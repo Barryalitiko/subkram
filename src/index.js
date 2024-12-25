@@ -1,65 +1,134 @@
-const { makeWASocket, fetchLatestBaileysVersion, initAuthCreds } = require('@whiskeysockets/baileys');
-const fs = require('fs');
-const path = require('path');
-const qrcode = require('qrcode-terminal');
+const path = require("path");
+const { question, onlyNumbers } = require("./utils");
+const {
+  default: makeWASocket,
+  DisconnectReason,
+  useMultiFileAuthState,
+  fetchLatestBaileysVersion,
+  isJidBroadcast,
+  isJidStatusBroadcast,
+  proto,
+  makeInMemoryStore,
+  isJidNewsletter,
+} = require("baileys");
+const NodeCache = require("node-cache");
+const pino = require("pino");
+const { load } = require("./loader");
+const {
+  warningLog,
+  infoLog,
+  errorLog,
+  sayLog,
+  successLog,
+} = require("./utils/logger");
 
-// Ruta para guardar las credenciales
-const AUTH_FILE_PATH = path.join(__dirname, 'auth_info.json');
+const msgRetryCounterCache = new NodeCache();
 
-// Cargar credenciales desde un archivo JSON
-function loadAuthState() {
-  try {
-    const data = JSON.parse(fs.readFileSync(AUTH_FILE_PATH, 'utf-8'));
-    return {
-      creds: data.creds,
-      keys: data.keys || {},
-    };
-  } catch (err) {
-    console.log('No se encontraron credenciales previas, se generarán nuevas.');
-    return {
-      creds: initAuthCreds(),
-      keys: {},
-    };
+const store = makeInMemoryStore({
+  logger: pino().child({ level: "silent", stream: "store" }),
+});
+
+async function getMessage(key) {
+  if (!store) {
+    return proto.Message.fromObject({});
   }
+
+  const msg = await store.loadMessage(key.remoteJid, key.id);
+
+  return msg ? msg.message : undefined;
 }
 
-// Guardar credenciales en un archivo JSON
-function saveAuthState(authState) {
-  fs.writeFileSync(AUTH_FILE_PATH, JSON.stringify(authState, null, 2), 'utf-8');
-}
+async function connect() {
+  // Cargar las credenciales si ya existen
+  const { state, saveCreds } = await useMultiFileAuthState(
+    path.resolve(__dirname, "..", "assets", "auth", "baileys")
+  );
 
-async function startBot() {
   const { version } = await fetchLatestBaileysVersion();
 
-  const authState = loadAuthState();
-
-  const sock = makeWASocket({
+  const socket = makeWASocket({
     version,
-    auth: authState, // Cargar credenciales
+    logger: pino({ level: "error" }),
+    printQRInTerminal: false, // Desactivamos la visualización del QR
+    defaultQueryTimeoutMs: 60 * 1000,
+    auth: state,  // Utilizamos las credenciales cargadas
+    keepAliveIntervalMs: 60 * 1000,
+    markOnlineOnConnect: true,
+    msgRetryCounterCache,
+    shouldSyncHistoryMessage: () => false,
+    getMessage,
   });
 
-  // Guardar las credenciales cada vez que se actualicen
-  sock.ev.on('creds.update', (creds) => {
-    authState.creds = creds;
-    saveAuthState(authState);
-  });
+  if (!socket.authState.creds.registered) {
+    warningLog("Credenciales no configuradas!");
 
-  sock.ev.on('connection.update', (update) => {
-    const { connection, lastDisconnect, qr } = update;
+    infoLog('Ingrese su numero sin el + (ejemplo: "13733665556"):');
 
-    // Mostrar el QR en la terminal
-    if (qr) {
-      qrcode.generate(qr, { small: true }); // Mostrar QR en la terminal
+    const phoneNumber = await question("Ingresa el numero: ");
+
+    if (!phoneNumber) {
+      errorLog(
+        'Numero de telefono inválido! Reinicia con el comando "npm start".'
+      );
+
+      process.exit(1);
     }
 
-    if (connection === 'close') {
-      const reason = lastDisconnect?.error?.output?.statusCode;
-      console.log('Conexión cerrada, motivo:', reason);
-      startBot(); // Reintentar conexión
-    } else if (connection === 'open') {
-      console.log('Conexión establecida con éxito');
+    const code = await socket.requestPairingCode(onlyNumbers(phoneNumber));
+
+    sayLog(`Código de pareamiento: ${code}`);
+  }
+
+  socket.ev.on("connection.update", async (update) => {
+    const { connection, lastDisconnect } = update;
+
+    if (connection === "close") {
+      const statusCode =
+        lastDisconnect.error?.output?.statusCode !== DisconnectReason.loggedOut;
+
+      if (statusCode === DisconnectReason.loggedOut) {
+        errorLog("Bot desconectado!");
+      } else {
+        switch (statusCode) {
+          case DisconnectReason.badSession:
+            warningLog("Sesion inválida!");
+            break;
+          case DisconnectReason.connectionClosed:
+            warningLog("Conexion cerrada!");
+            break;
+          case DisconnectReason.connectionLost:
+            warningLog("Conexion perdida!");
+            break;
+          case DisconnectReason.connectionReplaced:
+            warningLog("Conexion de reemplazo!");
+            break;
+          case DisconnectReason.multideviceMismatch:
+            warningLog("Dispositivo incompatible!");
+            break;
+          case DisconnectReason.forbidden:
+            warningLog("Conexion prohibida!");
+            break;
+          case DisconnectReason.restartRequired:
+            infoLog('Krampus reiniciado! Reinicia con "npm start".');
+            break;
+          case DisconnectReason.unavailableService:
+            warningLog("Servicio no disponible!");
+            break;
+        }
+
+        const newSocket = await connect();
+        load(newSocket);
+      }
+    } else if (connection === "open") {
+      successLog("Conexión exitosa");
+    } else {
+      infoLog("Procesando datos...");
     }
   });
+
+  socket.ev.on("creds.update", saveCreds);
+
+  return socket;
 }
 
-startBot();
+exports.connect = connect;
