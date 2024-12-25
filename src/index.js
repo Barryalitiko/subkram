@@ -50,4 +50,10 @@ async function startBot() {
       const reason = lastDisconnect?.error?.output?.statusCode;
       console.log('Conexión cerrada, motivo:', reason);
       startBot(); // Reintentar conexión
+    } else if (connection === 'open') {
+      console.log('Conexión establecida con éxito');
     }
+  });
+}
+
+startBot();
