@@ -1,4 +1,4 @@
-const { makeWASocket, fetchLatestBaileysVersion } = require('@whiskeysockets/baileys');
+const { makeWASocket, fetchLatestBaileysVersion, initAuthCreds } = require('@whiskeysockets/baileys');
 const fs = require('fs');
 const path = require('path');
 
@@ -6,32 +6,43 @@ const path = require('path');
 const AUTH_FILE_PATH = path.join(__dirname, 'auth_info.json');
 
 // Cargar credenciales desde un archivo JSON
-function loadAuth() {
+function loadAuthState() {
   try {
-    const data = fs.readFileSync(AUTH_FILE_PATH, 'utf-8');
-    return JSON.parse(data);
+    const data = JSON.parse(fs.readFileSync(AUTH_FILE_PATH, 'utf-8'));
+    return {
+      creds: data.creds,
+      keys: data.keys || {},
+    };
   } catch (err) {
     console.log('No se encontraron credenciales previas, se generarán nuevas.');
-    return undefined;
+    return {
+      creds: initAuthCreds(),
+      keys: {},
+    };
   }
 }
 
 // Guardar credenciales en un archivo JSON
-function saveAuth(authData) {
-  fs.writeFileSync(AUTH_FILE_PATH, JSON.stringify(authData, null, 2), 'utf-8');
+function saveAuthState(authState) {
+  fs.writeFileSync(AUTH_FILE_PATH, JSON.stringify(authState, null, 2), 'utf-8');
 }
 
 async function startBot() {
   const { version } = await fetchLatestBaileysVersion();
 
+  const authState = loadAuthState();
+
   const sock = makeWASocket({
     version,
-    printQRInTerminal: true, // Mostrar QR en la terminal
-    auth: loadAuth(), // Cargar credenciales
+    printQRInTerminal: true, // Mostrar el QR en la terminal
+    auth: authState, // Cargar credenciales
   });
 
   // Guardar las credenciales cada vez que se actualicen
-  sock.ev.on('creds.update', saveAuth);
+  sock.ev.on('creds.update', (creds) => {
+    authState.creds = creds;
+    saveAuthState(authState);
+  });
 
   sock.ev.on('connection.update', (update) => {
     const { connection, lastDisconnect } = update;
@@ -39,10 +50,4 @@ async function startBot() {
       const reason = lastDisconnect?.error?.output?.statusCode;
       console.log('Conexión cerrada, motivo:', reason);
       startBot(); // Reintentar conexión
-    } else if (connection === 'open') {
-      console.log('Conexión establecida con éxito');
     }
-  });
-}
-
-startBot();
