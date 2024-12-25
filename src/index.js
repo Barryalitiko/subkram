@@ -1,34 +1,48 @@
-const { makeWASocket, useSingleFileAuthState, fetchLatestBaileysVersion } = require('@whiskeysockets/baileys');
+const { makeWASocket, fetchLatestBaileysVersion } = require('@whiskeysockets/baileys');
 const fs = require('fs');
 const path = require('path');
 
-const { state, saveState } = useSingleFileAuthState(path.join(__dirname, 'auth_info.json'));
+// Ruta para guardar las credenciales
+const AUTH_FILE_PATH = path.join(__dirname, 'auth_info.json');
+
+// Cargar credenciales desde un archivo JSON
+function loadAuth() {
+  try {
+    const data = fs.readFileSync(AUTH_FILE_PATH, 'utf-8');
+    return JSON.parse(data);
+  } catch (err) {
+    console.log('No se encontraron credenciales previas, se generarán nuevas.');
+    return undefined;
+  }
+}
+
+// Guardar credenciales en un archivo JSON
+function saveAuth(authData) {
+  fs.writeFileSync(AUTH_FILE_PATH, JSON.stringify(authData, null, 2), 'utf-8');
+}
 
 async function startBot() {
-  const { version, isLatest } = await fetchLatestBaileysVersion();
-  const socket = makeWASocket({
-    printQRInTerminal: true,
-    auth: state,
+  const { version } = await fetchLatestBaileysVersion();
+
+  const sock = makeWASocket({
     version,
+    printQRInTerminal: true, // Mostrar QR en la terminal
+    auth: loadAuth(), // Cargar credenciales
   });
 
-  socket.ev.on('qr', (qr) => {
-    console.log('Escanea el código QR:');
-    console.log(qr);
-  });
+  // Guardar las credenciales cada vez que se actualicen
+  sock.ev.on('creds.update', saveAuth);
 
-  socket.ev.on('connection.update', (update) => {
+  sock.ev.on('connection.update', (update) => {
     const { connection, lastDisconnect } = update;
     if (connection === 'close') {
-      console.log('Conexión cerrada:', lastDisconnect.error);
-      startBot(); 
+      const reason = lastDisconnect?.error?.output?.statusCode;
+      console.log('Conexión cerrada, motivo:', reason);
+      startBot(); // Reintentar conexión
     } else if (connection === 'open') {
-      console.log('Krampus conectado con exito');
+      console.log('Conexión establecida con éxito');
     }
   });
-
-
-  socket.ev.on('creds.update', saveState);
 }
 
 startBot();
