@@ -9,6 +9,6 @@
   "author": "krampus",
   "license": "MIT",
   "dependencies": {
-    "@whiskeysockets/baileys": "^5.4.1"
+    "@whiskeysockets/baileys": "^6.7.9"
   }
 }
