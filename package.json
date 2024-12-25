@@ -9,6 +9,9 @@
   "author": "krampus",
   "license": "MIT",
   "dependencies": {
-    "@whiskeysockets/baileys": "^6.7.9"
+    "@whiskeysockets/baileys": "^6.7.9",
+    "baileys": "github:WhiskeySockets/Baileys",
+    "pino": "^9.5.0",
+    "node-cache": "^5.1.2"
   }
 }
