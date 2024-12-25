@@ -1,7 +1,7 @@
 const { makeWASocket, fetchLatestBaileysVersion, initAuthCreds } = require('@whiskeysockets/baileys');
 const fs = require('fs');
 const path = require('path');
-const QRCode = require('qrcode');
+const qrcode = require('qrcode-terminal');
 
 // Ruta para guardar las credenciales
 const AUTH_FILE_PATH = path.join(__dirname, 'auth_info.json');
@@ -10,10 +10,16 @@ const AUTH_FILE_PATH = path.join(__dirname, 'auth_info.json');
 function loadAuthState() {
   try {
     const data = JSON.parse(fs.readFileSync(AUTH_FILE_PATH, 'utf-8'));
-    return { creds: data.creds, keys: data.keys || {}, };
+    return {
+      creds: data.creds,
+      keys: data.keys || {},
+    };
   } catch (err) {
     console.log('No se encontraron credenciales previas, se generarán nuevas.');
-    return { creds: initAuthCreds(), keys: {}, };
+    return {
+      creds: initAuthCreds(),
+      keys: {},
+    };
   }
 }
 
@@ -24,48 +30,36 @@ function saveAuthState(authState) {
 
 async function startBot() {
   const { version } = await fetchLatestBaileysVersion();
+
   const authState = loadAuthState();
+
   const sock = makeWASocket({
     version,
-    printQRInTerminal: true,
-    auth: authState,
+    auth: authState, // Cargar credenciales
   });
 
-  sock.ev.on('connection.update', (update) => {
-    const { connection, lastDisconnect } = update;
-    if (connection === 'open') {
-      console.log('Conexión establecida con éxito');
-    } else if (connection === 'close') {
-      const reason = lastDisconnect?.error?.output?.statusCode;
-      console.log('Conexión cerrada, motivo:', reason);
-      startBot(); // Reintentar conexión
-    } else if (connection === 'qr') {
-      console.log('Escanea el código QR:');
-      console.log(update.qr);
-      // Enviar el QR como imagen
-      const qrImage = await generateQRImage(update.qr);
-      // Enviar la imagen como respuesta
-      sock.sendMessage('tu_numero_de_telefono', qrImage, 'image');
-    }
-  });
-
+  // Guardar las credenciales cada vez que se actualicen
   sock.ev.on('creds.update', (creds) => {
     authState.creds = creds;
     saveAuthState(authState);
   });
-}
 
-async function generateQRImage(qr) {
-  const qrCode = await QRCode.toString(qr, {
-    type: 'png',
-    errorCorrectionLevel: 'H',
-    margin: 4,
-    color: {
-      dark: '#000000',
-      light: '#ffffff',
-    },
+  sock.ev.on('connection.update', (update) => {
+    const { connection, lastDisconnect, qr } = update;
+
+    // Mostrar el QR en la terminal
+    if (qr) {
+      qrcode.generate(qr, { small: true }); // Mostrar QR en la terminal
+    }
+
+    if (connection === 'close') {
+      const reason = lastDisconnect?.error?.output?.statusCode;
+      console.log('Conexión cerrada, motivo:', reason);
+      startBot(); // Reintentar conexión
+    } else if (connection === 'open') {
+      console.log('Conexión establecida con éxito');
+    }
   });
-  return qrCode;
 }
 
 startBot();
