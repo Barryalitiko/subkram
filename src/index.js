@@ -1,65 +1,46 @@
-const { makeWASocket, fetchLatestBaileysVersion, initAuthCreds } = require('@whiskeysockets/baileys');
-const fs = require('fs');
-const path = require('path');
+const { makeWASocket, fetchLatestBaileysVersion, useSingleFileAuthState } = require('@whiskeysockets/baileys');
 const qrcode = require('qrcode-terminal');
+const path = require('path');
 
-// Ruta para guardar las credenciales
-const AUTH_FILE_PATH = path.join(__dirname, 'auth_info.json');
-
-// Cargar credenciales desde un archivo JSON
-function loadAuthState() {
-  try {
-    const data = JSON.parse(fs.readFileSync(AUTH_FILE_PATH, 'utf-8'));
-    return {
-      creds: data.creds,
-      keys: data.keys || {},
-    };
-  } catch (err) {
-    console.log('No se encontraron credenciales previas, se generarán nuevas.');
-    return {
-      creds: initAuthCreds(),
-      keys: {},
-    };
-  }
-}
-
-// Guardar credenciales en un archivo JSON
-function saveAuthState(authState) {
-  fs.writeFileSync(AUTH_FILE_PATH, JSON.stringify(authState, null, 2), 'utf-8');
-}
+// Ruta donde se guardarán las credenciales
+const { state, saveState } = useSingleFileAuthState(path.join(__dirname, 'auth_info.json'));
 
 async function startBot() {
-  const { version } = await fetchLatestBaileysVersion();
+    // Obtén la última versión de Baileys compatible con WhatsApp Web
+    const { version } = await fetchLatestBaileysVersion();
 
-  const authState = loadAuthState();
+    // Crea el socket de conexión
+    const sock = makeWASocket({
+        version,
+        auth: state,
+        printQRInTerminal: false, // Configuración para que usemos `qrcode-terminal`
+    });
 
-  const sock = makeWASocket({
-    version,
-    auth: authState, // Cargar credenciales
-  });
+    // Evento para guardar credenciales cuando sean actualizadas
+    sock.ev.on('creds.update', saveState);
 
-  // Guardar las credenciales cada vez que se actualicen
-  sock.ev.on('creds.update', (creds) => {
-    authState.creds = creds;
-    saveAuthState(authState);
-  });
+    // Manejo de eventos de conexión
+    sock.ev.on('connection.update', (update) => {
+        const { connection, lastDisconnect, qr } = update;
 
-  sock.ev.on('connection.update', (update) => {
-    const { connection, lastDisconnect, qr } = update;
+        if (qr) {
+            console.log('Escanea el código QR para conectar tu cuenta:');
+            qrcode.generate(qr, { small: true }); // Genera el QR en consola
+        }
 
-    // Mostrar el QR en la terminal
-    if (qr) {
-      qrcode.generate(qr, { small: true }); // Mostrar QR en la terminal
-    }
+        if (connection === 'close') {
+            const shouldReconnect = lastDisconnect.error?.output?.statusCode !== 401;
+            console.log('Conexión cerrada. Reintentando:', shouldReconnect);
+            if (shouldReconnect) startBot(); // Reintenta la conexión si no es un error de autenticación
+        } else if (connection === 'open') {
+            console.log('Conexión establecida con éxito.');
+        }
+    });
 
-    if (connection === 'close') {
-      const reason = lastDisconnect?.error?.output?.statusCode;
-      console.log('Conexión cerrada, motivo:', reason);
-      startBot(); // Reintentar conexión
-    } else if (connection === 'open') {
-      console.log('Conexión establecida con éxito');
-    }
-  });
+    return sock;
 }
 
-startBot();
+// Inicia el bot
+startBot()
+    .then(() => console.log('Bot iniciado correctamente'))
+    .catch((err) => console.error('Error al iniciar el bot:', err));
