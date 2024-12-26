@@ -1,4 +1,4 @@
-const { PREFIX, OWNER_NUMBER } = require("../config");
+const { PREFIX, OWNER_NUMBER } = require("../krampus");
 const { toUserJid } = require("../utils");
 
 exports.verifyPrefix = (prefix) => PREFIX === prefix;
