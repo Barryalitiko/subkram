@@ -1,5 +1,5 @@
 const path = require("path");
-const { version } = require(path.resolve(__dirname, "../package.json"));
+const { version } = require(path.join(__dirname, "../", "package.json"));
 
 exports.sayLog = (message) => {
   console.log("\x1b[36m[KRAMPUS | TALK]\x1b[0m", message);
