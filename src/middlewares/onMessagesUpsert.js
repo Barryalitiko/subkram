@@ -1,38 +1,22 @@
-const { PREFIX } = require("../krampus");
-const fs = require("fs");
-const path = require("path");
+const { dynamicCommand } = require("../utils/dynamicCommand");
+const { loadCommonFunctions } = require("../utils/loadCommonFunctions");
 
-module.exports = (client) => {
-  const comandosPath = path.join(__dirname, '..', 'comandos');
-  const comandosFiles = fs.readdirSync(comandosPath).filter(file => file.endsWith('.js'));
+exports.onMessagesUpsert = async ({ socket, messages }) => {
+  // Verificamos si hay mensajes
+  if (!messages.length) {
+    return;
+  }
 
-  const comandos = {};
+  for (const webMessage of messages) {
+    // Cargamos funciones comunes necesarias para procesar el mensaje
+    const commonFunctions = loadCommonFunctions({ socket, webMessage });
 
-  comandosFiles.forEach(file => {
-    const comando = require(path.join(comandosPath, file));
-    comandos[comando.name] = comando;
-  });
-
-  client.ev.on("messages.upsert", async (messageUpsert) => {
-    const message = messageUpsert.messages[0]; // Obtenemos el primer mensaje del evento
-
-    if (!message.key.fromMe && message.body) {
-      console.log("Mensaje recibido:", message.body); // Agregar log para depurar
-
-      if (message.body.startsWith(PREFIX)) {
-        const args = message.body.slice(PREFIX.length).trim().split(/ +/); // Separamos los argumentos
-        const commandName = args.shift().toLowerCase(); // Obtenemos el nombre del comando
-
-        if (comandos[commandName]) {
-          try {
-            await comandos[commandName].execute(message, client, args); // Pasamos los argumentos
-          } catch (error) {
-            console.error(`Error al ejecutar el comando ${commandName}:`, error);
-          }
-        } else {
-          console.log(`Comando ${commandName} no encontrado.`);
-        }
-      }
+    // Si no se obtienen funciones comunes, pasamos al siguiente mensaje
+    if (!commonFunctions) {
+      continue;
     }
-  });
+
+    // Procesamos el comando dinámico usando las funciones comunes
+    await dynamicCommand(commonFunctions);
+  }
 };
