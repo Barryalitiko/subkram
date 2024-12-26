@@ -1,5 +1,5 @@
 // src/loader.js
-const { connect } = require("./src/connect");  // Ahora importamos desde services/connect
+const { connect } = require("./connect");
 const { infoLog, errorLog } = require("./utils/logger");
 
 async function load(socket) {
