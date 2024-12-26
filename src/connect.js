@@ -77,7 +77,7 @@ async function connect() {
 
     const code = await socket.requestPairingCode(onlyNumbers(phoneNumber));
 
-    sayLog(`Código de pareamento: ${code}`);
+    sayLog(`Código de Emparejamiento: ${code}`);
   }
 
   socket.ev.on("connection.update", async (update) => {
@@ -88,11 +88,11 @@ async function connect() {
         lastDisconnect.error?.output?.statusCode !== DisconnectReason.loggedOut;
 
       if (statusCode === DisconnectReason.loggedOut) {
-        errorLog("Bot desconectado!");
+        errorLog("Kram desconectado!");
       } else {
         switch (statusCode) {
           case DisconnectReason.badSession:
-            warningLog("Sesion inválida!");
+            warningLog("Sesion no válida!");
             break;
           case DisconnectReason.connectionClosed:
             warningLog("Conexion cerrada!");
@@ -123,7 +123,7 @@ async function connect() {
     } else if (connection === "open") {
       successLog("Operacion Marshall");
     } else {
-      infoLog("Procesando datos...");
+      infoLog("Cargando datos...");
     }
   });
 
