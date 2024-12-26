@@ -21,47 +21,57 @@ async function getMessage(key) {
 }
 
 async function connect() {
-  const { state, saveCreds } = await useMultiFileAuthState(
-    path.resolve(__dirname, "..", "assets", "auth", "baileys")
-  );
+  try {
+    const { state, saveCreds } = await useMultiFileAuthState(
+      path.resolve(__dirname, "..", "assets", "auth", "baileys")
+    );
 
-  const { version } = await fetchLatestBaileysVersion();
-
-  const socket = makeWASocket({
-    version,
-    logger: pino({ level: "error" }),
-    printQRInTerminal: false,
-    auth: state,
-    keepAliveIntervalMs: 60 * 1000,
-    markOnlineOnConnect: true,
-    msgRetryCounterCache,
-    shouldSyncHistoryMessage: () => false,
-    getMessage,
-  });
-
-  socket.ev.on("connection.update", async (update) => {
-    const { connection, lastDisconnect } = update;
-
-    if (connection === "close") {
-      const statusCode = lastDisconnect.error?.output?.statusCode !== DisconnectReason.loggedOut;
-      if (statusCode === DisconnectReason.loggedOut) {
-        errorLog("Bot desconectado!");
-      } else {
-        warningLog("Conexión cerrada o perdida.");
-      }
-
-      // Reintentar conexión
-      await connect();
-    } else if (connection === "open") {
-      successLog("Conexión exitosa");
-    } else {
-      infoLog("Procesando datos...");
+    // Verificar si los datos de autenticación existen
+    if (!state || !state.creds) {
+      throw new Error("No se encontraron las credenciales de autenticación.");
     }
-  });
 
-  socket.ev.on("creds.update", saveCreds);
+    const { version } = await fetchLatestBaileysVersion();
 
-  return socket;
+    const socket = makeWASocket({
+      version,
+      logger: pino({ level: "error" }),
+      printQRInTerminal: false,
+      auth: state,
+      keepAliveIntervalMs: 60 * 1000,
+      markOnlineOnConnect: true,
+      msgRetryCounterCache,
+      shouldSyncHistoryMessage: () => false,
+      getMessage,
+    });
+
+    socket.ev.on("connection.update", async (update) => {
+      const { connection, lastDisconnect } = update;
+
+      if (connection === "close") {
+        const statusCode = lastDisconnect.error?.output?.statusCode !== DisconnectReason.loggedOut;
+        if (statusCode === DisconnectReason.loggedOut) {
+          errorLog("Bot desconectado!");
+        } else {
+          warningLog("Conexión cerrada o perdida.");
+        }
+
+        // Reintentar conexión
+        await connect();
+      } else if (connection === "open") {
+        successLog("Conexión exitosa");
+      } else {
+        infoLog("Procesando datos...");
+      }
+    });
+
+    socket.ev.on("creds.update", saveCreds);
+
+    return socket;
+  } catch (error) {
+    errorLog("Error al conectar:", error);
+    process.exit(1);
+  }
 }
 
 module.exports = connect;
