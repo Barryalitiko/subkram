@@ -9,7 +9,7 @@ const {
 } = require("../middlewares");
 const { checkPermission } = require("../middlewares/checkPermission");
 const { errorLog } = require("../utils/logger");
-const { ONLY_GROUP_ID } = require("../config");
+const { ONLY_GROUP_ID } = require("../krampus");
 
 exports.dynamicCommand = async (paramsHandler) => {
   const {
