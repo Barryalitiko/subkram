@@ -26,9 +26,9 @@ async function connect() {
       path.resolve(__dirname, "..", "assets", "auth", "baileys")
     );
 
-    // Verificar si los datos de autenticación existen
+    // Verificar si el estado de autenticación y las credenciales están definidos
     if (!state || !state.creds) {
-      throw new Error("No se encontraron las credenciales de autenticación.");
+      throw new Error("No se encontraron las credenciales de autenticación. Asegúrese de que los archivos de autenticación estén presentes.");
     }
 
     const { version } = await fetchLatestBaileysVersion();
