@@ -1,4 +1,4 @@
-const { OWNER_NUMBER } = require("../config");
+const { OWNER_NUMBER } = require("../krampus");
 
 exports.checkPermission = async ({ type, socket, userJid, remoteJid }) => {
   if (type === "member") {
