@@ -1,6 +1,5 @@
 const readline = require('readline');
 
-// Función para hacer preguntas
 const question = (query) => {
   const rl = readline.createInterface({
     input: process.stdin,
@@ -12,7 +11,6 @@ const question = (query) => {
   }));
 };
 
-// Función para permitir solo números
 const onlyNumbers = (str) => str.replace(/\D/g, '');
 
 module.exports = { question, onlyNumbers };
