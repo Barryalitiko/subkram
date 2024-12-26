@@ -1,4 +1,4 @@
-const { BOT_NAME, PREFIX } = require("../config");
+const { BOT_NAME, PREFIX } = require("../krampus");
 
 exports.waitMessage = "Carregando dados...";
 
