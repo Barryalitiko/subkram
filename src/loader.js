@@ -1,7 +1,7 @@
 // src/loader.js
 
 const { connect } = require("./index");  // Ajusta la ruta según sea necesario
-const { infoLog, errorLog } = require("utils/logger");
+const { infoLog, errorLog } = require("./utils/logger");
 
 async function load(socket) {
   try {
