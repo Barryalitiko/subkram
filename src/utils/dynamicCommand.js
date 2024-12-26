@@ -1,38 +1,72 @@
-const path = require("path");
-const { PREFIX } = require("../krampus");
-const { infoLog, errorLog } = require("../utils/logger");
-const fs = require("fs");
+const { DangerError } = require("../errors/DangerError");
+const { InvalidParameterError } = require("../errors/InvalidParameterError");
+const { WarningError } = require("../errors/WarningError");
+const { findCommandImport } = require(".");
+const {
+  verifyPrefix,
+  hasTypeOrCommand,
+  isAdmin,
+} = require("../middlewares");
+const { checkPermission } = require("../middlewares/checkPermission");
+const { errorLog } = require("../utils/logger");
+const { ONLY_GROUP_ID } = require("../config");
 
-exports.dynamicCommand = async (commonFunctions) => {
-  const { message, sender, groupId, socket } = commonFunctions;
+exports.dynamicCommand = async (paramsHandler) => {
+  const {
+    commandName,
+    prefix,
+    sendWarningReply,
+    sendErrorReply,
+    remoteJid,
+    sendReply,
+    socket,
+    userJid,
+    fullMessage,
+    webMessage,
+  } = paramsHandler;
+ 
+  const { type, command } = findCommandImport(commandName);
 
-  // Verificar si el mensaje comienza con el prefijo
-  if (!message.startsWith(PREFIX)) {
+  if (ONLY_GROUP_ID && ONLY_GROUP_ID !== remoteJid) {
     return;
   }
 
-  // Obtener el comando y argumentos
-  const args = message.slice(PREFIX.length).trim().split(/ +/);
-  const commandName = args.shift().toLowerCase();
+  if (!verifyPrefix(prefix) || !hasTypeOrCommand({ type, command })) {
+    if (isActiveAutoResponderGroup(remoteJid)) {
+      const response = getAutoResponderResponse(fullMessage);
 
-  try {
-    // Ruta a la carpeta de comandos
-    const commandsPath = path.resolve(__dirname, "../comandos");
-    const commandFiles = fs.readdirSync(commandsPath).filter((file) => file.endsWith(".js"));
-
-    for (const file of commandFiles) {
-      const command = require(path.join(commandsPath, file));
-
-      // Comparar el nombre del comando
-      if (command.name === commandName) {
-        await command.execute({ args, message, sender, groupId, socket });
-        infoLog(`Ejecutado comando: ${commandName} por ${sender}`);
-        return;
+      if (response) {
+        await sendReply(response);
       }
     }
 
-    infoLog(`Comando no reconocido: ${commandName}`);
+    return;
+  }
+
+  if (!(await checkPermission({ type, ...paramsHandler }))) {
+    await sendErrorReply("👻 𝙺𝚛𝚊𝚖𝚙𝚞𝚜.𝚋𝚘𝚝 👻 No tienes permitido usar el comando");
+    return;
+  }
+
+  try {
+    await command.handle({
+      ...paramsHandler,
+      type,
+    });
   } catch (error) {
-    errorLog(`Error al ejecutar el comando ${commandName}: ${error.message}`);
+    if (error instanceof InvalidParameterError) {
+      await sendWarningReply(`Parametros inválidos! ${error.message}`);
+    } else if (error instanceof WarningError) {
+      await sendWarningReply(error.message);
+    } else if (error instanceof DangerError) {
+      await sendErrorReply(error.message);
+    } else {
+      errorLog("Error al ejecutar el comando", error);
+      await sendErrorReply(
+        `👻 𝙺𝚛𝚊𝚖𝚙𝚞𝚜.𝚋𝚘𝚝 👻 Ocurrio un error al ejecutar el comando ${command.name}!
+      
+📄 *Detalles*: ${error.message}`
+      );
+    }
   }
 };
