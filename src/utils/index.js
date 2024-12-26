@@ -1,5 +1,5 @@
 const { downloadContentFromMessage } = require("baileys");
-const { PREFIX, COMMANDS_DIR, TEMP_DIR } = require("../krampus");
+const { PREFIX, COMMANDS_DIR, TEMP_DIR } = require("../config");
 const path = require("path");
 const fs = require("fs");
 const { writeFile } = require("fs/promises");
