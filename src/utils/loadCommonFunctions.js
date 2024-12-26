@@ -1,4 +1,4 @@
-const { BOT_EMOJI } = require("../config");
+const { BOT_EMOJI } = require("../krampus");
 const { extractDataFromMessage, baileyIs } = require(".");
 const { waitMessage } = require("./messages");
 
