@@ -1,4 +1,4 @@
-const { connect } = require("./connection");
+const { connect } = require("./connect");
 const { load } = require("./loader");
 const { infoLog, bannerLog } = require("./utils/logger");
 
