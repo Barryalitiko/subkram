@@ -1,50 +1,72 @@
-const { infoLog, errorLog } = require("../utils/logger");
-const { PREFIX } = require("../krampus");
+const { BOT_EMOJI } = require("../config");
+const { extractDataFromMessage, baileyIs } = require(".");
 
 exports.loadCommonFunctions = ({ socket, webMessage }) => {
-  try {
-    // Validar el contenido del mensaje
-    if (!webMessage || !webMessage.message) {
-      return null;
-    }
+  const {
+    args,
+    commandName,
+    fullArgs,
+    fullMessage,
+    isReply,
+    prefix,
+    remoteJid,
+    replyJid,
+    userJid,
+  } = extractDataFromMessage(webMessage);
 
-    // Extraer información del mensaje
-    const { key, message } = webMessage;
-    const remoteJid = key.remoteJid;
-    const isGroup = remoteJid.endsWith("@g.us");
-    const sender = isGroup ? key.participant : remoteJid;
-
-    // Verificar si es un mensaje de texto
-    const textMessage =
-      message.conversation ||
-      (message.extendedTextMessage && message.extendedTextMessage.text);
-
-    if (!textMessage) {
-      return null;
-    }
-
-    // Crear un objeto con las funciones comunes
-    const commonFunctions = {
-      socket,
-      remoteJid,
-      sender,
-      groupId: isGroup ? remoteJid : null,
-      message: textMessage.trim(),
-      isGroup,
-    };
-
-    // Log de mensajes para depuración
-    if (textMessage.startsWith(PREFIX)) {
-      infoLog(
-        `Mensaje detectado con prefijo: "${textMessage}" de ${sender} en ${
-          isGroup ? "grupo" : "chat privado"
-        }`
-      );
-    }
-
-    return commonFunctions;
-  } catch (error) {
-    errorLog("Error al cargar funciones comunes: ", error.message);
+  if (!remoteJid) {
     return null;
   }
+
+  // Funciones para enviar texto y respuestas
+  const sendReply = async (text) => {
+    return await socket.sendMessage(
+      remoteJid,
+      { text: `${BOT_EMOJI} ${text}` },
+      { quoted: webMessage }
+    );
+  };
+
+  const sendReact = async (emoji) => {
+    return await socket.sendMessage(remoteJid, {
+      react: {
+        text: emoji,
+        key: webMessage.key,
+      },
+    });
+  };
+
+  const sendSuccessReply = async (text) => {
+    await sendReact("✅");
+    return await sendReply(`✅ ${text}`);
+  };
+
+  const sendWaitReply = async (text) => {
+    await sendReact("⏳");
+    return await sendReply(`⏳ Aguarde! ${text || "Procesando..."}`);
+  };
+
+  const sendErrorReply = async (text) => {
+    await sendReact("❌");
+    return await sendReply(`❌ Erro! ${text}`);
+  };
+
+  return {
+    args,
+    commandName,
+    fullArgs,
+    fullMessage,
+    isReply,
+    prefix,
+    remoteJid,
+    replyJid,
+    socket,
+    userJid,
+    webMessage,
+    sendReact,
+    sendReply,
+    sendSuccessReply,
+    sendWaitReply,
+    sendErrorReply,
+  };
 };
