@@ -1,4 +1,4 @@
-const { TIMEOUT_IN_MILLISECONDS_BY_EVENT } = require("./config");
+const { TIMEOUT_IN_MILLISECONDS_BY_EVENT } = require("./krampus");
 const { onMessagesUpsert } = require("./middlewares/onMesssagesUpsert");
 const {
   onGroupParticipantsUpdate,
