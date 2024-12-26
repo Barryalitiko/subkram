@@ -1,5 +1,5 @@
-const { dynamicCommand } = require("../middlewares/dynamicCommand");
-const { loadCommonFunctions } = require("../middlewares/loadCommonFunctions");
+const { dynamicCommand } = require("../utils/dynamicCommand");
+const { loadCommonFunctions } = require("../utils/loadCommonFunctions");
 
 exports.onMessagesUpsert = async ({ socket, messages }) => {
   // Verificamos si hay mensajes
