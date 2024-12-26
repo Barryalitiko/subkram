@@ -1,17 +1,23 @@
-const { connect } = require("./connect");
-const { infoLog, errorLog } = require("./utils/logger");
+const { TIMEOUT_IN_MILLISECONDS_BY_EVENT } = require("./krampus");
+const { onMessagesUpsert } = require("./middlewares/onMesssagesUpsert");
+const {
+  onGroupParticipantsUpdate,
+} = require("./middlewares/onGroupParticipantsUpdate");
 
-async function load(socket) {
-  try {
-    infoLog("Cargando servicios...");
+exports.load = (socket) => {
+  socket.ev.on("messages.upsert", async ({ messages }) => {
+    setTimeout(() => {
+      onMessagesUpsert({ socket, messages });
+    }, TIMEOUT_IN_MILLISECONDS_BY_EVENT);
+  });
 
-
-    await connect();  
-
-    infoLog("CARGANDO OPERACION MARSHALL...");
-  } catch (error) {
-    errorLog("Error al cargar servicios: ", error);
-  }
-}
-
-module.exports = { load };
+  socket.ev.on("group-participants.update", async (data) => {
+    setTimeout(() => {
+      try {
+        onGroupParticipantsUpdate({ socket, groupParticipantsUpdate: data });
+      } catch (error) {
+        console.error(error);
+      }
+    }, TIMEOUT_IN_MILLISECONDS_BY_EVENT);
+  });
+};
