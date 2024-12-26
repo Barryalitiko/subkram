@@ -1,4 +1,3 @@
-// src/loader.js
 const { connect } = require("./connect");
 const { infoLog, errorLog } = require("./utils/logger");
 
@@ -6,11 +5,10 @@ async function load(socket) {
   try {
     infoLog("Cargando servicios...");
 
-    // Aquí podrías agregar lógica para cargar más servicios si es necesario
 
-    await connect();  // Llamamos a la función de conexión
+    await connect();  
 
-    infoLog("Servicios cargados correctamente.");
+    infoLog("CARGANDO OPERACION MARSHALL...");
   } catch (error) {
     errorLog("Error al cargar servicios: ", error);
   }
