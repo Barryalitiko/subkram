@@ -3,7 +3,7 @@ const path = require("path");
 const { makeWASocket, useMultiFileAuthState, fetchLatestBaileysVersion, DisconnectReason, proto } = require("@whiskeysockets/baileys");
 const NodeCache = require("node-cache");
 const pino = require("pino");
-const { warningLog, infoLog, errorLog, sayLog, successLog } = require("./utils/logger");
+const { warningLog, infoLog, errorLog, sayLog, successLog } = require("../utils/logger");
 
 const msgRetryCounterCache = new NodeCache();
 
