@@ -1,5 +1,6 @@
 const { BOT_EMOJI } = require("../config");
 const { extractDataFromMessage, baileyIs } = require(".");
+const { waitMessage } = require("./messages");
 
 exports.loadCommonFunctions = ({ socket, webMessage }) => {
   const {
