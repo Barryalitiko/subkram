@@ -6,7 +6,9 @@ const { warningLog, infoLog, errorLog, sayLog, successLog, bannerLog } = require
 
 async function start() {
   try {
-    // Realiza la conexión con Baileys
+    bannerLog();
+    infoLog("Kram está procesando...");
+    
     const socket = await connect();
 
     // Aquí puedes agregar más lógica de tu aplicación, si es necesario
