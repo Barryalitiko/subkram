@@ -9,7 +9,7 @@
   "author": "krampus",
   "license": "MIT",
   "dependencies": {
-    "baileys": "6.7.9",
+    "@whiskeysockets/baileys": "6.7.9",
     "pino": "^9.6.0",
     "node-cache": "^5.1.2"
   }
