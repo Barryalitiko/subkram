@@ -1,14 +1,14 @@
 // src/loader.js
-
-const { connect } = require("./index");  // Ajusta la ruta según sea necesario
+const { connect } = require("./src/connect");  // Ahora importamos desde services/connect
 const { infoLog, errorLog } = require("./utils/logger");
 
 async function load(socket) {
   try {
     infoLog("Cargando servicios...");
 
-    // Ejemplo de cargar otros servicios o inicializar el socket
-    await connect();
+    // Aquí podrías agregar lógica para cargar más servicios si es necesario
+
+    await connect();  // Llamamos a la función de conexión
 
     infoLog("Servicios cargados correctamente.");
   } catch (error) {
