@@ -1,7 +1,7 @@
 // src/index.js
 const path = require("path");
 const { question, onlyNumbers } = require("./utils");
-const connect = require("./connect");  // Importamos la conexión desde services/connect
+const { connect } = require("./connect");  // Importamos la conexión desde services/connect
 const { warningLog, infoLog, errorLog, sayLog, successLog } = require("./utils/logger");
 
 async function start() {
