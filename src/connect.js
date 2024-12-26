@@ -1,17 +1,26 @@
 const path = require("path");
-const { makeWASocket, useMultiFileAuthState, fetchLatestBaileysVersion, DisconnectReason, proto } = require("@whiskeysockets/baileys");
+const { question, onlyNumbers } = require("./utils");
+const {
+  default: makeWASocket,
+  DisconnectReason,
+  useMultiFileAuthState,
+  fetchLatestBaileysVersion,
+  isJidBroadcast,
+  isJidStatusBroadcast,
+  proto,
+  makeInMemoryStore,
+  isJidNewsletter,
+} = require("baileys");
 const NodeCache = require("node-cache");
 const pino = require("pino");
-const { warningLog, infoLog, errorLog, sayLog, successLog } = require("./utils/logger");
-
-const msgRetryCounterCache = new NodeCache();
-
-const store = makeWASocket({
-  logger: pino().child({ level: "silent", stream: "store" }),const path = require("path");
-const { makeInMemoryStore, useMultiFileAuthState, fetchLatestBaileysVersion, DisconnectReason, proto } = require("@whiskeysockets/baileys");
-const NodeCache = require("node-cache");
-const pino = require("pino");
-const { warningLog, infoLog, errorLog, sayLog, successLog } = require("./utils/logger");
+const { load } = require("./loader");
+const {
+  warningLog,
+  infoLog,
+  errorLog,
+  sayLog,
+  successLog,
+} = require("./utils/logger");
 
 const msgRetryCounterCache = new NodeCache();
 
@@ -25,6 +34,7 @@ async function getMessage(key) {
   }
 
   const msg = await store.loadMessage(key.remoteJid, key.id);
+
   return msg ? msg.message : undefined;
 }
 
@@ -39,7 +49,10 @@ async function connect() {
     version,
     logger: pino({ level: "error" }),
     printQRInTerminal: false,
+    defaultQueryTimeoutMs: 60 * 1000,
     auth: state,
+    shouldIgnoreJid: (jid) =>
+      isJidBroadcast(jid) || isJidStatusBroadcast(jid) || isJidNewsletter(jid),
     keepAliveIntervalMs: 60 * 1000,
     markOnlineOnConnect: true,
     msgRetryCounterCache,
@@ -64,7 +77,7 @@ async function connect() {
 
     const code = await socket.requestPairingCode(onlyNumbers(phoneNumber));
 
-    sayLog(`Código de pareamiento: ${code}`);
+    sayLog(`Código de pareamento: ${code}`);
   }
 
   socket.ev.on("connection.update", async (update) => {
@@ -77,14 +90,38 @@ async function connect() {
       if (statusCode === DisconnectReason.loggedOut) {
         errorLog("Bot desconectado!");
       } else {
-        warningLog("Conexión cerrada o perdida.");
-      }
+        switch (statusCode) {
+          case DisconnectReason.badSession:
+            warningLog("Sesion inválida!");
+            break;
+          case DisconnectReason.connectionClosed:
+            warningLog("Conexion cerrada!");
+            break;
+          case DisconnectReason.connectionLost:
+            warningLog("Conexion perdida!");
+            break;
+          case DisconnectReason.connectionReplaced:
+            warningLog("Conexion de reemplazo!");
+            break;
+          case DisconnectReason.multideviceMismatch:
+            warningLog("Dispositivo incompatible!");
+            break;
+          case DisconnectReason.forbidden:
+            warningLog("Conexion prohibida!");
+            break;
+          case DisconnectReason.restartRequired:
+            infoLog('Krampus reiniciado! Reinicia con "npm start".');
+            break;
+          case DisconnectReason.unavailableService:
+            warningLog("Servicio no disponible!");
+            break;
+        }
 
-      // Reintentar conexión
-      const newSocket = await connect();
-      load(newSocket);
+        const newSocket = await connect();
+        load(newSocket);
+      }
     } else if (connection === "open") {
-      successLog("Conexión exitosa");
+      successLog("Operacion Marshall");
     } else {
       infoLog("Procesando datos...");
     }
@@ -95,71 +132,4 @@ async function connect() {
   return socket;
 }
 
-module.exports = connect;
-
-});
-
-async function getMessage(key) {
-  if (!store) {
-    return proto.Message.fromObject({});
-  }
-
-  const msg = await store.loadMessage(key.remoteJid, key.id);
-  return msg ? msg.message : undefined;
-}
-
-async function connect() {
-  try {
-    const { state, saveCreds } = await useMultiFileAuthState(
-      path.resolve(__dirname, "..", "assets", "auth", "baileys")
-    );
-
-    // Verificar si el estado de autenticación y las credenciales están definidos
-    if (!state || !state.creds) {
-      throw new Error("No se encontraron las credenciales de autenticación. Asegúrese de que los archivos de autenticación estén presentes.");
-    }
-
-    const { version } = await fetchLatestBaileysVersion();
-
-    const socket = makeWASocket({
-      version,
-      logger: pino({ level: "error" }),
-      printQRInTerminal: false,
-      auth: state,
-      keepAliveIntervalMs: 60 * 1000,
-      markOnlineOnConnect: true,
-      msgRetryCounterCache,
-      shouldSyncHistoryMessage: () => false,
-      getMessage,
-    });
-
-    socket.ev.on("connection.update", async (update) => {
-      const { connection, lastDisconnect } = update;
-
-      if (connection === "close") {
-        const statusCode = lastDisconnect.error?.output?.statusCode !== DisconnectReason.loggedOut;
-        if (statusCode === DisconnectReason.loggedOut) {
-          errorLog("Bot desconectado!");
-        } else {
-          warningLog("Conexión cerrada o perdida.");
-        }
-
-        // Reintentar conexión
-        await connect();
-      } else if (connection === "open") {
-        successLog("Conexión exitosa");
-      } else {
-        infoLog("Procesando datos...");
-      }
-    });
-
-    socket.ev.on("creds.update", saveCreds);
-
-    return socket;
-  } catch (error) {
-    errorLog("Error al conectar:", error);
-    process.exit(1);
-  }
-}
-
-module.exports = connect;
+exports.connect = connect;
