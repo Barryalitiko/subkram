@@ -67,26 +67,39 @@ exports.loadCommonFunctions = ({ socket, webMessage }) => {
     }
   };
 
-  // Función para obtener la URL de descarga de YouTube
-  const getYouTubeDownloadUrl = async (videoUrl) => {
-    try {
-      if (!ytdl.validateURL(videoUrl)) {
-        throw new Error("URL de video inválida.");
-      }
-
-      // Descargar el audio como stream
-      const audioStream = ytdl(videoUrl, { filter: "audioonly" });
-
-      // Convertimos el stream a un buffer
-      const chunks = [];
-      for await (const chunk of audioStream) {
-        chunks.push(chunk);
-      }
-      return Buffer.concat(chunks); // Retorna el buffer del audio
-    } catch (error) {
-      throw new Error("No se pudo obtener la URL de descarga.");
+  const searchAndDownloadYouTubeMusic = async (query) => {
+  try {
+    // Buscar el video en YouTube
+    const results = await ytSearch(query);
+    if (!results || results.videos.length === 0) {
+      throw new Error("No se encontraron resultados para tu búsqueda.");
     }
-  };
+
+    const video = results.videos[0]; // Tomamos el primer video encontrado
+    const videoUrl = video.url;
+
+    // Validar la URL del video
+    if (!ytdl.validateURL(videoUrl)) {
+      throw new Error("URL de video inválida.");
+    }
+
+    // Obtener información del video y filtrar los formatos de audio
+    const info = await ytdl.getInfo(videoUrl);
+    const audioFormats = ytdl.filterFormats(info.formats, "audioonly");
+
+    // Buscar un formato MP3
+    const mp3Format = audioFormats.find((format) => format.container === "mp3");
+
+    if (!mp3Format) {
+      throw new Error("No se encontró un formato de audio MP3.");
+    }
+
+    // Retornar la URL de descarga del MP3
+    return mp3Format.url;
+  } catch (error) {
+    throw new Error("No se pudo obtener la URL de descarga: " + error.message);
+  }
+};
 
   return {
     args,
