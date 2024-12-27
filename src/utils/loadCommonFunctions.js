@@ -21,6 +21,10 @@ exports.loadCommonFunctions = ({ socket, webMessage }) => {
     return null;
   }
 
+  // Regex para validar URLs de YouTube
+  const youtubeRegex = /^https?:\/\/(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})$/;
+  const isValidYoutubeUrl = (url) => youtubeRegex.test(url);
+
   // Funciones para enviar texto y respuestas
   const sendReply = async (text) => {
     return await socket.sendMessage(
@@ -70,12 +74,12 @@ exports.loadCommonFunctions = ({ socket, webMessage }) => {
   // Función para obtener la URL de descarga de YouTube
   const getYouTubeDownloadUrl = async (videoUrl) => {
     try {
-      if (ytdl.validateURL(videoUrl)) {
+      if (isValidYoutubeUrl(videoUrl)) {
         const info = await ytdl.getInfo(videoUrl);
         const audioFormats = ytdl.filterFormats(info.formats, "audioonly");
-        return audioFormats[0]?.url; // Retorna la primera URL de audio disponible
+        return audioFormats[0]?.url || null; // Retorna la primera URL de audio disponible
       }
-      throw new Error("URL de video inválida.");
+      throw new Error("URL de YouTube inválida.");
     } catch (error) {
       throw new Error("No se pudo obtener la URL de descarga.");
     }
