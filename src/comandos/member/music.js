@@ -1,58 +1,60 @@
-const ytdl = require("ytdl-core");
-const { youtubeSearch } = require("youtube-search-api");
 const { PREFIX } = require("../../krampus");
 
 module.exports = {
-  name: "descargar",
-  description: "Descargar música desde YouTube",
-  commands: ["descargar"],
-  usage: `${PREFIX}descargar <nombre de la canción>`,
-  handle: async ({ sendReply, sendReact, message, args }) => {
-    if (args.length === 0) {
-      await sendReply("Por favor, proporciona el nombre de la canción.");
-      return;
+  name: "musica",
+  description: "Buscar y descargar música desde YouTube",
+  commands: ["musica"],
+  usage: `${PREFIX}musica <nombre de la canción>`,
+  handle: async ({
+    args,
+    sendReply,
+    sendWaitReply,
+    sendErrorReply,
+    sendReact,
+    searchYouTubeMusic,
+    getYouTubeDownloadUrl,
+    socket,
+    remoteJid,
+  }) => {
+    if (!args.length) {
+      return sendErrorReply("Por favor, proporciona el nombre de la canción.");
     }
 
-    const songName = args.join(" ");
-    console.log(`Buscando la canción: ${songName}`);
-    
+    const query = args.join(" ");
+    await sendWaitReply(`Buscando "${query}" en YouTube...`);
+
     try {
       // Buscar la canción en YouTube
-      const searchResults = await youtubeSearch(songName);
-      const video = searchResults.items[0];
+      const result = await searchYouTubeMusic(query);
 
-      if (!video) {
-        await sendReply("No se encontraron resultados para esa canción.");
-        return;
+      if (!result) {
+        return sendErrorReply("No se encontraron resultados para tu búsqueda.");
       }
 
-      console.log(`Encontrado video: ${video.title}`);
+      const videoTitle = result.title;
+      const videoUrl = `https://www.youtube.com/watch?v=${result.id}`;
+      await sendReply(`🎵 Canción encontrada: *${videoTitle}*\n🔗 Enlace: ${videoUrl}`);
 
-      // Descargar la canción
-      const stream = ytdl(video.url, { filter: "audioonly", quality: "highestaudio" });
-      await sendReply(`Descargando: ${video.title}`);
+      // Obtener la URL de descarga en formato MP3
+      await sendWaitReply(`Procesando la descarga de "${videoTitle}"...`);
+      const audioUrl = getYouTubeDownloadUrl(videoUrl);
 
-      // Enviar la canción como un archivo de audio
-      stream.pipe(fs.createWriteStream(`${video.title}.mp3`));
+      if (!audioUrl) {
+        return sendErrorReply("No se pudo obtener la URL de descarga.");
+      }
 
-      // Esperar a que se descargue y enviar el archivo
-      stream.on("end", async () => {
-        await sendReply(`Enviando: ${video.title}`);
-        await sendReact("🎶");
-
-        // Enviar audio al usuario
-        await sendReply({
-          audio: fs.createReadStream(`${video.title}.mp3`),
-          mimetype: "audio/mp4",
-          ptt: true
-        });
-
-        fs.unlinkSync(`${video.title}.mp3`); // Borrar el archivo después de enviarlo
-        console.log(`Canción enviada: ${video.title}`);
+      // Enviar el archivo de audio como mensaje
+      await socket.sendMessage(remoteJid, {
+        audio: { url: audioUrl },
+        mimetype: "audio/mpeg",
+        fileName: `${videoTitle}.mp3`,
       });
+
+      await sendReact("✅");
+      await sendReply(`🎶 Descarga completada: "${videoTitle}"`);
     } catch (error) {
-      console.error("Error al descargar la canción:", error);
-      await sendReply("Hubo un error al descargar la canción. Intenta nuevamente.");
+      console.error("Error al procesar el comando música:", error);
+      await sendErrorReply("Hubo un error al procesar tu solicitud. Inténtalo de nuevo.");
     }
   },
 };
