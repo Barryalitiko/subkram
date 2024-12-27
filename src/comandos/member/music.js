@@ -1,5 +1,4 @@
 const { PREFIX } = require("../../krampus");
-const ytdl = require("ytdl-core"); // Importación de la biblioteca
 
 module.exports = {
   name: "musica",
@@ -12,7 +11,6 @@ module.exports = {
     sendWaitReply,
     sendErrorReply,
     sendReact,
-    searchYouTubeMusic,
     socket,
     remoteJid,
   }) => {
@@ -25,29 +23,50 @@ module.exports = {
     await sendWaitReply(`Buscando "${query}" en YouTube...`);
 
     try {
-      const result = await searchYouTubeMusic(query);
-      if (!result || !result.videoId) {
-        await sendReact("❌");
-        return sendErrorReply("No se encontraron resultados para tu búsqueda.");
-      }
+      // Función fusionada: Buscar y obtener URL de descarga en un solo paso
+      const searchAndDownload = async (query) => {
+        const ytSearch = require("yt-search");
+        const ytdl = require("ytdl-core");
 
-      const videoTitle = result.title;
-      await sendWaitReply(`Descargando "${videoTitle}"...`);
+        try {
+          const results = await ytSearch(query);
+          if (results && results.videos.length > 0) {
+            const video = results.videos[0]; // Tomar el primer video
+            const videoTitle = video.title;
+            const videoUrl = video.url;
 
-      const videoUrl = `https://www.youtube.com/watch?v=${result.videoId}`;
+            if (!ytdl.validateURL(videoUrl)) {
+              throw new Error("URL de video inválida.");
+            }
 
-      // Obtener el stream de audio de YouTube
-      const stream = ytdl(videoUrl, {
-        filter: 'audioonly',
-        quality: 'highestaudio', // Asegurarse de obtener el mejor audio posible
-      });
+            const info = await ytdl.getInfo(videoUrl);
+            const audioFormats = ytdl.filterFormats(info.formats, "audioonly");
 
-      // Enviar el audio como mensaje
+            const mp3Format = audioFormats.find((format) => format.container === "mp3");
+
+            if (!mp3Format) {
+              throw new Error("No se encontró un formato de audio MP3.");
+            }
+
+            return mp3Format.url; // Retorna la URL de descarga
+          } else {
+            throw new Error("No se encontraron resultados para la búsqueda.");
+          }
+        } catch (error) {
+          throw new Error("No se pudo obtener la URL de descarga.");
+        }
+      };
+
+      const audioUrl = await searchAndDownload(query);
+      const audioBuffer = await fetch(audioUrl).then((res) => res.arrayBuffer());
+
+      // Enviar el audio al grupo
       await socket.sendMessage(remoteJid, {
-        audio: stream,
+        audio: {
+          buffer: audioBuffer,
+        },
         mimetype: "audio/mpeg",
-        fileName: `${videoTitle}.mp3`,
-        ptt: true, // PTT (Push-to-talk) es un formato para que el mensaje se envíe como un archivo de voz
+        fileName: `${query}.mp3`,
       });
 
       await sendReact("✅");
