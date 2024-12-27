@@ -32,15 +32,15 @@ module.exports = {
       }
 
       const videoTitle = result.title;
+      const videoUrl = result.url;
+
       await sendWaitReply(`Descargando "${videoTitle}"...`);
 
-      const audioUrl = await getYouTubeDownloadUrl(result.videoId);
-      const audioBuffer = await fetch(audioUrl).then((res) => res.arrayBuffer());
+      // Obtenemos el buffer del audio
+      const audioBuffer = await getYouTubeDownloadUrl(videoUrl);
 
       await socket.sendMessage(remoteJid, {
-        audio: {
-          buffer: audioBuffer,
-        },
+        audio: audioBuffer,
         mimetype: "audio/mpeg",
         fileName: `${videoTitle}.mp3`,
       });
