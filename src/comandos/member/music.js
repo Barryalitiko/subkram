@@ -1,4 +1,4 @@
-const { PREFIX } = require("../../config");  // Asegúrate de importar el prefijo desde tu configuración
+const { PREFIX } = require("../../krampus");  // Asegúrate de importar el prefijo desde tu configuración
 const { ytSearch } = require("yt-search");
 const ytdl = require("ytdl-core");
 
