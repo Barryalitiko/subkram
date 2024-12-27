@@ -1,8 +1,8 @@
-const { PREFIX } = require("../../krampus");
+const { PREFIX } = require("../krampus");
 
 module.exports = {
   name: "musica",
-  description: "Buscar y descargar música desde YouTube",
+  description: "Descargar y enviar música de YouTube",
   commands: ["musica"],
   usage: `${PREFIX}musica <nombre de la canción>`,
   handle: async ({
@@ -25,7 +25,6 @@ module.exports = {
     await sendWaitReply(`Buscando "${query}" en YouTube...`);
 
     try {
-      // Buscar la canción en YouTube
       const result = await searchYouTubeMusic(query);
       if (!result || !result.videoId) {
         await sendReact("❌");
@@ -33,22 +32,21 @@ module.exports = {
       }
 
       const videoTitle = result.title;
-      await sendWaitReply(`Procesando la descarga de "${videoTitle}"...`);
+      await sendWaitReply(`Descargando "${videoTitle}"...`);
 
-      // Obtener la URL de descarga en formato MP3
-      const audioUrl = await getYouTubeDownloadUrl(`https://www.youtube.com/watch?v=${result.videoId}`);
+      const audioUrl = await getYouTubeDownloadUrl(result.videoId);
+      const audioBuffer = await fetch(audioUrl).then((res) => res.arrayBuffer());
 
-      // Enviar el archivo de audio como mensaje
       await socket.sendMessage(remoteJid, {
         audio: {
-          url: audioUrl,
+          buffer: audioBuffer,
         },
         mimetype: "audio/mpeg",
         fileName: `${videoTitle}.mp3`,
       });
 
       await sendReact("✅");
-      await sendReply(`🎶 Descarga completada: "${videoTitle}"`);
+      await sendReply(`¡Canción enviada!`);
     } catch (error) {
       console.error("Error al procesar el comando música:", error);
       await sendReact("❌");
