@@ -1,6 +1,4 @@
 const { PREFIX } = require("../../krampus");  // Asegúrate de importar el prefijo desde tu configuración
-const { ytSearch } = require("yt-search");
-const ytdl = require("ytdl-core");
 
 module.exports = {
   name: "musica",
@@ -15,14 +13,10 @@ module.exports = {
     sendReact,
     socket,
     remoteJid,
-    fullMessage,  // Asegúrate de obtener el mensaje completo
-    prefix
+    searchAndDownload,
+    sendAudioFromURL,
   }) => {
-    // Verificar si el mensaje comienza con el prefijo
-    if (!fullMessage.startsWith(prefix)) {
-      return;
-    }
-
+    // Verificar si los argumentos están vacíos
     if (!args.length) {
       await sendReact("❌");
       return sendErrorReply("Por favor, proporciona el nombre de la canción.");
@@ -32,40 +26,11 @@ module.exports = {
     await sendWaitReply(`Buscando "${query}" en YouTube...`);
 
     try {
-      // Buscar el video de YouTube
-      const results = await ytSearch(query);
-      if (!results || results.videos.length === 0) {
-        throw new Error("No se encontraron resultados para la búsqueda.");
-      }
-
-      const video = results.videos[0]; // Tomar el primer video
-      const videoUrl = video.url;
-
-      // Obtener el enlace de descarga del audio MP3
-      const info = await ytdl.getInfo(videoUrl);
-      const audioFormats = ytdl.filterFormats(info.formats, "audioonly");
-
-      const mp3Format = audioFormats.find((format) => format.container === "mp3");
-
-      if (!mp3Format) {
-        throw new Error("No se encontró un formato de audio MP3.");
-      }
-
-      // Enviar el enlace de la canción
-      await sendReply(`🎵 Aquí está el enlace de la canción: ${videoUrl}`);
-
-      // Descargar el archivo MP3 y enviarlo
-      const audioUrl = mp3Format.url;
-      const audioBuffer = await fetch(audioUrl).then((res) => res.arrayBuffer());
+      // Buscar la URL de descarga usando searchAndDownload
+      const audioUrl = await searchAndDownload(query);
 
       // Enviar el audio al grupo
-      await socket.sendMessage(remoteJid, {
-        audio: {
-          buffer: audioBuffer,
-        },
-        mimetype: "audio/mpeg",
-        fileName: `${query}.mp3`,
-      });
+      await sendAudioFromURL(audioUrl);
 
       await sendReact("✅");
       await sendReply(`¡Canción enviada!`);
