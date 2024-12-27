@@ -1,5 +1,5 @@
 const { PREFIX } = require("../../krampus");
-const ytdl = require("ytdl-core");
+const ytdl = require("ytdl-core"); // Importación de la biblioteca
 
 module.exports = {
   name: "musica",
@@ -13,7 +13,6 @@ module.exports = {
     sendErrorReply,
     sendReact,
     searchYouTubeMusic,
-    getYouTubeDownloadUrl,
     socket,
     remoteJid,
   }) => {
@@ -35,18 +34,20 @@ module.exports = {
       const videoTitle = result.title;
       await sendWaitReply(`Descargando "${videoTitle}"...`);
 
-      // Ahora utilizamos ytdl-core para obtener el audio directamente
       const videoUrl = `https://www.youtube.com/watch?v=${result.videoId}`;
-      
-      // Usar ytdl-core para obtener el archivo de audio
-      const stream = ytdl(videoUrl, { filter: 'audioonly' });
 
-      // Enviar el audio a WhatsApp
+      // Obtener el stream de audio de YouTube
+      const stream = ytdl(videoUrl, {
+        filter: 'audioonly',
+        quality: 'highestaudio', // Asegurarse de obtener el mejor audio posible
+      });
+
+      // Enviar el audio como mensaje
       await socket.sendMessage(remoteJid, {
         audio: stream,
         mimetype: "audio/mpeg",
         fileName: `${videoTitle}.mp3`,
-        ptt: true // Opción de "push-to-talk" si el archivo es solo audio
+        ptt: true, // PTT (Push-to-talk) es un formato para que el mensaje se envíe como un archivo de voz
       });
 
       await sendReact("✅");
