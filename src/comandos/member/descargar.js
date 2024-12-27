@@ -1,50 +1,28 @@
-const ytdl = require("ytdl-core");
 const { PREFIX } = require("../../krampus");
+const { getYouTubeDownloadUrl } = require("../../services/loadCommonFunctions");
 
 module.exports = {
-  name: "descargar",
-  description: "Descarga el audio de un video de YouTube.",
-  commands: [`${PREFIX}descargar`, `${PREFIX}download`],
-  usage: `${PREFIX}descargar <link de YouTube>`,
-  handle: async ({ args, sendReply, sendAudioFromURL }) => {
-    console.log("Argumentos recibidos:", args); // Verifica los argumentos
-
+  name: "download",
+  description: "Descargar música desde YouTube",
+  commands: ["download", "music", "play"],
+  usage: `${PREFIX}download <URL de YouTube>`,
+  handle: async ({ args, sendWaitReact, sendSuccessReact, sendErrorReply }) => {
     if (!args.length) {
-      return await sendReply("⚠️ Por favor, proporciona un enlace de YouTube.");
+      return sendErrorReply(`👻 ${PREFIX}download Debes proporcionar una URL válida de YouTube.`);
     }
 
-    const videoUrl = args[0];
-    console.log("URL recibida:", videoUrl); // Verifica la URL proporcionada
+    const url = args[0];
 
     try {
-      // Validar URL
-      if (!ytdl.validateURL(videoUrl)) {
-        console.log("URL inválida:", videoUrl); // Log para URL inválida
-        return await sendReply("❌ El enlace proporcionado no es válido.");
-      }
+      // Llamamos a la función para obtener la URL de descarga
+      const downloadUrl = await getYouTubeDownloadUrl(url);
 
-      // Obtener información y URL del audio
-      const info = await ytdl.getInfo(videoUrl);
-      console.log("Información del video:", info); // Log para información del video
+      await sendWaitReact();
+      await sendSuccessReact();
 
-      const audioFormats = ytdl.filterFormats(info.formats, "audioonly");
-      console.log("Formatos de audio disponibles:", audioFormats); // Log para formatos
-
-      if (!audioFormats.length) {
-        return await sendReply("❌ No se encontraron formatos de audio disponibles.");
-      }
-
-      // Obtener la URL del mejor formato disponible
-      const audioUrl = audioFormats[0].url;
-      console.log("URL de descarga:", audioUrl); // Log para la URL de descarga
-
-      // Responder con el audio descargado
-      await sendReply("⏳ Procesando y enviando el audio...");
-      await sendAudioFromURL(audioUrl);
-
+      return sendErrorReply(`🔊 Aquí está el enlace de descarga: ${downloadUrl}`);
     } catch (error) {
-      console.error("Error al descargar el audio:", error);
-      await sendReply("❌ Hubo un error al intentar descargar el audio.");
+      return sendErrorReply(`❌ Error: ${error.message}`);
     }
   },
 };
