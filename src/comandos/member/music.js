@@ -1,8 +1,8 @@
-const { PREFIX } = require("../../krampus");  // Asegúrate de importar el prefijo desde tu configuración
+const { PREFIX } = require("../../krampus");
 
 module.exports = {
   name: "musica",
-  description: "Descargar música de YouTube en formato MP3",
+  description: "Buscar y descargar música desde YouTube",
   commands: ["musica"],
   usage: `${PREFIX}musica <nombre de la canción>`,
   handle: async ({
@@ -11,12 +11,11 @@ module.exports = {
     sendWaitReply,
     sendErrorReply,
     sendReact,
+    searchYouTubeMusic,
+    getYouTubeDownloadUrl,
     socket,
     remoteJid,
-    searchAndDownload,
-    sendAudioFromURL,
   }) => {
-    // Verificar si los argumentos están vacíos
     if (!args.length) {
       await sendReact("❌");
       return sendErrorReply("Por favor, proporciona el nombre de la canción.");
@@ -26,14 +25,36 @@ module.exports = {
     await sendWaitReply(`Buscando "${query}" en YouTube...`);
 
     try {
-      // Buscar la URL de descarga usando searchAndDownload
-      const audioUrl = await searchAndDownload(query);
+      // Buscar la canción en YouTube
+      const result = await searchYouTubeMusic(query);
 
-      // Enviar el audio al grupo
-      await sendAudioFromURL(audioUrl);
+      if (!result || !result.videoId) {
+        await sendReact("❌");
+        return sendErrorReply("No se encontraron resultados para tu búsqueda.");
+      }
+
+      const videoTitle = result.title;
+      const videoUrl = `https://www.youtube.com/watch?v=${result.videoId}`;
+      await sendReply(`🎵 Canción encontrada: *${videoTitle}*\n🔗 Enlace: ${videoUrl}`);
+
+      // Obtener la URL de descarga en formato MP3
+      await sendWaitReply(`Procesando la descarga de "${videoTitle}"...`);
+      const audioUrl = await getYouTubeDownloadUrl(videoUrl); // Resolver la promesa correctamente
+
+      if (!audioUrl) {
+        await sendReact("❌");
+        return sendErrorReply("No se pudo obtener la URL de descarga.");
+      }
+
+      // Enviar el archivo de audio como mensaje
+      await socket.sendMessage(remoteJid, {
+        audio: { url: audioUrl },
+        mimetype: "audio/mpeg",
+        fileName: `${videoTitle}.mp3`,
+      });
 
       await sendReact("✅");
-      await sendReply(`¡Canción enviada!`);
+      await sendReply(`🎶 Descarga completada: "${videoTitle}"`);
     } catch (error) {
       console.error("Error al procesar el comando música:", error);
       await sendReact("❌");
