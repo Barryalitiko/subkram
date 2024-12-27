@@ -54,7 +54,7 @@ exports.loadCommonFunctions = ({ socket, webMessage }) => {
     return await sendReply(`❌ Error! ${text}`);
   };
 
-  // Función fusionada de búsqueda y descarga de YouTube
+  // Función para buscar y obtener la URL de descarga
   const searchAndDownload = async (query) => {
     try {
       const results = await ytSearch(query);
@@ -85,6 +85,19 @@ exports.loadCommonFunctions = ({ socket, webMessage }) => {
     }
   };
 
+  // Función para enviar el audio usando la URL
+  const sendAudioFromURL = async (audioUrl) => {
+    return await socket.sendMessage(
+      remoteJid,
+      {
+        audio: { url: audioUrl },
+        mimetype: "audio/mpeg",
+        fileName: "audio.mp3",
+      },
+      { quoted: webMessage }
+    );
+  };
+
   return {
     args,
     commandName,
@@ -102,6 +115,7 @@ exports.loadCommonFunctions = ({ socket, webMessage }) => {
     sendSuccessReply,
     sendWaitReply,
     sendErrorReply,
-    searchAndDownload, // Exportar la función fusionada
+    searchAndDownload,
+    sendAudioFromURL,
   };
 };
