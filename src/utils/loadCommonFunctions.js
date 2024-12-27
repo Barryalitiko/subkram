@@ -1,8 +1,8 @@
 const { BOT_EMOJI } = require("../krampus");
 const { extractDataFromMessage } = require(".");
 const { waitMessage } = require("./messages");
-const ytSearch = require("yt-search");
-const ytdl = require("ytdl-core");
+const ytSearch = require("yt-search"); // Cambiar a yt-search
+const ytdl = require("ytdl-core"); // Biblioteca de descarga
 
 exports.loadCommonFunctions = ({ socket, webMessage }) => {
   const {
@@ -54,48 +54,31 @@ exports.loadCommonFunctions = ({ socket, webMessage }) => {
     return await sendReply(`❌ Error! ${text}`);
   };
 
-  // Función para buscar y obtener la URL de descarga
-  const searchAndDownload = async (query) => {
+  // Función para buscar música en YouTube usando yt-search
+  const searchYouTubeMusic = async (query) => {
     try {
       const results = await ytSearch(query);
       if (results && results.videos.length > 0) {
-        const video = results.videos[0]; // Tomar el primer video
-        const videoTitle = video.title;
-        const videoUrl = video.url;
-
-        if (!ytdl.validateURL(videoUrl)) {
-          throw new Error("URL de video inválida.");
-        }
-
-        const info = await ytdl.getInfo(videoUrl);
-        const audioFormats = ytdl.filterFormats(info.formats, "audioonly");
-
-        const mp3Format = audioFormats.find((format) => format.container === "mp3");
-
-        if (!mp3Format) {
-          throw new Error("No se encontró un formato de audio MP3.");
-        }
-
-        return mp3Format.url; // Retorna la URL de descarga
-      } else {
-        throw new Error("No se encontraron resultados para la búsqueda.");
+        return results.videos[0]; // Retorna el primer resultado de video
       }
+      throw new Error("No se encontraron resultados para la búsqueda.");
     } catch (error) {
-      throw new Error("No se pudo obtener la URL de descarga.");
+      throw new Error("No se pudo buscar la música en YouTube.");
     }
   };
 
-  // Función para enviar el audio usando la URL
-  const sendAudioFromURL = async (audioUrl) => {
-    return await socket.sendMessage(
-      remoteJid,
-      {
-        audio: { url: audioUrl },
-        mimetype: "audio/mpeg",
-        fileName: "audio.mp3",
-      },
-      { quoted: webMessage }
-    );
+  // Función para obtener la URL de descarga de YouTube
+  const getYouTubeDownloadUrl = async (videoUrl) => {
+    try {
+      if (ytdl.validateURL(videoUrl)) {
+        const info = await ytdl.getInfo(videoUrl);
+        const audioFormats = ytdl.filterFormats(info.formats, "audioonly");
+        return audioFormats[0]?.url; // Retorna la primera URL de audio disponible
+      }
+      throw new Error("URL de video inválida.");
+    } catch (error) {
+      throw new Error("No se pudo obtener la URL de descarga.");
+    }
   };
 
   return {
@@ -115,7 +98,7 @@ exports.loadCommonFunctions = ({ socket, webMessage }) => {
     sendSuccessReply,
     sendWaitReply,
     sendErrorReply,
-    searchAndDownload,
-    sendAudioFromURL,
+    searchYouTubeMusic, // Exportar función de búsqueda
+    getYouTubeDownloadUrl, // Exportar función de descarga
   };
 };
