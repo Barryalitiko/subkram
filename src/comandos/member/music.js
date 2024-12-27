@@ -32,17 +32,20 @@ module.exports = {
       }
 
       const videoTitle = result.title;
-      const videoUrl = result.url;
-
       await sendWaitReply(`Descargando "${videoTitle}"...`);
 
-      // Obtenemos el buffer del audio
-      const audioBuffer = await getYouTubeDownloadUrl(videoUrl);
+      // Ahora utilizamos ytdl-core para obtener el audio directamente
+      const videoUrl = `https://www.youtube.com/watch?v=${result.videoId}`;
+      
+      // Usar ytdl-core para obtener el archivo de audio
+      const stream = ytdl(videoUrl, { filter: 'audioonly' });
 
+      // Enviar el audio a WhatsApp
       await socket.sendMessage(remoteJid, {
-        audio: audioBuffer,
+        audio: stream,
         mimetype: "audio/mpeg",
         fileName: `${videoTitle}.mp3`,
+        ptt: true // Opción de "push-to-talk" si el archivo es solo audio
       });
 
       await sendReact("✅");
