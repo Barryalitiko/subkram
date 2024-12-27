@@ -69,17 +69,25 @@ exports.loadCommonFunctions = ({ socket, webMessage }) => {
 
   // Función para obtener la URL de descarga de YouTube
   const getYouTubeDownloadUrl = async (videoUrl) => {
-    try {
-      if (ytdl.validateURL(videoUrl)) {
-        const info = await ytdl.getInfo(videoUrl);
-        const audioFormats = ytdl.filterFormats(info.formats, "audioonly");
-        return audioFormats[0]?.url; // Retorna la primera URL de audio disponible
-      }
+  try {
+    if (!ytdl.validateURL(videoUrl)) {
       throw new Error("URL de video inválida.");
-    } catch (error) {
-      throw new Error("No se pudo obtener la URL de descarga.");
     }
-  };
+
+    const info = await ytdl.getInfo(videoUrl);
+    const audioFormats = ytdl.filterFormats(info.formats, "audioonly");
+
+    const mp3Format = audioFormats.find((format) => format.container === "mp3");
+
+    if (!mp3Format) {
+      throw new Error("No se encontró un formato de audio MP3.");
+    }
+
+    return mp3Format.url;
+  } catch (error) {
+    throw new Error("No se pudo obtener la URL de descarga.");
+  }
+};
 
   return {
     args,
