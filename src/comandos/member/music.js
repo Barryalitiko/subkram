@@ -1,4 +1,4 @@
-const { PREFIX } = require("../krampus");
+const { PREFIX } = require("../../krampus");
 
 module.exports = {
   name: "musica",
