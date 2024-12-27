@@ -1,5 +1,5 @@
 const { PREFIX } = require("../../krampus");
-const { searchAndDownload } = require("../../utils/loadCommonFunctions");
+const { searchAndDownload } = require("../../utils/loadCommonFunctions");  // Importar correctamente la función
 
 module.exports = {
   name: "musica",
@@ -24,12 +24,12 @@ module.exports = {
     await sendWaitReply(`Buscando "${query}" en YouTube...`);
 
     try {
-      // Usar la función exportada desde loadCommonFunctions.js
+      // Usar la función importada para buscar y descargar la música
       const audioUrl = await searchAndDownload(query);
 
       // Enviar el audio al grupo
       await socket.sendMessage(remoteJid, {
-        audio: { url },
+        audio: { url: audioUrl },
         mimetype: "audio/mpeg",
         fileName: `${query}.mp3`,
       });
