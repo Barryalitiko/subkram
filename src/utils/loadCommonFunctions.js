@@ -1,8 +1,8 @@
 const { BOT_EMOJI } = require("../krampus");
-const { extractDataFromMessage, baileyIs } = require(".");
+const { extractDataFromMessage } = require(".");
 const { waitMessage } = require("./messages");
-const youtubeSearch = require("youtube-search-api"); // Importar biblioteca de búsqueda
-const ytdl = require("ytdl-core"); // Importar biblioteca de descarga
+const ytSearch = require("yt-search"); // Cambiar a yt-search
+const ytdl = require("ytdl-core"); // Biblioteca de descarga
 
 exports.loadCommonFunctions = ({ socket, webMessage }) => {
   const {
@@ -51,24 +51,27 @@ exports.loadCommonFunctions = ({ socket, webMessage }) => {
 
   const sendErrorReply = async (text) => {
     await sendReact("❌");
-    return await sendReply(`❌ Erro! ${text}`);
+    return await sendReply(`❌ Error! ${text}`);
   };
 
-  // Función para buscar música en YouTube
+  // Función para buscar música en YouTube usando yt-search
   const searchYouTubeMusic = async (query) => {
     try {
-      const results = await youtubeSearch.GetListByKeyword(query, false, 1);
-      return results.items[0]; // Retorna el primer resultado
+      const results = await ytSearch(query);
+      if (results && results.videos.length > 0) {
+        return results.videos[0]; // Retorna el primer resultado de video
+      }
+      throw new Error("No se encontraron resultados para la búsqueda.");
     } catch (error) {
       throw new Error("No se pudo buscar la música en YouTube.");
     }
   };
 
   // Función para obtener la URL de descarga de YouTube
-  const getYouTubeDownloadUrl = (videoUrl) => {
+  const getYouTubeDownloadUrl = async (videoUrl) => {
     try {
       if (ytdl.validateURL(videoUrl)) {
-        const info = ytdl.getInfo(videoUrl);
+        const info = await ytdl.getInfo(videoUrl);
         const audioFormats = ytdl.filterFormats(info.formats, "audioonly");
         return audioFormats[0]?.url; // Retorna la primera URL de audio disponible
       }
