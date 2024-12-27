@@ -32,5 +32,5 @@ exports.bannerLog = () => {
   console.log(`\x1b[34m ██  ██▄    ██       ▄██▀▀▀██  ██ ██ ██\x1b[0m`);
   console.log(`\x1b[34m ██   ██▄   ██       ██▄▄▄███  ██ ██ ██\x1b[0m`);
   console.log(`\x1b[34m ▀▀    ▀▀   ▀▀        ▀▀▀▀ ▀▀  ▀▀ ▀▀ ▀▀\x1b[0m`);
-  console.log(`\x1b[31mby Barryalitiko\x1b[0m`);
+  console.log(`\x1b[31mby Krampus OM\x1b[0m`);
 };
