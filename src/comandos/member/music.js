@@ -1,4 +1,5 @@
 const { PREFIX } = require("../../krampus");
+const { searchAndDownload } = require("../../utils/loadCommonFunctions");
 
 module.exports = {
   name: "musica",
@@ -23,45 +24,21 @@ module.exports = {
     await sendWaitReply(`Buscando "${query}" en YouTube...`);
 
     try {
-      // Función para buscar y obtener la URL de descarga
-      const searchAndDownload = async (query) => {
-        const ytSearch = require("yt-search");
-        const ytdl = require("ytdl-core");
+      console.log(`Buscando canción: "${query}"`);
 
-        try {
-          const results = await ytSearch(query);
-          if (results && results.videos.length > 0) {
-            const video = results.videos[0]; // Tomar el primer video
-            const videoUrl = video.url;
-
-            if (!ytdl.validateURL(videoUrl)) {
-              throw new Error("URL de video inválida.");
-            }
-
-            const info = await ytdl.getInfo(videoUrl);
-            const audioFormats = ytdl.filterFormats(info.formats, "audioonly");
-
-            const mp3Format = audioFormats.find((format) => format.container === "mp3");
-
-            if (!mp3Format) {
-              throw new Error("No se encontró un formato de audio MP3.");
-            }
-
-            return mp3Format.url; // Retorna la URL de descarga
-          } else {
-            throw new Error("No se encontraron resultados para la búsqueda.");
-          }
-        } catch (error) {
-          throw new Error("No se pudo obtener la URL de descarga.");
-        }
-      };
-
+      // Usamos la función searchAndDownload para obtener la URL del audio
       const audioUrl = await searchAndDownload(query);
+      console.log("URL de audio obtenida:", audioUrl);
 
-      // Enviar el audio directamente desde la URL
+      if (!audioUrl) {
+        throw new Error("No se pudo obtener la URL del audio.");
+      }
+
+      // Enviamos el audio al grupo usando el socket
       await socket.sendMessage(remoteJid, {
-        audio: { url: audioUrl },
-        mimetype: "audio/mpeg",
+        audio: { url: audioUrl }, // Pasamos la URL del audio
+        mimetype: "audio/mpeg",   // Especificamos el tipo de archivo
+        fileName: `${query}.mp3`, // Nombre del archivo (opcional)
       });
 
       await sendReact("✅");
@@ -69,7 +46,7 @@ module.exports = {
     } catch (error) {
       console.error("Error al procesar el comando música:", error);
       await sendReact("❌");
-      await sendErrorReply("Hubo un error al procesar tu solicitud. Inténtalo de nuevo.");
+      await sendErrorReply(`Hubo un error: ${error.message}`);
     }
   },
 };
