@@ -29,7 +29,7 @@ module.exports = {
 
       // Enviar el audio al grupo
       await socket.sendMessage(remoteJid, {
-        audio: { url: audioUrl },
+        audio: { url },
         mimetype: "audio/mpeg",
         fileName: `${query}.mp3`,
       });
