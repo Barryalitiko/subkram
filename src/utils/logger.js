@@ -9,7 +9,7 @@ exports.inputLog = (message) => {
 };
 
 exports.infoLog = (message) => {
-  console.log("\x1b[31m[KRAMPUS | INFO]\x1b[0m", message);
+  console.log("\x1b[34m[KRAMPUS | INFO]\x1b[0m", message);
 };
 
 exports.successLog = (message) => {
