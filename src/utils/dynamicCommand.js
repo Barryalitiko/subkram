@@ -8,6 +8,11 @@ const {
   isAdmin,
 } = require("../middlewares");
 const { checkPermission } = require("../middlewares/checkPermission");
+const {
+  isActiveGroup,
+  getAutoResponderResponse,
+  isActiveAutoResponderGroup,
+} = require("./database");
 const { errorLog } = require("../utils/logger");
 const { ONLY_GROUP_ID } = require("../krampus");
 
