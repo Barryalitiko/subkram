@@ -1,8 +1,8 @@
 const { BOT_EMOJI } = require("../krampus");
 const { extractDataFromMessage } = require(".");
 const { waitMessage } = require("./messages");
-const ytSearch = require("yt-search"); // Cambiar a yt-search
-const ytdl = require("ytdl-core"); // Biblioteca de descarga
+const ytSearch = require("yt-search");
+const ytdl = require("ytdl-core");
 
 exports.loadCommonFunctions = ({ socket, webMessage }) => {
   const {
@@ -54,52 +54,36 @@ exports.loadCommonFunctions = ({ socket, webMessage }) => {
     return await sendReply(`❌ Error! ${text}`);
   };
 
-  // Función para buscar música en YouTube usando yt-search
-  const searchYouTubeMusic = async (query) => {
+  // Función fusionada de búsqueda y descarga de YouTube
+  const searchAndDownload = async (query) => {
     try {
       const results = await ytSearch(query);
       if (results && results.videos.length > 0) {
-        return results.videos[0]; // Retorna el primer resultado de video
+        const video = results.videos[0]; // Tomar el primer video
+        const videoTitle = video.title;
+        const videoUrl = video.url;
+
+        if (!ytdl.validateURL(videoUrl)) {
+          throw new Error("URL de video inválida.");
+        }
+
+        const info = await ytdl.getInfo(videoUrl);
+        const audioFormats = ytdl.filterFormats(info.formats, "audioonly");
+
+        const mp3Format = audioFormats.find((format) => format.container === "mp3");
+
+        if (!mp3Format) {
+          throw new Error("No se encontró un formato de audio MP3.");
+        }
+
+        return mp3Format.url; // Retorna la URL de descarga
+      } else {
+        throw new Error("No se encontraron resultados para la búsqueda.");
       }
-      throw new Error("No se encontraron resultados para la búsqueda.");
     } catch (error) {
-      throw new Error("No se pudo buscar la música en YouTube.");
+      throw new Error("No se pudo obtener la URL de descarga.");
     }
   };
-
-  const searchAndDownloadYouTubeMusic = async (query) => {
-  try {
-    // Buscar el video en YouTube
-    const results = await ytSearch(query);
-    if (!results || results.videos.length === 0) {
-      throw new Error("No se encontraron resultados para tu búsqueda.");
-    }
-
-    const video = results.videos[0]; // Tomamos el primer video encontrado
-    const videoUrl = video.url;
-
-    // Validar la URL del video
-    if (!ytdl.validateURL(videoUrl)) {
-      throw new Error("URL de video inválida.");
-    }
-
-    // Obtener información del video y filtrar los formatos de audio
-    const info = await ytdl.getInfo(videoUrl);
-    const audioFormats = ytdl.filterFormats(info.formats, "audioonly");
-
-    // Buscar un formato MP3
-    const mp3Format = audioFormats.find((format) => format.container === "mp3");
-
-    if (!mp3Format) {
-      throw new Error("No se encontró un formato de audio MP3.");
-    }
-
-    // Retornar la URL de descarga del MP3
-    return mp3Format.url;
-  } catch (error) {
-    throw new Error("No se pudo obtener la URL de descarga: " + error.message);
-  }
-};
 
   return {
     args,
@@ -118,7 +102,6 @@ exports.loadCommonFunctions = ({ socket, webMessage }) => {
     sendSuccessReply,
     sendWaitReply,
     sendErrorReply,
-    searchYouTubeMusic, // Exportar función de búsqueda
-    getYouTubeDownloadUrl, // Exportar función de descarga
+    searchAndDownload, // Exportar la función fusionada
   };
 };
