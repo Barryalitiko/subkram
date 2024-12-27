@@ -1,4 +1,5 @@
 const { PREFIX } = require("../../krampus");
+const ytdl = require("ytdl-core");
 
 module.exports = {
   name: "musica",
