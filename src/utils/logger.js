@@ -9,11 +9,11 @@ exports.inputLog = (message) => {
 };
 
 exports.infoLog = (message) => {
-  console.log("\x1b[34m[Operacion ༴༎👻༎ Mashall]\x1b[0m", message);
+  console.log("\x1b[34m[Operacion 👻 Mashall]\x1b[0m", message);
 };
 
 exports.successLog = (message) => {
-  console.log("\x1b[5m\x1b[32m[KRAMPUS | OM]\x1b[0m", message);
+  console.log("\x1b[5m\x1b[32m[KRAMPUS ༴༎ OM]\x1b[0m", message);
 };
 
 exports.errorLog = (message) => {
