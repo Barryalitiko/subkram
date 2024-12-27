@@ -27,28 +27,22 @@ module.exports = {
     try {
       // Buscar la canción en YouTube
       const result = await searchYouTubeMusic(query);
-
       if (!result || !result.videoId) {
         await sendReact("❌");
         return sendErrorReply("No se encontraron resultados para tu búsqueda.");
       }
 
       const videoTitle = result.title;
-      const videoUrl = `https://www.youtube.com/watch?v=${result.videoId}`;
-      await sendReply(`🎵 Canción encontrada: *${videoTitle}*\n🔗 Enlace: ${videoUrl}`);
+      await sendWaitReply(`Procesando la descarga de "${videoTitle}"...`);
 
       // Obtener la URL de descarga en formato MP3
-      await sendWaitReply(`Procesando la descarga de "${videoTitle}"...`);
-      const audioUrl = await getYouTubeDownloadUrl(videoUrl); // Resolver la promesa correctamente
-
-      if (!audioUrl) {
-        await sendReact("❌");
-        return sendErrorReply("No se pudo obtener la URL de descarga.");
-      }
+      const audioUrl = await getYouTubeDownloadUrl(`https://www.youtube.com/watch?v=${result.videoId}`);
 
       // Enviar el archivo de audio como mensaje
       await socket.sendMessage(remoteJid, {
-        audio: { url: audioUrl },
+        audio: {
+          url: audioUrl,
+        },
         mimetype: "audio/mpeg",
         fileName: `${videoTitle}.mp3`,
       });
