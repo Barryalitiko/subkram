@@ -3,11 +3,22 @@ const fs = require("fs");
 
 const databasePath = path.resolve(__dirname, "..", "..", "database");
 
+// Crear el directorio `database` si no existe
+if (!fs.existsSync(databasePath)) {
+  fs.mkdirSync(databasePath, { recursive: true });
+}
+
 const INACTIVE_GROUPS_FILE = "inactive-groups";
 const NOT_WELCOME_GROUPS_FILE = "not-welcome-groups";
 const INACTIVE_AUTO_RESPONDER_GROUPS_FILE = "inactive-auto-responder-groups";
 
 function createIfNotExists(fullPath) {
+  // Aseguramos que el directorio exista antes de crear el archivo
+  const dirPath = path.dirname(fullPath);
+  if (!fs.existsSync(dirPath)) {
+    fs.mkdirSync(dirPath, { recursive: true });
+  }
+
   if (!fs.existsSync(fullPath)) {
     fs.writeFileSync(fullPath, JSON.stringify([]));
   }
@@ -26,7 +37,7 @@ function writeJSON(jsonFile, data) {
 
   createIfNotExists(fullPath);
 
-  fs.writeFileSync(fullPath, JSON.stringify(data));
+  fs.writeFileSync(fullPath, JSON.stringify(data, null, 2));
 }
 
 exports.activateGroup = (groupId) => {
