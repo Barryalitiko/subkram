@@ -12,6 +12,8 @@
     "@whiskeysockets/baileys": "6.7.9",
     "pino": "^9.6.0",
     "node-cache": "^5.1.2",
-    "mongoose": "^8.9.2"
+    "mongoose": "^8.9.2",
+    "youtube-search-api": "^1.2.2",
+    "ytdl-core": "^4.11.5"
   }
 }
