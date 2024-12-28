@@ -22,13 +22,12 @@ module.exports = {
       );
     }
 
-    // Unir todos los argumentos para asegurarnos de que obtenemos la URL completa
-    const videoUrl = args.join(" ");
+    const videoUrl = args[0];
 
-    // Mostrar la URL que el bot está recibiendo
-    console.log("URL recibida desde el comando:", videoUrl);
+    // Mostrar el enlace recibido para depuración
+    console.log("Enlace recibido:", videoUrl);
 
-    // Validar si la URL es de YouTube
+    // Validar si la URL es válida
     if (!ytdl.validateURL(videoUrl)) {
       return sendErrorReply("❌ La URL proporcionada no es válida.");
     }
