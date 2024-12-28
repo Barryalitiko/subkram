@@ -12,13 +12,12 @@ module.exports = {
     sendErrorReply,
     sendReact,
     searchYouTubeMusic,
-    getYouTubeDownloadUrl,
+    downloadYouTubeAudio,
     socket,
     remoteJid,
   }) => {
     console.log("[MUSICA] Comando recibido con argumentos:", args);
 
-    // Validar si se proporcionaron argumentos
     if (!args.length) {
       await sendReact("❌");
       console.log("[MUSICA] No se proporcionaron argumentos.");
@@ -47,20 +46,14 @@ module.exports = {
 
       // Obtener la URL de descarga en formato MP3
       await sendWaitReply(`Procesando la descarga de "${videoTitle}"...`);
-      console.log("[MUSICA] Iniciando obtención de la URL de descarga para:", videoUrl);
+      console.log("[MUSICA] Iniciando descarga para:", videoUrl);
 
-      const audioUrl = await getYouTubeDownloadUrl(videoUrl);
-      console.log("[MUSICA] URL de descarga obtenida:", audioUrl);
-
-      if (!audioUrl) {
-        await sendReact("❌");
-        console.log("[MUSICA] No se pudo obtener la URL de descarga para:", videoUrl);
-        return sendErrorReply("No se pudo obtener la URL de descarga.");
-      }
+      const audioFilePath = await downloadYouTubeAudio(videoUrl);
+      console.log("[MUSICA] Audio descargado y guardado en:", audioFilePath);
 
       // Enviar el archivo de audio como mensaje
       await socket.sendMessage(remoteJid, {
-        audio: { url: audioUrl },
+        audio: { url: audioFilePath },
         mimetype: "audio/mpeg",
         fileName: `${videoTitle}.mp3`,
       });
