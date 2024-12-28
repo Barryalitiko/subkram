@@ -22,7 +22,8 @@ module.exports = {
       );
     }
 
-    const videoUrl = args[0];
+    // Eliminar el prefijo (#play, #music, etc.) y obtener solo la URL
+    const videoUrl = args.join(" ").replace(/^#\w+\s*/, ""); // Elimina el prefijo como #play y obtiene solo la URL
 
     // Validar si la URL es válida
     if (!ytdl.validateURL(videoUrl)) {
@@ -36,17 +37,31 @@ module.exports = {
       // Obtener información del video
       const info = await ytdl.getInfo(videoUrl);
       const title = info.videoDetails.title.replace(/[^\w\s]/gi, ""); // Limpiar título
+      const filePath = path.resolve(__dirname, `${title}.mp3`);
 
-      // Descargar el audio directamente sin escribir en disco
+      // Descargar el audio
       const stream = ytdl(videoUrl, { filter: "audioonly", quality: "highestaudio" });
+      const file = fs.createWriteStream(filePath);
 
-      // Enviar el audio directamente al grupo sin guardarlo en disco
-      await socket.sendMessage(remoteJid, {
-        audio: stream,
-        mimetype: "audio/mpeg",
+      stream.pipe(file);
+
+      // Esperar a que se complete la descarga
+      file.on("finish", async () => {
+        await socket.sendMessage(remoteJid, {
+          audio: { url: filePath },
+          mimetype: "audio/mpeg",
+        });
+
+        // Eliminar el archivo después de enviarlo
+        fs.unlinkSync(filePath);
+        await sendSuccessReply(`✅ Descarga completada y enviada: ${title}`);
       });
 
-      await sendSuccessReply(`✅ Descarga completada y enviada: ${title}`);
+      // Manejo de errores en el stream
+      stream.on("error", async (error) => {
+        console.error(error);
+        await sendErrorReply("❌ Ocurrió un error al descargar el audio.");
+      });
     } catch (error) {
       console.error(error);
       return sendErrorReply(`❌ Error: ${error.message}`);
