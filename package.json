@@ -10,7 +10,6 @@
   "license": "MIT",
   "dependencies": {
     "@whiskeysockets/baileys": "6.7.9",
-    "ffmpeg": "7.1.0",
     "fluent-ffmpeg": "^2.1.2",
     "pino": "^9.6.0",
     "node-cache": "^5.1.2",
