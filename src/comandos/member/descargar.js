@@ -38,7 +38,7 @@ module.exports = {
 
       // Obtener información del video
       const info = await ytdl.getInfo(videoUrl);
-      const title = info.videoDetails.title.replace(/[^\w\s]/gi, ""); // Limpiar título
+const title = info.videoDetails.title.replace(/[^\w\s.-]/g, ""); // Limpiar solo caracteres no alfanuméricos del título
       const filePath = path.resolve(__dirname, `${title}.mp3`);
 
       // Mostrar el archivo de salida
