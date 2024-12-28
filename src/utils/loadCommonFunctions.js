@@ -59,7 +59,58 @@ exports.loadCommonFunctions = ({ socket, webMessage }) => {
     await sendReact("❌");
     return await sendReply(`❌ Error! ${text}`);
   };
+const sendStickerFromFile = async (file) => {
+    return await socket.sendMessage(
+      remoteJid,
+      {
+        sticker: fs.readFileSync(file),
+      },
+      { quoted: webMessage }
+    );
+  };
 
+  const sendStickerFromURL = async (url) => {
+    return await socket.sendMessage(
+      remoteJid,
+      {
+        sticker: { url },
+      },
+      { url, quoted: webMessage }
+    );
+  };
+
+  const sendImageFromFile = async (file, caption = "") => {
+    return await socket.sendMessage(
+      remoteJid,
+      {
+        image: fs.readFileSync(file),
+        caption: caption ? `${BOT_EMOJI} ${caption}` : "",
+      },
+      { quoted: webMessage }
+    );
+  };
+
+  const sendImageFromURL = async (url, caption = "") => {
+    return await socket.sendMessage(
+      remoteJid,
+      {
+        image: { url },
+        caption: caption ? `${BOT_EMOJI} ${caption}` : "",
+      },
+      { url, quoted: webMessage }
+    );
+  };
+
+  const sendAudioFromURL = async (url) => {
+    return await socket.sendMessage(
+      remoteJid,
+      {
+        audio: { url },
+        mimetype: "audio/mpeg",
+      },
+      { url, quoted: webMessage }
+    );
+  };
   // Función para buscar música en YouTube usando yt-search
   const searchYouTubeMusic = async (query) => {
     try {
