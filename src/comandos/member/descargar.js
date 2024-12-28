@@ -22,27 +22,27 @@ module.exports = {
       );
     }
 
-    const videoUrl = args[0];
-
-    // Mostrar el enlace recibido para depuración
-    console.log("Enlace recibido:", videoUrl);
-
-    // Validar si la URL es válida
-    if (!ytdl.validateURL(videoUrl)) {
+    // Extraer la URL utilizando una expresión regular
+    const videoUrl = args.join(" ").match(/https?:\/\/(?:www\.)?youtube\.com\/(?:watch\?v=|embed\/)([a-zA-Z0-9_-]{11})/);
+    
+    if (!videoUrl) {
       return sendErrorReply("❌ La URL proporcionada no es válida.");
     }
+
+    // Mostrar el enlace para depuración
+    console.log("Enlace recibido:", videoUrl[0]);
 
     try {
       // Indicar que se está procesando la solicitud
       await sendWaitReply("Descargando la canción, por favor espera...");
 
       // Obtener información del video
-      const info = await ytdl.getInfo(videoUrl);
+      const info = await ytdl.getInfo(videoUrl[0]);
       const title = info.videoDetails.title.replace(/[^\w\s]/gi, ""); // Limpiar título
       const filePath = path.resolve(__dirname, `${title}.mp3`);
 
       // Descargar el audio
-      const stream = ytdl(videoUrl, { filter: "audioonly", quality: "highestaudio" });
+      const stream = ytdl(videoUrl[0], { filter: "audioonly", quality: "highestaudio" });
       const file = fs.createWriteStream(filePath);
 
       stream.pipe(file);
