@@ -1,69 +1,69 @@
 const { PREFIX } = require("../../krampus");
 const Canvas = require("canvas");
-const fs = require("fs");
 const path = require("path");
+const fs = require("fs");
+const fetch = require("node-fetch"); // Para descargar imágenes desde URLs
 
 module.exports = {
-  name: "corazon",
-  description: "Añade un corazón al centro de la foto de perfil de un usuario etiquetado.",
-  commands: ["corazon"],
-  usage: `${PREFIX}corazon @usuario`,
-  handle: async ({ socket, sendReply, sendErrorReply, sendReact, remoteJid, webMessage }) => {
+  name: "profileheart",
+  description: "Añade un corazón a la foto de perfil de un usuario.",
+  commands: ["pfpheart", "corazonpfp"],
+  usage: `${PREFIX}profileheart @usuario`,
+  handle: async ({ args, socket, remoteJid, sendReply, sendReact }) => {
+    if (args.length < 1) {
+      await sendReply("Uso incorrecto. Usa el comando así:\n" + `${PREFIX}pfpheart @usuario`);
+      return;
+    }
+
+    const userJid = args[0].replace("@", "") + "@s.whatsapp.net";
+
     try {
-      await sendReact("⏳");
+      // Obtener la foto de perfil del usuario
+      const profilePicUrl = await socket.profilePictureUrl(userJid, "image");
 
-      // Obtener el JID del usuario etiquetado (si existe)
-      const mentionedJid = webMessage.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
-      const targetJid = mentionedJid || webMessage.key.participant; // Si no hay mención, usar el remitente
-
-      // Obtener la foto de perfil del usuario objetivo
-      const profilePictureUrl = await socket.profilePictureUrl(targetJid, "image").catch(() => null);
-      if (!profilePictureUrl) {
+      if (!profilePicUrl) {
         await sendReact("❌");
-        return sendErrorReply("No se pudo obtener la foto de perfil del usuario.");
+        return await sendReply(`No se pudo obtener la foto de perfil de @${args[0]}.`);
       }
 
-      // Cargar la imagen de perfil
-      const response = await fetch(profilePictureUrl);
-      const buffer = await response.buffer();
-      const avatar = await Canvas.loadImage(buffer);
+      await sendReply("> Krampus Bot👻 procesando...");
+      await sendReact("⏳");
 
-      // Crear lienzo y contexto
+      // Descargar la foto de perfil
+      const response = await fetch(profilePicUrl);
+      const arrayBuffer = await response.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
+
+      // Cargar la imagen de perfil y crear el lienzo
+      const avatar = await Canvas.loadImage(buffer);
       const canvas = Canvas.createCanvas(avatar.width, avatar.height);
       const ctx = canvas.getContext("2d");
 
-      // Dibujar la imagen de perfil
+      // Dibujar la foto de perfil en el lienzo
       ctx.drawImage(avatar, 0, 0, canvas.width, canvas.height);
 
-      // Añadir un corazón al centro
+      // Añadir el corazón al centro
       const heartImagePath = path.resolve(__dirname, "../../assets/heart.png"); // Ruta de la imagen del corazón
       const heartImage = await Canvas.loadImage(heartImagePath);
-      const heartSize = canvas.width * 0.2; // Ajustar el tamaño del corazón (20% del ancho)
+      const heartSize = canvas.width * 0.2; // Tamaño del corazón (20% del ancho)
       const heartX = (canvas.width - heartSize) / 2;
       const heartY = (canvas.height - heartSize) / 2;
       ctx.drawImage(heartImage, heartX, heartY, heartSize, heartSize);
 
-      // Guardar la imagen editada
-      const outputPath = path.resolve(__dirname, "../../temp/edited-profile.jpg");
-      const out = fs.createWriteStream(outputPath);
-      const stream = canvas.createJPEGStream();
-      stream.pipe(out);
+      // Convertir el lienzo a un Buffer
+      const outputBuffer = canvas.toBuffer("image/jpeg");
 
-      out.on("finish", async () => {
-        // Enviar la imagen resultante
-        await socket.sendMessage(remoteJid, {
-          image: { url: outputPath },
-          caption: "Aquí está la foto con un corazón 💖",
-        });
-
-        // Eliminar el archivo temporal
-        fs.unlinkSync(outputPath);
-        await sendReact("✅");
+      // Enviar la imagen generada al chat
+      await socket.sendMessage(remoteJid, {
+        image: outputBuffer,
+        caption: "Aquí está la foto de perfil con un corazón 💖",
       });
+
+      await sendReact("✅");
     } catch (error) {
-      console.error("[CORAZON] Error:", error);
+      console.error("Error al procesar la foto de perfil:", error);
       await sendReact("❌");
-      await sendErrorReply("Hubo un error al editar la imagen. Intenta nuevamente.");
+      await sendReply("Hubo un error al procesar la imagen. Inténtalo nuevamente.");
     }
   },
 };
