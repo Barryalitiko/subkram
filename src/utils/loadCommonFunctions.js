@@ -116,6 +116,6 @@ exports.loadCommonFunctions = ({ socket, webMessage }) => {
     sendWaitReply,
     sendErrorReply,
     searchYouTubeMusic,
-    getYouTubeDownloadUrl,
+    getYouTubeDownloadUrl, // Devuelto como parte de las funciones
   };
 };
