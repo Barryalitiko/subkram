@@ -22,7 +22,8 @@ module.exports = {
       );
     }
 
-    const videoUrl = args[0];
+    // Unir los argumentos en un solo string para capturar la URL completa
+    const videoUrl = args.join(" ");
 
     // Mostrar el enlace recibido para depuración
     console.log("Enlace recibido:", videoUrl);
@@ -38,11 +39,8 @@ module.exports = {
 
       // Obtener información del video
       const info = await ytdl.getInfo(videoUrl);
-const title = info.videoDetails.title.replace(/[^\w\s.-]/g, ""); // Limpiar solo caracteres no alfanuméricos del título
+      const title = info.videoDetails.title.replace(/[^\w\s.-]/g, ""); // Limpiar solo caracteres no alfanuméricos del título
       const filePath = path.resolve(__dirname, `${title}.mp3`);
-
-      // Mostrar el archivo de salida
-      console.log("Archivo de salida:", filePath);
 
       // Descargar el audio
       const stream = ytdl(videoUrl, { filter: "audioonly", quality: "highestaudio" });
