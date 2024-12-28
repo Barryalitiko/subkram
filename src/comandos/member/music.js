@@ -53,7 +53,7 @@ module.exports = {
 
       // Enviar el archivo de audio como mensaje
       await socket.sendMessage(remoteJid, {
-        audio: { url: audioFilePath },
+        audio: { url },
         mimetype: "audio/mpeg",
         fileName: `${videoTitle}.mp3`,
       });
