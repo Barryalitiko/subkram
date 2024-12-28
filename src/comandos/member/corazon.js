@@ -1,17 +1,15 @@
 const { PREFIX } = require("../../krampus");
-const Canvas = require("canvas");
+const canvas = require("canvas");
 const path = require("path");
-const fs = require("fs");
-const fetch = require("node-fetch"); // Para descargar imágenes desde URLs
 
 module.exports = {
-  name: "profileheart",
-  description: "Añade un corazón a la foto de perfil de un usuario.",
-  commands: ["pfpheart", "corazonpfp"],
-  usage: `${PREFIX}profileheart @usuario`,
+  name: "corazonperfil",
+  description: "Añade un corazón en el centro de la foto de perfil.",
+  commands: ["corazonperfil"],
+  usage: `${PREFIX}corazonperfil @usuario`,
   handle: async ({ args, socket, remoteJid, sendReply, sendReact }) => {
     if (args.length < 1) {
-      await sendReply("Uso incorrecto. Usa el comando así:\n" + `${PREFIX}pfpheart @usuario`);
+      await sendReply("Uso incorrecto. Usa el comando así:\n" + `${PREFIX}corazonperfil @usuario`);
       return;
     }
 
@@ -21,49 +19,45 @@ module.exports = {
       // Obtener la foto de perfil del usuario
       const profilePicUrl = await socket.profilePictureUrl(userJid, "image");
 
-      if (!profilePicUrl) {
-        await sendReact("❌");
-        return await sendReply(`No se pudo obtener la foto de perfil de @${args[0]}.`);
+      if (profilePicUrl) {
+        // Descargar la foto de perfil
+        await sendReact("📸");
+        const profilePic = await canvas.loadImage(profilePicUrl);
+
+        // Crear un lienzo con las mismas dimensiones que la foto de perfil
+        const canvasWidth = profilePic.width;
+        const canvasHeight = profilePic.height;
+        const canvasElement = canvas.createCanvas(canvasWidth, canvasHeight);
+        const ctx = canvasElement.getContext("2d");
+
+        // Dibujar la foto de perfil en el lienzo
+        ctx.drawImage(profilePic, 0, 0, canvasWidth, canvasHeight);
+
+        // Cargar el corazón desde el repositorio
+        const heartImage = await canvas.loadImage(path.resolve(__dirname, "../../assets/temp/imagenes/corazon.png"));
+
+        // Calcular el centro de la imagen para posicionar el corazón
+        const heartX = (canvasWidth - heartImage.width) / 2;
+        const heartY = (canvasHeight - heartImage.height) / 2;
+
+        // Dibujar el corazón en el centro de la foto de perfil
+        ctx.drawImage(heartImage, heartX, heartY);
+
+        // Enviar la imagen modificada como respuesta
+        const buffer = canvasElement.toBuffer("image/png");
+
+        await socket.sendMessage(remoteJid, {
+          image: buffer,
+          caption: "Aquí está tu foto de perfil con un corazón en el centro 💖",
+        });
+
+        await sendReact("✅");
+      } else {
+        await sendReply(`No se pudo obtener la foto de perfil de @${args[0]}.`);
       }
-
-      await sendReply("> Krampus Bot👻 procesando...");
-      await sendReact("⏳");
-
-      // Descargar la foto de perfil
-      const response = await fetch(profilePicUrl);
-      const arrayBuffer = await response.arrayBuffer();
-      const buffer = Buffer.from(arrayBuffer);
-
-      // Cargar la imagen de perfil y crear el lienzo
-      const avatar = await Canvas.loadImage(buffer);
-      const canvas = Canvas.createCanvas(avatar.width, avatar.height);
-      const ctx = canvas.getContext("2d");
-
-      // Dibujar la foto de perfil en el lienzo
-      ctx.drawImage(avatar, 0, 0, canvas.width, canvas.height);
-
-      // Añadir el corazón al centro
-      const heartImagePath = path.resolve(__dirname, "../../assets/heart.png"); // Ruta de la imagen del corazón
-      const heartImage = await Canvas.loadImage(heartImagePath);
-      const heartSize = canvas.width * 0.2; // Tamaño del corazón (20% del ancho)
-      const heartX = (canvas.width - heartSize) / 2;
-      const heartY = (canvas.height - heartSize) / 2;
-      ctx.drawImage(heartImage, heartX, heartY, heartSize, heartSize);
-
-      // Convertir el lienzo a un Buffer
-      const outputBuffer = canvas.toBuffer("image/jpeg");
-
-      // Enviar la imagen generada al chat
-      await socket.sendMessage(remoteJid, {
-        image: outputBuffer,
-        caption: "Aquí está la foto de perfil con un corazón 💖",
-      });
-
-      await sendReact("✅");
     } catch (error) {
-      console.error("Error al procesar la foto de perfil:", error);
-      await sendReact("❌");
-      await sendReply("Hubo un error al procesar la imagen. Inténtalo nuevamente.");
+      console.error("Error al procesar el comando:", error);
+      await sendReply("Hubo un error al procesar la imagen.");
     }
   },
 };
