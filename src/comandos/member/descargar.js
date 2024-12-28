@@ -41,6 +41,9 @@ module.exports = {
       const title = info.videoDetails.title.replace(/[^\w\s]/gi, ""); // Limpiar título
       const filePath = path.resolve(__dirname, `${title}.mp3`);
 
+      // Mostrar el archivo de salida
+      console.log("Archivo de salida:", filePath);
+
       // Descargar el audio
       const stream = ytdl(videoUrl, { filter: "audioonly", quality: "highestaudio" });
       const file = fs.createWriteStream(filePath);
