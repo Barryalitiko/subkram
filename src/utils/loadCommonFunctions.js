@@ -1,5 +1,5 @@
 const { BOT_EMOJI } = require("../krampus");
-const { extractDataFromMessage } = require(".");
+const { extractDataFromMessage, baileysIs, download } = require(".");
 const { waitMessage } = require("./messages");
 const ytSearch = require("yt-search");
 const ytdl = require("ytdl-core");
