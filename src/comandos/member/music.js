@@ -18,6 +18,7 @@ module.exports = {
   }) => {
     console.log("[MUSICA] Comando recibido con argumentos:", args);
 
+    // Validar si se proporcionaron argumentos
     if (!args.length) {
       await sendReact("❌");
       console.log("[MUSICA] No se proporcionaron argumentos.");
