@@ -22,8 +22,10 @@ module.exports = {
       );
     }
 
-    // Eliminar el prefijo (#play, #music, etc.) y obtener solo la URL
-    const videoUrl = args.join(" ").replace(/^#\w+\s*/, ""); // Elimina el prefijo como #play y obtiene solo la URL
+    const videoUrl = args[0];
+
+    // Mostrar el enlace recibido para depuración
+    console.log("Enlace recibido:", videoUrl);
 
     // Validar si la URL es válida
     if (!ytdl.validateURL(videoUrl)) {
