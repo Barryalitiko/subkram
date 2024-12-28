@@ -10,6 +10,7 @@
   "license": "MIT",
   "dependencies": {
     "@whiskeysockets/baileys": "6.7.9",
+    "canvas": "^3.0.0",
     "fluent-ffmpeg": "^2.1.2",
     "hercai": "^12.4.0",
     "pino": "^9.6.0",
