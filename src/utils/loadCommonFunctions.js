@@ -1,8 +1,8 @@
 const { BOT_EMOJI } = require("../krampus");
 const { extractDataFromMessage } = require(".");
 const { waitMessage } = require("./messages");
-const ytSearch = require("yt-search"); // Cambiar a yt-search
-const ytdl = require("ytdl-core"); // Biblioteca de descarga
+const ytSearch = require("yt-search");
+const ytdl = require("ytdl-core");
 
 exports.loadCommonFunctions = ({ socket, webMessage }) => {
   const {
@@ -21,9 +21,9 @@ exports.loadCommonFunctions = ({ socket, webMessage }) => {
     return null;
   }
 
-  // Regex para validar URLs de YouTube
-  const youtubeRegex = /^https?:\/\/(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})$/;
-  const isValidYoutubeUrl = (url) => youtubeRegex.test(url);
+  // Regex para validar URLs básicas de YouTube
+  const basicYoutubeRegex = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+$/;
+  const isValidYoutubeUrl = (url) => basicYoutubeRegex.test(url);
 
   // Funciones para enviar texto y respuestas
   const sendReply = async (text) => {
@@ -71,17 +71,30 @@ exports.loadCommonFunctions = ({ socket, webMessage }) => {
     }
   };
 
-  // Función para obtener la URL de descarga de YouTube
+  // Función para obtener información del video y la URL de descarga
   const getYouTubeDownloadUrl = async (videoUrl) => {
     try {
-      if (isValidYoutubeUrl(videoUrl)) {
-        const info = await ytdl.getInfo(videoUrl);
-        const audioFormats = ytdl.filterFormats(info.formats, "audioonly");
-        return audioFormats[0]?.url || null; // Retorna la primera URL de audio disponible
+      if (!isValidYoutubeUrl(videoUrl)) {
+        throw new Error("URL no válida de YouTube");
       }
-      throw new Error("URL de YouTube inválida.");
+
+      // Obtener información del video
+      const info = await ytdl.getInfo(videoUrl);
+      console.log("Información del video:", info);
+
+      // Filtrar solo formatos de audio
+      const audioFormats = ytdl.filterFormats(info.formats, "audioonly");
+      if (!audioFormats.length) {
+        throw new Error("No se encontraron formatos de audio disponibles.");
+      }
+
+      console.log("Formato elegido:", audioFormats[0]);
+      return audioFormats[0].url;
     } catch (error) {
-      throw new Error("No se pudo obtener la URL de descarga.");
+      console.error("Error al obtener la URL de descarga:", error);
+      throw new Error(
+        "Ocurrió un error al intentar obtener la URL de descarga. Verifica la URL."
+      );
     }
   };
 
@@ -102,7 +115,7 @@ exports.loadCommonFunctions = ({ socket, webMessage }) => {
     sendSuccessReply,
     sendWaitReply,
     sendErrorReply,
-    searchYouTubeMusic, // Exportar función de búsqueda
-    getYouTubeDownloadUrl, // Exportar función de descarga
+    searchYouTubeMusic,
+    getYouTubeDownloadUrl,
   };
 };
