@@ -3,6 +3,8 @@ const { extractDataFromMessage } = require(".");
 const { waitMessage } = require("./messages");
 const ytSearch = require("yt-search");
 const ytdl = require("ytdl-core");
+const fs = require("fs");
+const path = require("path");
 
 exports.loadCommonFunctions = ({ socket, webMessage }) => {
   const {
@@ -58,45 +60,76 @@ exports.loadCommonFunctions = ({ socket, webMessage }) => {
     return await sendReply(`❌ Error! ${text}`);
   };
 
-  // Función para buscar música en YouTube usando yt-search
-  const searchYouTubeMusic = async (query) => {
+  // Función principal para descargar audio de YouTube
+  const downloadYouTubeAudio = async (videoUrl) => {
     try {
-      const results = await ytSearch(query);
-      if (results && results.videos.length > 0) {
-        return results.videos[0]; // Retorna el primer resultado de video
+      console.log("[MUSICA] Validando URL de YouTube:", videoUrl);
+
+      // Validar la URL con ytdl-core
+      if (!ytdl.validateURL(videoUrl)) {
+        throw new Error("URL no válida de YouTube.");
       }
-      throw new Error("No se encontraron resultados para la búsqueda.");
+
+      // Obtener información del video
+      const info = await ytdl.getInfo(videoUrl);
+      const videoDetails = info.videoDetails;
+      const title = videoDetails.title.replace(/[^\w\s]/gi, ""); // Limpiar título
+      const duration = videoDetails.lengthSeconds;
+      const author = videoDetails.author.name;
+
+      console.log(`[MUSICA] Título: ${title}`);
+      console.log(`[MUSICA] Duración: ${duration} segundos`);
+      console.log(`[MUSICA] Autor: ${author}`);
+
+      // Filtrar formatos de audio y elegir el mejor
+      const audioFormats = ytdl.filterFormats(info.formats, "audioonly");
+      if (!audioFormats.length) {
+        throw new Error("No se encontraron formatos de audio disponibles.");
+      }
+      const bestAudioFormat = ytdl.chooseFormat(audioFormats, {
+        quality: "highestaudio",
+      });
+
+      console.log("[MUSICA] Mejor formato de audio seleccionado:", bestAudioFormat);
+
+      // Crear ruta para guardar el archivo
+      const outputDir = path.resolve(__dirname, "downloads");
+      if (!fs.existsSync(outputDir)) {
+        fs.mkdirSync(outputDir); // Crear carpeta si no existe
+      }
+      const filePath = path.join(outputDir, `${title}.mp3`);
+
+      // Descargar el archivo
+      console.log("[MUSICA] Iniciando descarga...");
+      const audioStream = ytdl(videoUrl, { format: bestAudioFormat });
+
+      const writeStream = fs.createWriteStream(filePath);
+      audioStream.pipe(writeStream);
+
+      // Escuchar eventos de progreso
+      audioStream.on("progress", (chunkLength, downloaded, total) => {
+        const percent = ((downloaded / total) * 100).toFixed(2);
+        console.log(`[MUSICA] Descarga en progreso: ${percent}%`);
+      });
+
+      return new Promise((resolve, reject) => {
+        writeStream.on("finish", () => {
+          console.log("[MUSICA] Descarga completada:", filePath);
+          resolve(filePath); // Devolver la ruta del archivo descargado
+        });
+
+        writeStream.on("error", (error) => {
+          console.error("[MUSICA] Error al guardar el archivo:", error.message);
+          reject(error);
+        });
+      });
     } catch (error) {
-      throw new Error("No se pudo buscar la música en YouTube.");
+      console.error("[MUSICA] Error:", error.message);
+      throw new Error(
+        "Ocurrió un error al procesar el video. Inténtalo nuevamente."
+      );
     }
   };
-
-  const getYouTubeDownloadUrl = async (videoUrl) => {
-  try {
-    console.log("[MUSICA] Validando URL de YouTube:", videoUrl);
-    if (!isValidYoutubeUrl(videoUrl)) {
-      throw new Error("URL no válida de YouTube");
-    }
-
-    // Obtener información del video
-    const info = await ytdl.getInfo(videoUrl);
-    console.log("[MUSICA] Información del video:", info);
-
-    // Filtrar solo formatos de audio
-    const audioFormats = ytdl.filterFormats(info.formats, "audioonly");
-    if (!audioFormats.length) {
-      throw new Error("No se encontraron formatos de audio disponibles.");
-    }
-
-    console.log("[MUSICA] Formatos de audio disponibles:", audioFormats);
-    return audioFormats[0].url;
-  } catch (error) {
-    console.error("[MUSICA] Error al obtener la URL de descarga:", error.message);
-    throw new Error(
-      "Ocurrió un error al intentar obtener la URL de descarga. Verifica la URL."
-    );
-  }
-};
 
   return {
     args,
@@ -115,7 +148,6 @@ exports.loadCommonFunctions = ({ socket, webMessage }) => {
     sendSuccessReply,
     sendWaitReply,
     sendErrorReply,
-    searchYouTubeMusic,
-    getYouTubeDownloadUrl, // Devuelto como parte de las funciones
+    downloadYouTubeAudio, // Añadida al objeto retornado
   };
 };
