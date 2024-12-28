@@ -60,6 +60,19 @@ exports.loadCommonFunctions = ({ socket, webMessage }) => {
     return await sendReply(`❌ Error! ${text}`);
   };
 
+  // Función para buscar música en YouTube usando yt-search
+  const searchYouTubeMusic = async (query) => {
+    try {
+      const results = await ytSearch(query);
+      if (results && results.videos.length > 0) {
+        return results.videos[0]; // Retorna el primer resultado de video
+      }
+      throw new Error("No se encontraron resultados para la búsqueda.");
+    } catch (error) {
+      throw new Error("No se pudo buscar la música en YouTube.");
+    }
+  };
+
   // Función principal para descargar audio de YouTube
   const downloadYouTubeAudio = async (videoUrl) => {
     try {
@@ -148,6 +161,7 @@ exports.loadCommonFunctions = ({ socket, webMessage }) => {
     sendSuccessReply,
     sendWaitReply,
     sendErrorReply,
+    searchYouTubeMusic, // Mantengo la función de búsqueda
     downloadYouTubeAudio, // Añadida al objeto retornado
   };
 };
