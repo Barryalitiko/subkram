@@ -22,6 +22,7 @@ exports.loadCommonFunctions = ({ socket, webMessage }) => {
   if (!remoteJid) {
     return null;
   }
+
   const isImage = baileysIs(webMessage, "image");
   const isVideo = baileysIs(webMessage, "video");
   const isSticker = baileysIs(webMessage, "sticker");
@@ -37,7 +38,7 @@ exports.loadCommonFunctions = ({ socket, webMessage }) => {
   const downloadVideo = async (webMessage, fileName) => {
     return await download(webMessage, fileName, "video", "mp4");
   };
-  
+
   const basicYoutubeRegex = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+$/;
   const isValidYoutubeUrl = (url) => basicYoutubeRegex.test(url);
 
