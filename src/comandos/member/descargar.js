@@ -36,31 +36,17 @@ module.exports = {
       // Obtener información del video
       const info = await ytdl.getInfo(videoUrl);
       const title = info.videoDetails.title.replace(/[^\w\s]/gi, ""); // Limpiar título
-      const filePath = path.resolve(__dirname, `${title}.mp3`);
 
-      // Descargar el audio
+      // Descargar el audio directamente sin escribir en disco
       const stream = ytdl(videoUrl, { filter: "audioonly", quality: "highestaudio" });
-      const file = fs.createWriteStream(filePath);
 
-      stream.pipe(file);
-
-      // Esperar a que se complete la descarga
-      file.on("finish", async () => {
-        await socket.sendMessage(remoteJid, {
-          audio: { url: filePath },
-          mimetype: "audio/mpeg",
-        });
-
-        // Eliminar el archivo después de enviarlo
-        fs.unlinkSync(filePath);
-        await sendSuccessReply(`✅ Descarga completada y enviada: ${title}`);
+      // Enviar el audio directamente al grupo sin guardarlo en disco
+      await socket.sendMessage(remoteJid, {
+        audio: stream,
+        mimetype: "audio/mpeg",
       });
 
-      // Manejo de errores en el stream
-      stream.on("error", async (error) => {
-        console.error(error);
-        await sendErrorReply("❌ Ocurrió un error al descargar el audio.");
-      });
+      await sendSuccessReply(`✅ Descarga completada y enviada: ${title}`);
     } catch (error) {
       console.error(error);
       return sendErrorReply(`❌ Error: ${error.message}`);
