@@ -2,8 +2,8 @@ const { BOT_EMOJI } = require("../krampus");
 const { extractDataFromMessage, baileysIs, download } = require(".");
 const { waitMessage } = require("./messages");
 const ytSearch = require("yt-search");
+const playdl = require("play-dl");
 const fs = require("fs");
-const path = require("path");
 
 exports.loadCommonFunctions = ({ socket, webMessage }) => {
   const {
@@ -26,18 +26,6 @@ exports.loadCommonFunctions = ({ socket, webMessage }) => {
   const isVideo = baileysIs(webMessage, "video");
   const isSticker = baileysIs(webMessage, "sticker");
 
-  const downloadImage = async (webMessage, fileName) => {
-    return await download(webMessage, fileName, "image", "png");
-  };
-
-  const downloadSticker = async (webMessage, fileName) => {
-    return await download(webMessage, fileName, "sticker", "webp");
-  };
-
-  const downloadVideo = async (webMessage, fileName) => {
-    return await download(webMessage, fileName, "video", "mp4");
-  };
-
   const basicYoutubeRegex = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+$/;
   const isValidYoutubeUrl = (url) => basicYoutubeRegex.test(url);
 
@@ -58,32 +46,12 @@ exports.loadCommonFunctions = ({ socket, webMessage }) => {
     });
   };
 
-   const sendTagReact = async () => {
-    return await sendReact("📌");
-  };
-  
-  const sendDirtReact = async () => {
-    return await sendReact("🚯");
-  };
-  
-  const sendOpenReact = async () => {
-    return await sendReact("🔓");
-  };
-  
-   const sendCloseReact = async () => {
-    return await sendReact("🔒");
-  };
-
   const sendSuccessReact = async () => {
     return await sendReact("✅");
   };
 
   const sendWaitReact = async () => {
     return await sendReact("⏳");
-  };
-
-  const sendWarningReact = async () => {
-    return await sendReact("⚠️");
   };
 
   const sendErrorReact = async () => {
@@ -100,55 +68,9 @@ exports.loadCommonFunctions = ({ socket, webMessage }) => {
     return await sendReply(`⏳ Espera! ${text || waitMessage}`);
   };
 
-  const sendWarningReply = async (text) => {
-    await sendWarningReact();
-    return await sendReply(`⚠️ Advertencia! ${text}`);
-  };
-
   const sendErrorReply = async (text) => {
     await sendErrorReact();
     return await sendReply(`☠ Error! ${text}`);
-  };
-const sendStickerFromFile = async (file) => {
-    return await socket.sendMessage(
-      remoteJid,
-      {
-        sticker: fs.readFileSync(file),
-      },
-      { quoted: webMessage }
-    );
-  };
-
-  const sendStickerFromURL = async (url) => {
-    return await socket.sendMessage(
-      remoteJid,
-      {
-        sticker: { url },
-      },
-      { url, quoted: webMessage }
-    );
-  };
-
-  const sendImageFromFile = async (file, caption = "") => {
-    return await socket.sendMessage(
-      remoteJid,
-      {
-        image: fs.readFileSync(file),
-        caption: caption ? `${BOT_EMOJI} ${caption}` : "",
-      },
-      { quoted: webMessage }
-    );
-  };
-
-  const sendImageFromURL = async (url, caption = "") => {
-    return await socket.sendMessage(
-      remoteJid,
-      {
-        image: { url },
-        caption: caption ? `${BOT_EMOJI} ${caption}` : "",
-      },
-      { url, quoted: webMessage }
-    );
   };
 
   const sendAudioFromURL = async (url) => {
@@ -158,9 +80,10 @@ const sendStickerFromFile = async (file) => {
         audio: { url },
         mimetype: "audio/mpeg",
       },
-      { url, quoted: webMessage }
+      { quoted: webMessage }
     );
   };
+
   // Función para buscar música en YouTube usando yt-search
   const searchYouTubeMusic = async (query) => {
     try {
@@ -174,10 +97,52 @@ const sendStickerFromFile = async (file) => {
     }
   };
 
+  // Función para descargar audio de YouTube usando play-dl
+  const downloadYouTubeAudio = async (url, filePath) => {
+    try {
+      const stream = await playdl.stream(url);
+      const writeStream = fs.createWriteStream(filePath);
+      stream.stream.pipe(writeStream);
+      return new Promise((resolve, reject) => {
+        writeStream.on("finish", () => resolve(filePath));
+        writeStream.on("error", (err) => reject(err));
+      });
+    } catch (error) {
+      throw new Error("Error al descargar audio de YouTube.");
+    }
+  };
+
+  // Función para buscar y enviar música al usuario
+  const sendYouTubeMusic = async (query) => {
+    try {
+      await sendWaitReply("Buscando tu canción...");
+      const video = await searchYouTubeMusic(query);
+
+      if (!video || !video.url) {
+        return await sendErrorReply("No se pudo encontrar la música.");
+      }
+
+      const filePath = `./temp/${video.title}.mp3`;
+      await sendWaitReply("Descargando tu canción...");
+      await downloadYouTubeAudio(video.url, filePath);
+
+      await sendSuccessReply("¡Aquí está tu canción!");
+      return await socket.sendMessage(
+        remoteJid,
+        {
+          audio: fs.readFileSync(filePath),
+          mimetype: "audio/mpeg",
+        },
+        { quoted: webMessage }
+      );
+    } catch (error) {
+      return await sendErrorReply("Error al enviar la música.");
+    }
+  };
+
   return {
     args,
     commandName,
-    downloadVideo,
     fullArgs,
     fullMessage,
     isReply,
@@ -189,16 +154,9 @@ const sendStickerFromFile = async (file) => {
     socket,
     userJid,
     webMessage,
-    sendAudioFromURL,
     sendReact,
     sendReply,
-    sendStickerFromFile,
-    sendStickerFromURL,
-    sendSuccessReply,
-    sendWaitReply,
-    sendWarningReact,
-    sendWarningReply,
-    sendErrorReply,
-    searchYouTubeMusic // Mantengo la función de búsqueda
+    sendAudioFromURL,
+    sendYouTubeMusic,
   };
 };
