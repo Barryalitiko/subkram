@@ -1,7 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 
-const { PREFIX } = require("../../config");
+const { PREFIX } = require("../../krampus");
 const antispamConfigPath = path.join(__dirname, "../../assets/antispamConfig.json");
 
 let spamTracker = {}; // Seguimiento en memoria para usuarios.
