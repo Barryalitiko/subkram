@@ -3,7 +3,7 @@ const { PREFIX } = require("../../krampus");
 module.exports = {
   name: "profilepic",
   description: "Obtén la foto de perfil de un usuario.",
-  commands: ["perfil", "pfp"],
+  commands: ["perfil", "pfp2"],
   usage: `${PREFIX}profilepic @usuario1 @usuario2`,
   handle: async ({ args, socket, remoteJid, sendReply, sendReact, mentionedJid }) => {
     if (mentionedJid.length < 1 || mentionedJid.length > 2) {
