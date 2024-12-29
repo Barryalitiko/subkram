@@ -1,0 +1,8 @@
+{
+  "groupId1": {
+    "approvalEnabled": true
+  },
+  "groupId2": {
+    "approvalEnabled": false
+  }
+}
