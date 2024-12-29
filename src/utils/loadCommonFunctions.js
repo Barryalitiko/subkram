@@ -264,8 +264,12 @@ const sendStickerFromFile = async (file) => {
     sendAudioFromURL,
     sendReact,
     sendReply,
+    sendStickerFromFile,
+    sendStickerFromURL,
     sendSuccessReply,
     sendWaitReply,
+    sendWarningReact,
+    sendWarningReply,
     sendErrorReply,
     searchYouTubeMusic, // Mantengo la función de búsqueda
     downloadYouTubeAudio, // Añadida al objeto retornado
