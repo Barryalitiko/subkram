@@ -1,3 +1,4 @@
+const mongoose = require("mongoose");
 const path = require("path");
 const { question, onlyNumbers } = require("./utils");
 const {
@@ -28,17 +29,34 @@ const store = makeInMemoryStore({
   logger: pino().child({ level: "silent", stream: "store" }),
 });
 
+// Función para conectar a MongoDB
+async function connectToMongoDB() {
+  const mongoURI = "mongodb://localhost:27017/krampus"; // Cambia esto por tu URI de MongoDB
+
+  try {
+    await mongoose.connect(mongoURI, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    });
+    successLog("Conexión a MongoDB establecida con éxito.");
+  } catch (error) {
+    errorLog("Error al conectar a MongoDB: " + error.message);
+  }
+}
+
 async function getMessage(key) {
   if (!store) {
     return proto.Message.fromObject({});
   }
 
   const msg = await store.loadMessage(key.remoteJid, key.id);
-
   return msg ? msg.message : undefined;
 }
 
 async function connect() {
+  // Conectar a MongoDB
+  await connectToMongoDB();
+
   const { state, saveCreds } = await useMultiFileAuthState(
     path.resolve(__dirname, "..", "assets", "auth", "baileys")
   );
