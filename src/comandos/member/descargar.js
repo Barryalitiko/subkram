@@ -29,7 +29,7 @@ module.exports = {
 
       // Descargar el audio del video
       const audioStream = await playdl.stream(video.url);
-      const audioBuffer = await audioStream.stream.buffer();
+      const audioBuffer = await audioStream.buffer(); // Cambiado de stream.buffer() a buffer()
 
       // Enviar el audio al usuario
       await socket.sendMessage(remoteJid, {
