@@ -139,7 +139,19 @@ const autoReactions = {
     "sombrero": "🎩",
     "gafas de sol": "🕶️",
     "moño": "🎀",
-    "lentes": "👓"
+    "lentes": "👓",
+    "maicol": "🛵",
+    "alexander": "👷🏾",
+    "gigi": "👸🏾",
+    "diamantico": "🥊",
+    "haitiano": "🗑️",
+    "rd": "🇩🇴",
+    "dominicano": "🇩🇴",
+    "klk": "🇩🇴",
+    "joan": "💯",
+    "stacy": "🕊️",
+    "soky": "🍺",
+    "olo": "🎸"
 };
 
 module.exports = { autoReactions };
