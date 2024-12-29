@@ -1,7 +1,6 @@
 const { getProfileImageData } = require("@whiskeysockets/baileys");
 const { createCanvas, loadImage } = require("canvas");
 const fs = require("fs");
-const { warningLog } = require("../utils/logger");
 const { PREFIX } = require("../../krampus"); // Para acceder al prefix
 
 module.exports = {
@@ -47,7 +46,6 @@ module.exports = {
       if (!profileImage2.includes("default-user")) fs.unlinkSync(profileImage2);
 
     } catch (error) {
-      warningLog("👻 Error al crear el collage: " + error.message);
       await sendReply("❌ Hubo un problema al crear el collage. Intenta de nuevo.");
     }
   },
