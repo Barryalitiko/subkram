@@ -1,5 +1,6 @@
 const ytdl = require('ytdl-core');
 const ytSearch = require('yt-search');
+const { PREFIX } = require("../../krampus"); // Asegúrate de que este archivo tiene el prefijo configurado
 
 module.exports = {
   name: 'música',
