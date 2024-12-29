@@ -59,19 +59,56 @@ exports.loadCommonFunctions = ({ socket, webMessage }) => {
     });
   };
 
+   const sendTagReact = async () => {
+    return await sendReact("📌");
+  };
+  
+  const sendDirtReact = async () => {
+    return await sendReact("🚯");
+  };
+  
+  const sendOpenReact = async () => {
+    return await sendReact("🔓");
+  };
+  
+   const sendCloseReact = async () => {
+    return await sendReact("🔒");
+  };
+
+  const sendSuccessReact = async () => {
+    return await sendReact("✅");
+  };
+
+  const sendWaitReact = async () => {
+    return await sendReact("⏳");
+  };
+
+  const sendWarningReact = async () => {
+    return await sendReact("⚠️");
+  };
+
+  const sendErrorReact = async () => {
+    return await sendReact("❌");
+  };
+
   const sendSuccessReply = async (text) => {
-    await sendReact("✅");
-    return await sendReply(`✅ ${text}`);
+    await sendSuccessReact();
+    return await sendReply(`👻 ${text}`);
   };
 
   const sendWaitReply = async (text) => {
-    await sendReact("⏳");
-    return await sendReply(`⏳ Aguarde! ${text || "Procesando..."}`);
+    await sendWaitReact();
+    return await sendReply(`⏳ Espera! ${text || waitMessage}`);
+  };
+
+  const sendWarningReply = async (text) => {
+    await sendWarningReact();
+    return await sendReply(`⚠️ Advertencia! ${text}`);
   };
 
   const sendErrorReply = async (text) => {
-    await sendReact("❌");
-    return await sendReply(`❌ Error! ${text}`);
+    await sendErrorReact();
+    return await sendReply(`☠ Error! ${text}`);
   };
 const sendStickerFromFile = async (file) => {
     return await socket.sendMessage(
