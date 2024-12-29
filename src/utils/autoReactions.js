@@ -151,7 +151,24 @@ const autoReactions = {
     "joan": "💯",
     "stacy": "🕊️",
     "soky": "🍺",
-    "olo": "🎸"
+    "olo": "🎸",
+    "merly": "🧚🏽‍♀️",
+    "guagua": "🚐",
+    "wawawa": "🧟",
+    "popi": "🦋",
+    "popy": "🦋",
+    "hola": "👋🏾",
+    "ola": "🌊",
+    "gorda": "🐳",
+    "dawi": "🦀",
+    "flaca": "🩻",
+    "krampus": "❤️",
+    "barry": "🍄",
+    "doctol nastra": "🇯🇲",
+    "bot": "🤖",
+    "privado": "🦈",
+    "ok": "👌🏾",
+    "lento": "🐢"
 };
 
 module.exports = { autoReactions };
