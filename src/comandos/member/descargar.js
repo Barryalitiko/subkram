@@ -1,73 +1,33 @@
-const ytdl = require("ytdl-core");
-const fs = require("fs");
-const path = require("path");
 const { PREFIX } = require("../../krampus");
+const playdl = require('play-dl');
 
 module.exports = {
-  name: "download",
-  description: "Descarga música desde YouTube.",
-  commands: ["download", "music", "play"],
-  usage: `${PREFIX}download <URL de YouTube>`,
-  handle: async ({
-    args,
-    sendWaitReply,
-    sendSuccessReply,
-    sendErrorReply,
-    remoteJid,
-    socket,
-  }) => {
-    if (!args.length) {
-      return sendErrorReply(
-        `👻 Proporciona una URL válida de YouTube. Uso: ${PREFIX}download <URL>`
-      );
+  name: 'descargar',
+  description: 'Descarga el audio de un video de YouTube',
+  commands: ['descargar', 'dl'],
+  usage: `${PREFIX}descargar <URL del video>`,
+  handle: async ({ args, remoteJid, sendReply, socket }) => {
+    if (args.length < 1) {
+      await sendReply('Uso incorrecto. Por favor, proporciona el URL del video.');
+      return;
     }
 
-    // Unir los argumentos en un solo string para capturar la URL completa
-    const videoUrl = args.join(" ");
-
-    // Mostrar el enlace recibido para depuración
-    console.log("Enlace recibido:", videoUrl);
-
-    // Validar si la URL es válida
-    if (!ytdl.validateURL(videoUrl)) {
-      return sendErrorReply("❌ La URL proporcionada no es válida.");
-    }
+    const videoUrl = args[0];
+    console.log(`Descargando audio de ${videoUrl}...`);
 
     try {
-      // Indicar que se está procesando la solicitud
-      await sendWaitReply("Descargando la canción, por favor espera...");
+      const audioBuffer = await playdl.download({ url: videoUrl, quality: 'highestaudio' });
+      console.log(`Audio descargado con éxito: ${audioBuffer.length} bytes`);
 
-      // Obtener información del video
-      const info = await ytdl.getInfo(videoUrl);
-      const title = info.videoDetails.title; // Usar el título tal cual sin reemplazar caracteres
-      const filePath = path.resolve(__dirname, `${title}.mp3`);
-
-      // Descargar el audio
-      const stream = ytdl(videoUrl, { filter: "audioonly", quality: "highestaudio" });
-      const file = fs.createWriteStream(filePath);
-
-      stream.pipe(file);
-
-      // Esperar a que se complete la descarga
-      file.on("finish", async () => {
-        await socket.sendMessage(remoteJid, {
-          audio: { url: filePath },
-          mimetype: "audio/mpeg",
-        });
-
-        // Eliminar el archivo después de enviarlo
-        fs.unlinkSync(filePath);
-        await sendSuccessReply(`✅ Descarga completada y enviada: ${title}`);
+      await socket.sendMessage(remoteJid, {
+        audio: audioBuffer,
+        caption: `Audio descargado de ${videoUrl}`,
       });
 
-      // Manejo de errores en el stream
-      stream.on("error", async (error) => {
-        console.error(error);
-        await sendErrorReply("❌ Ocurrió un error al descargar el audio.");
-      });
+      console.log(`Mensaje de audio enviado con éxito.`);
     } catch (error) {
-      console.error(error);
-      return sendErrorReply(`❌ Error: ${error.message}`);
+      console.error(`Error al descargar el audio: ${error}`);
+      await sendReply('Ocurrió un error al descargar el audio. Por favor, inténtalo de nuevo.');
     }
   },
 };
