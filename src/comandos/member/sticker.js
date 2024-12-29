@@ -1,4 +1,4 @@
-const { PREFIX, TEMP_DIR } = require("../../config");
+const { PREFIX, TEMP_DIR } = require("../../krampus");
 const { InvalidParameterError } = require("../../errors/InvalidParameterError");
 const path = require("path");
 const fs = require("fs");
