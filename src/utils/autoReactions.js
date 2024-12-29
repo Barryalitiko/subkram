@@ -54,7 +54,7 @@ const autoReactions = {
     "camello": "🐪",
     "manta ray": "🦈",
     "macho cabrío": "🐐",
-    "zorrillo": "🦨"
+    "zorrillo": "🦨",
     "computadora": "💻",
     "teléfono": "📱",
     "televisión": "📺",
