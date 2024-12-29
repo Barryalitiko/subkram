@@ -1,56 +1,53 @@
 const ytdl = require('ytdl-core');
-const { PREFIX } = require('../../krampus');
+const ytSearch = require('yt-search');
 
 module.exports = {
-  name: 'descargar',
-  description: 'Descarga el audio de un video de YouTube',
-  commands: ['descargar', 'dl'],
-  usage: `${PREFIX}descargar <URL del video>`,
+  name: 'música',
+  description: 'Descarga y envía música desde YouTube',
+  commands: ['música', 'play'],
+  usage: `${PREFIX}música <nombre de la canción o URL de YouTube>`,
   handle: async ({ args, remoteJid, sendReply, socket }) => {
-    console.log(`Comando descargar ejecutado con argumentos: ${args}`);
-
-    if (args.length < 1) {
-      console.log(`Error: No se proporcionó el URL del video.`);
-      await sendReply('Uso incorrecto. Por favor, proporciona el URL del video.');
-      return;
-    }
-
-    const videoUrl = args[0];
-    console.log(`URL del video: ${videoUrl}`);
-
-    try {
-      console.log(`Intentando descargar el audio del video...`);
-      const audioStream = ytdl.downloadFromURL(videoUrl, { quality: 'highestaudio' });
-      console.log(`AudioStream creado: ${audioStream}`);
-
-      const audioBuffer = await new Promise((resolve, reject) => {
-        console.log(`Esperando a que se descargue el audio...`);
-        const chunks = [];
-        audioStream.on('data', (chunk) => {
-          console.log(`Chunk de audio recibido: ${chunk.length} bytes`);
-          chunks.push(chunk);
-        });
-        audioStream.on('end', () => {
-          console.log(`Descarga del audio completada.`);
-          resolve(Buffer.concat(chunks));
-        });
-        audioStream.on('error', (error) => {
-          console.error(`Error al descargar el audio: ${error}`);
-          reject(error);
-        });
-      });
-
-      console.log(`Audio descargado con éxito: ${audioBuffer.length} bytes`);
-
-      await socket.sendMessage(remoteJid, {
-        audio: audioBuffer,
-        caption: `Audio descargado de ${videoUrl}`,
-      });
-
-      console.log(`Mensaje de audio enviado con éxito.`);
-    } catch (error) {
-      console.error(`Error al ejecutar el comando descargar: ${error}`);
-      await sendReply('Ocurrió un error al ejecutar el comando. Por favor, inténtalo de nuevo.');
-    }
-  },
+    await handleMusicCommand(args, sendReply);
+  }
 };
+
+// Función para manejar el comando de música
+async function handleMusicCommand(args, sendReply) {
+  let query = args.join(' ');
+  try {
+    let videoUrl = await searchVideo(query);
+    if (videoUrl) {
+      sendReply(`Buscando la música para: ${query}`);
+      let audioStream = ytdl(videoUrl, { filter: 'audioonly' });
+      let audioBuffer = await streamToBuffer(audioStream);
+      sendReply(audioBuffer, 'audio/mp3');
+    } else {
+      sendReply('No se pudo encontrar el video.');
+    }
+  } catch (error) {
+    console.error(error);
+    sendReply('Hubo un error al intentar obtener la música.');
+  }
+}
+
+// Función para buscar el video en YouTube
+async function searchVideo(query) {
+  try {
+    let results = await ytSearch(query);
+    let video = results.videos[0];
+    return video.url;
+  } catch (error) {
+    console.error('Error buscando video:', error);
+    return null;
+  }
+}
+
+// Función para convertir un stream a buffer
+function streamToBuffer(stream) {
+  return new Promise((resolve, reject) => {
+    const chunks = [];
+    stream.on('data', chunk => chunks.push(chunk));
+    stream.on('end', () => resolve(Buffer.concat(chunks)));
+    stream.on('error', reject);
+  });
+}
