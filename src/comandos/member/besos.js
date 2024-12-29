@@ -1,7 +1,7 @@
 const { PREFIX } = require("../../krampus");
 const fs = require("fs");
 const path = require("path");
-const gifs = require("../assets/gifs.json");  // Importamos el archivo gifs.json
+const gifs = require("assets/gifs.json");  // Importamos el archivo gifs.json
 
 module.exports = {
   name: "beso",
