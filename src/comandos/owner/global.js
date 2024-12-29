@@ -5,7 +5,7 @@ module.exports = {
   description: "Envía un mensaje a todos los grupos donde está el bot.",
   commands: ["broadcastgrupos", "bcg"],
   usage: `${PREFIX}broadcastgrupos <mensaje>`,
-  handle: async ({ args, socket, remoteJid, sendReply }) => {
+  handle: async ({ args, socket, sendReply }) => {
     try {
       if (args.length < 1) {
         await sendReply(
@@ -18,9 +18,9 @@ module.exports = {
       // Mensaje a enviar
       const mensaje = args.join(" ");
 
-      // Obtener todos los chats donde el bot está presente
-      const chats = await socket.chatRead();
-      const groupChats = chats.filter((chat) => chat.id.endsWith("@g.us"));
+      // Obtener todos los chats activos del bot
+      const chats = await socket.groupFetchAllParticipating();
+      const groupChats = Object.keys(chats);
 
       if (groupChats.length === 0) {
         await sendReply("❌ No se encontraron grupos donde el bot esté presente.");
@@ -30,8 +30,8 @@ module.exports = {
       await sendReply(`✅ Enviando mensaje a ${groupChats.length} grupo(s)...`);
 
       // Enviar el mensaje a cada grupo
-      for (const group of groupChats) {
-        await socket.sendMessage(group.id, {
+      for (const groupId of groupChats) {
+        await socket.sendMessage(groupId, {
           text: mensaje,
         });
       }
