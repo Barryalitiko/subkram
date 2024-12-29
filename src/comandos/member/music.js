@@ -1,7 +1,7 @@
 const { PREFIX } = require("../../krampus");
 const ytSearch = require("yt-search");
-// Importa correctamente la función downloadAudio desde la ruta correcta
-const { downloadAudio } = require("../play-handler/downloadAudio");
+// Importación correcta de downloadAudio
+const { downloadAudio } = require("../../play-handler/downloadAudio");
 
 module.exports = {
   name: 'musica',
