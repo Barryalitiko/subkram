@@ -6,17 +6,15 @@ module.exports = {
   name: 'descargar',
   description: 'Descarga el audio de un video de YouTube',
   commands: ['descargar', 'dl'],
-  usage: `${PREFIX}descargar <título del video o URL>`,
+  usage: `${PREFIX}descargar <título de la canción>`,
   handle: async ({ args, remoteJid, sendReply, socket }) => {
-    console.log(`Comando descargar ejecutado con argumentos: ${args}`);
-
     if (args.length < 1) {
-      await sendReply('Uso incorrecto. Por favor, proporciona el título del video o la URL.');
+      await sendReply('Uso incorrecto. Por favor, proporciona el título de la canción.');
       return;
     }
 
     const searchQuery = args.join(' ');
-    console.log(`Buscando video con la query: ${searchQuery}`);
+    console.log(`Buscando canción con la query: ${searchQuery}`);
 
     try {
       const results = await ytSearch(searchQuery);
@@ -27,24 +25,10 @@ module.exports = {
         return;
       }
 
-      if (!results[0] || !results[0].url) {
-        await sendReply('Ocurrió un error al obtener el URL del video.');
-        return;
-      }
-
       const videoUrl = results[0].url;
-      console.log(`URL del video seleccionado: ${videoUrl}`);
+      console.log(`URL de la canción seleccionada: ${videoUrl}`);
 
-      const videoInfo = await ytdl.getInfo(videoUrl);
-      console.log(`Información del video: ${JSON.stringify(videoInfo)}`);
-
-      const audioFormats = ytdl.filterFormats(videoInfo.formats, 'audioonly');
-      console.log(`Formatos de audio disponibles: ${audioFormats.length}`);
-
-      const bestAudioFormat = ytdl.chooseFormat(audioFormats, { quality: 'highestaudio' });
-      console.log(`Formato de audio seleccionado: ${JSON.stringify(bestAudioFormat)}`);
-
-      const audioStream = ytdl.downloadFromInfo(videoInfo, { format: bestAudioFormat });
+      const audioStream = ytdl.downloadFromURL(videoUrl, { quality: 'highestaudio' });
       console.log(`Descargando audio...`);
 
       const audioBuffer = await new Promise((resolve, reject) => {
@@ -58,7 +42,7 @@ module.exports = {
 
       await socket.sendMessage(remoteJid, {
         audio: audioBuffer,
-        caption: `Audio descargado de ${videoInfo.videoDetails.title}`,
+        caption: `Audio descargado de ${results[0].title}`,
       });
 
       console.log(`Mensaje de audio enviado con éxito`);
