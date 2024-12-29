@@ -14,7 +14,7 @@ module.exports = {
       const mentions = participants.map(({ id }) => id);
 
       // Enviar una reacción para confirmar el comando
-      await sendReact("👻");
+      await sendReact("🫂");
 
       // Generar un mensaje llamativo para mencionar a todos
       const message = `
