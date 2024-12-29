@@ -1,4 +1,3 @@
-const ytSearch = require('yt-search');
 const ytdl = require('ytdl-core');
 const { PREFIX } = require('../../krampus');
 
@@ -6,46 +5,49 @@ module.exports = {
   name: 'descargar',
   description: 'Descarga el audio de un video de YouTube',
   commands: ['descargar', 'dl'],
-  usage: `${PREFIX}descargar <título de la canción>`,
+  usage: `${PREFIX}descargar <URL del video>`,
   handle: async ({ args, remoteJid, sendReply, socket }) => {
+    console.log(`Comando descargar ejecutado con argumentos: ${args}`);
+
     if (args.length < 1) {
-      await sendReply('Uso incorrecto. Por favor, proporciona el título de la canción.');
+      console.log(`Error: No se proporcionó el URL del video.`);
+      await sendReply('Uso incorrecto. Por favor, proporciona el URL del video.');
       return;
     }
 
-    const searchQuery = args.join(' ');
-    console.log(`Buscando canción con la query: ${searchQuery}`);
+    const videoUrl = args[0];
+    console.log(`URL del video: ${videoUrl}`);
 
     try {
-      const results = await ytSearch(searchQuery);
-      console.log(`Resultados de la búsqueda: ${results.length}`);
-
-      if (results.length === 0) {
-        await sendReply('No se encontraron resultados para tu búsqueda.');
-        return;
-      }
-
-      const videoUrl = results[0].url;
-      console.log(`URL de la canción seleccionada: ${videoUrl}`);
-
+      console.log(`Intentando descargar el audio del video...`);
       const audioStream = ytdl.downloadFromURL(videoUrl, { quality: 'highestaudio' });
-      console.log(`Descargando audio...`);
+      console.log(`AudioStream creado: ${audioStream}`);
 
       const audioBuffer = await new Promise((resolve, reject) => {
+        console.log(`Esperando a que se descargue el audio...`);
         const chunks = [];
-        audioStream.on('data', (chunk) => chunks.push(chunk));
-        audioStream.on('end', () => resolve(Buffer.concat(chunks)));
-        audioStream.on('error', (error) => reject(error));
+        audioStream.on('data', (chunk) => {
+          console.log(`Chunk de audio recibido: ${chunk.length} bytes`);
+          chunks.push(chunk);
+        });
+        audioStream.on('end', () => {
+          console.log(`Descarga del audio completada.`);
+          resolve(Buffer.concat(chunks));
+        });
+        audioStream.on('error', (error) => {
+          console.error(`Error al descargar el audio: ${error}`);
+          reject(error);
+        });
       });
 
-      console.log(`Audio descargado con éxito`);
+      console.log(`Audio descargado con éxito: ${audioBuffer.length} bytes`);
 
       await socket.sendMessage(remoteJid, {
         audio: audioBuffer,
-        caption: `Audio descargado de ${results[0].title}`,
+        caption: `Audio descargado de ${videoUrl}`,
       });
 
-      console.log(`Mensaje de audio enviado con éxito`);
+      console.log(`Mensaje de audio enviado con éxito.`);
     } catch (error) {
       console.error(`Error al ejecutar el comando descargar: ${error}`);
       await sendReply('Ocurrió un error al ejecutar el comando. Por favor, inténtalo de nuevo.');
