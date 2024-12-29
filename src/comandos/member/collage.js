@@ -1,4 +1,3 @@
-const { getProfileImageData } = require("@whiskeysockets/baileys");
 const { createCanvas, loadImage } = require("canvas");
 const fs = require("fs");
 const { PREFIX } = require("../../krampus"); // Para acceder al prefix
