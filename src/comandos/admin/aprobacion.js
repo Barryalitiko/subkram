@@ -2,7 +2,7 @@ const { PREFIX } = require("../../krampus");
 const fs = require("fs");
 const path = require("path");
 
-const approvalConfigPath = path.join(__dirname, "../../data/groupApprovalConfig.json");
+const approvalConfigPath = path.join(__dirname, "../assets/groupApprovalConfig.json");
 
 const readApprovalConfig = () => {
   if (fs.existsSync(approvalConfigPath)) {
