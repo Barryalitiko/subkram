@@ -2,7 +2,6 @@ const { BOT_EMOJI } = require("../krampus");
 const { extractDataFromMessage, baileysIs, download } = require(".");
 const { waitMessage } = require("./messages");
 const ytSearch = require("yt-search");
-const ytdl = require("ytdl-core");
 const fs = require("fs");
 const path = require("path");
 
@@ -175,77 +174,6 @@ const sendStickerFromFile = async (file) => {
     }
   };
 
-  // Función principal para descargar audio de YouTube
-  const downloadYouTubeAudio = async (videoUrl) => {
-    try {
-      console.log("[MUSICA] Validando URL de YouTube:", videoUrl);
-
-      // Validar la URL con ytdl-core
-      if (!ytdl.validateURL(videoUrl)) {
-        throw new Error("URL no válida de YouTube.");
-      }
-
-      // Obtener información del video
-      const info = await ytdl.getInfo(videoUrl);
-      const videoDetails = info.videoDetails;
-      const title = videoDetails.title.replace(/[^\w\s]/gi, ""); // Limpiar título
-      const duration = videoDetails.lengthSeconds;
-      const author = videoDetails.author.name;
-
-      console.log(`[MUSICA] Título: ${title}`);
-      console.log(`[MUSICA] Duración: ${duration} segundos`);
-      console.log(`[MUSICA] Autor: ${author}`);
-
-      // Filtrar formatos de audio y elegir el mejor
-      const audioFormats = ytdl.filterFormats(info.formats, "audioonly");
-      if (!audioFormats.length) {
-        throw new Error("No se encontraron formatos de audio disponibles.");
-      }
-      const bestAudioFormat = ytdl.chooseFormat(audioFormats, {
-        quality: "highestaudio",
-      });
-
-      console.log("[MUSICA] Mejor formato de audio seleccionado:", bestAudioFormat);
-
-      // Crear ruta para guardar el archivo
-      const outputDir = path.resolve(__dirname, "downloads");
-      if (!fs.existsSync(outputDir)) {
-        fs.mkdirSync(outputDir); // Crear carpeta si no existe
-      }
-      const filePath = path.join(outputDir, `${title}.mp3`);
-
-      // Descargar el archivo
-      console.log("[MUSICA] Iniciando descarga...");
-      const audioStream = ytdl(videoUrl, { format: bestAudioFormat });
-
-      const writeStream = fs.createWriteStream(filePath);
-      audioStream.pipe(writeStream);
-
-      // Escuchar eventos de progreso
-      audioStream.on("progress", (chunkLength, downloaded, total) => {
-        const percent = ((downloaded / total) * 100).toFixed(2);
-        console.log(`[MUSICA] Descarga en progreso: ${percent}%`);
-      });
-
-      return new Promise((resolve, reject) => {
-        writeStream.on("finish", () => {
-          console.log("[MUSICA] Descarga completada:", filePath);
-          resolve(filePath); // Devolver la ruta del archivo descargado
-        });
-
-        writeStream.on("error", (error) => {
-          console.error("[MUSICA] Error al guardar el archivo:", error.message);
-          reject(error);
-        });
-      });
-    } catch (error) {
-      console.error("[MUSICA] Error:", error.message);
-      throw new Error(
-        "Ocurrió un error al procesar el video. Inténtalo nuevamente."
-      );
-    }
-  };
-
   return {
     args,
     commandName,
@@ -271,7 +199,6 @@ const sendStickerFromFile = async (file) => {
     sendWarningReact,
     sendWarningReply,
     sendErrorReply,
-    searchYouTubeMusic, // Mantengo la función de búsqueda
-    downloadYouTubeAudio, // Añadida al objeto retornado
+    searchYouTubeMusic // Mantengo la función de búsqueda
   };
 };
