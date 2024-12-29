@@ -1,7 +1,7 @@
 // utils/autoReactions.js
 
 const autoReactions = {
-  "gato": "    "perro": "🐶",
+      "perro": "🐶",
     "gato": "🐱",
     "conejo": "🐰",
     "pájaro": "🐦",
