@@ -1,70 +1,53 @@
 const { PREFIX } = require("../../krampus");
+const ytSearch = require("yt-search");
+const { downloadAudio } = require("../playdl-handler/downloadAudio");
 
 module.exports = {
-  name: "musica",
-  description: "Buscar y descargar música desde YouTube",
-  commands: ["musica"],
-  usage: `${PREFIX}musica <nombre de la canción>`,
-  handle: async ({
-    args,
-    sendReply,
-    sendWaitReply,
-    sendErrorReply,
-    sendReact,
-    searchYouTubeMusic,
-    downloadYouTubeAudio,
-    socket,
-    remoteJid,
-  }) => {
-    console.log("[MUSICA] Comando recibido con argumentos:", args);
-
-    if (!args.length) {
-      await sendReact("❌");
-      console.log("[MUSICA] No se proporcionaron argumentos.");
-      return sendErrorReply("Por favor, proporciona el nombre de la canción.");
+  name: 'musica',
+  description: 'Busca y envía música desde YouTube',
+  commands: ['musica', 'play'],
+  usage: `${PREFIX}musica <nombre de la canción o URL de YouTube>`,
+  handle: async ({ args, remoteJid, sendReply, socket }) => {
+    if (args.length < 1) {
+      console.log("Uso incorrecto. No se proporcionó nombre de canción o URL.");
+      await sendReply(`Uso incorrecto. Por favor, proporciona el nombre de la canción o el URL. Ejemplo: ${PREFIX}musica [nombre o URL]`);
+      return;
     }
 
     const query = args.join(" ");
-    console.log("[MUSICA] Buscando en YouTube con el query:", query);
-    await sendWaitReply(`Buscando "${query}" en YouTube...`);
+    console.log(`Buscando música para: ${query}`);
 
     try {
-      // Buscar la canción en YouTube
-      const result = await searchYouTubeMusic(query);
-      console.log("[MUSICA] Resultado de búsqueda:", result);
-
-      if (!result || !result.videoId) {
-        await sendReact("❌");
-        console.log("[MUSICA] No se encontraron resultados para:", query);
-        return sendErrorReply("No se encontraron resultados para tu búsqueda.");
+      // Buscar música en YouTube usando yt-search
+      console.log(`Iniciando búsqueda en YouTube para: ${query}`);
+      const results = await ytSearch(query);
+      
+      if (!results || results.videos.length === 0) {
+        console.log("No se encontraron resultados para la búsqueda.");
+        return await sendReply("No se encontraron resultados para la búsqueda.");
       }
 
-      const videoTitle = result.title;
-      const videoUrl = `https://www.youtube.com/watch?v=${result.videoId}`;
-      console.log("[MUSICA] Canción encontrada:", videoTitle, videoUrl);
-      await sendReply(`🎵 Canción encontrada: *${videoTitle}*\n🔗 Enlace: ${videoUrl}`);
+      // Obtener el primer resultado de video
+      const video = results.videos[0];
+      console.log(`Encontrado: ${video.title} - ${video.url}`);
 
-      // Obtener la URL de descarga en formato MP3
-      await sendWaitReply(`Procesando la descarga de "${videoTitle}"...`);
-      console.log("[MUSICA] Iniciando descarga para:", videoUrl);
+      // Descargar el audio del video
+      console.log(`Iniciando descarga del audio de: ${video.url}`);
+      const audioBuffer = await downloadAudio(video.url);
+      console.log(`Audio descargado con éxito, tamaño: ${audioBuffer.length} bytes`);
 
-      const audioFilePath = await downloadYouTubeAudio(videoUrl);
-      console.log("[MUSICA] Audio descargado y guardado en:", audioFilePath);
-
-      // Enviar el archivo de audio como mensaje
+      // Enviar el audio al usuario
+      console.log(`Enviando audio a: ${remoteJid}`);
       await socket.sendMessage(remoteJid, {
-        audio: { url },
+        audio: audioBuffer,
         mimetype: "audio/mpeg",
-        fileName: `${videoTitle}.mp3`,
+        caption: `🎶 Aquí tienes: ${video.title}`,
       });
 
-      await sendReact("✅");
-      console.log("[MUSICA] Descarga completada y enviada:", videoTitle);
-      await sendReply(`🎶 Descarga completada: "${videoTitle}"`);
+      console.log(`Audio enviado con éxito: ${video.title}`);
     } catch (error) {
-      console.error("[MUSICA] Error al procesar el comando:", error.message);
-      await sendReact("❌");
-      await sendErrorReply("Hubo un error al procesar tu solicitud. Inténtalo de nuevo.");
+      console.error(`Error al buscar o descargar el audio: ${error}`);
+      await sendReply("Ocurrió un error al procesar tu solicitud. Por favor, inténtalo de nuevo.");
     }
   },
 };
