@@ -3,14 +3,14 @@ const GroupApproval = require("../../models/GroupApproval");
 
 module.exports = {
   name: "aprobacion",
-  description: "Activa o desactiva la aprobación de solicitudes de ingreso al grupo.",
+  description: "Activa o desactiva la aprobación automática de solicitudes.",
   commands: ["aprobacion", "approval"],
   usage: `${PREFIX}aprobacion [on|off]`,
   handle: async ({ args, remoteJid, sendReply }) => {
     const action = args[0]?.toLowerCase();
 
     if (!["on", "off"].includes(action)) {
-      await sendReply(`Uso incorrecto. Usa el comando de esta manera:\n${PREFIX}aprobacion [on|off]`);
+      await sendReply(`Uso incorrecto. Usa el comando así:\n${PREFIX}aprobacion [on|off]`);
       return;
     }
 
@@ -19,7 +19,7 @@ module.exports = {
 
       if (action === "on") {
         if (groupApproval && groupApproval.approvalEnabled) {
-          await sendReply("✅ La aprobación de solicitudes ya está activada en este grupo.");
+          await sendReply("✅ La aprobación automática ya está activada en este grupo.");
           return;
         }
 
@@ -29,10 +29,10 @@ module.exports = {
           { upsert: true }
         );
 
-        await sendReply("✅ Aprobación de solicitudes activada. Las solicitudes deberán ser aprobadas manualmente.");
+        await sendReply("✅ Aprobación automática activada. El bot aceptará todas las solicitudes.");
       } else if (action === "off") {
         if (groupApproval && !groupApproval.approvalEnabled) {
-          await sendReply("✅ La aprobación de solicitudes ya está desactivada en este grupo.");
+          await sendReply("✅ La aprobación automática ya está desactivada en este grupo.");
           return;
         }
 
@@ -42,11 +42,11 @@ module.exports = {
           { upsert: true }
         );
 
-        await sendReply("❌ Aprobación de solicitudes desactivada. Los usuarios podrán unirse automáticamente.");
+        await sendReply("❌ Aprobación automática desactivada. Los usuarios se unirán automáticamente.");
       }
     } catch (error) {
-      console.error("Error al gestionar la aprobación de solicitudes:", error);
-      await sendReply("❌ Hubo un problema al gestionar la aprobación de solicitudes. Inténtalo de nuevo.");
+      console.error("Error al gestionar la aprobación automática:", error);
+      await sendReply("❌ Hubo un problema al gestionar la aprobación automática. Inténtalo de nuevo.");
     }
   },
 };
