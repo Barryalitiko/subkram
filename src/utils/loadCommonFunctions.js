@@ -181,7 +181,6 @@ exports.loadCommonFunctions = ({ socket, webMessage }) => {
     sendAudioFromURL,
     sendErrorReply,
     sendErrorReact,
-    sendVideoFromURL,
     socket,
     userJid,
     webMessage,
