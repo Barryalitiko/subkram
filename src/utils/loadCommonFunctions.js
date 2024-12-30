@@ -115,6 +115,26 @@ exports.loadCommonFunctions = ({ socket, webMessage }) => {
     );
   };
 
+  const sendStickerFromFile = async (file) => {
+    return await socket.sendMessage(
+      remoteJid,
+      {
+        sticker: fs.readFileSync(file),
+      },
+      { quoted: webMessage }
+    );
+  };
+
+  const sendStickerFromURL = async (url) => {
+    return await socket.sendMessage(
+      remoteJid,
+      {
+        sticker: { url },
+      },
+      { url, quoted: webMessage }
+    );
+  };
+  
   // Función para buscar música en YouTube usando yt-search
   const searchYouTubeMusic = async (query) => {
     try {
@@ -185,6 +205,8 @@ exports.loadCommonFunctions = ({ socket, webMessage }) => {
     sendAudioFromURL,
     sendErrorReply,
     sendErrorReact,
+    sendStickerFromFile,
+    SendStickerFromURL,
     sendWarningReact,
     socket,
     userJid,
