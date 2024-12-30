@@ -1,53 +1,57 @@
-const playdl = require('play-dl');
-const { PREFIX } = require("../../krampus");
+Disculpa el error! Aquí te dejo el comando actualizado para utilizar `yt-search` en lugar de `yts`:
+```
+const ytdl = require('ytdl-core');
+const ytSearch = require('yt-search');
 
 module.exports = {
   name: 'música',
   description: 'Descarga y envía música desde YouTube',
-  commands: ['m', 'play'],
+  commands: ['música', 'play'],
   usage: `${PREFIX}música <nombre de la canción o URL de YouTube>`,
-  handle: async ({ args, remoteJid, sendReply, socket, webMessage }) => {
-    console.log('Comando música recibido con argumentos:', args);
-    await handleMusicCommand(args, sendReply, remoteJid, socket, webMessage);
+  handle: async ({ args, remoteJid, sendReply, socket }) => {
+    await handleMusicCommand(args, sendReply);
   }
 };
 
-async function handleMusicCommand(args, sendReply, remoteJid, socket, webMessage) {
-  const query = args.join(' ');
-  console.log('Consulta recibida:', query);
+// Función para manejar el comando de música
+async function handleMusicCommand(args, sendReply) {
+  let query = args.join(' ');
   try {
-    // Buscar el video
-    console.log('Buscando video en YouTube...');
-    const searchResult = await playdl.search(query, { limit: 1 });
-    console.log('Resultado de la búsqueda:', searchResult);
-    if (searchResult.length === 0) {
-      console.log('No se encontraron resultados para:', query);
-      sendReply('No se encontró ningún video para la consulta.');
-      return;
+    let videoUrl = await searchVideo(query);
+    if (videoUrl) {
+      sendReply(`Buscando la música para: ${query}`);
+      let audioStream = ytdl(videoUrl, { filter: 'audioonly' });
+      let audioBuffer = await streamToBuffer(audioStream);
+      sendReply(audioBuffer, 'audio/mp3');
+    } else {
+      sendReply('No se pudo encontrar el video.');
     }
-    const video = searchResult[0];
-    console.log('Video encontrado:', video);
-    // Notificar que la música está siendo enviada
-    console.log('Enviando música...');
-    sendReply(`Enviando música: ${video.title}`);
-    // Enviar el audio directamente desde la URL
-    console.log('Enviando audio desde la URL...');
-    await sendAudioFromURL(video.url, remoteJid, socket, webMessage);
-    console.log('Audio enviado con éxito.');
   } catch (error) {
-    console.error('Error manejando el comando de música:', error);
+    console.error(error);
     sendReply('Hubo un error al intentar obtener la música.');
   }
 }
 
-const sendAudioFromURL = async (url, remoteJid, socket, webMessage) => {
-  console.log('Enviando audio desde la URL:', url);
-  return await socket.sendMessage(
-    remoteJid,
-    {
-      audio: { url, duration: 180 }, // Duración de 3 minutos
-      mimetype: "audio/mpeg",
-    },
-    { url, quoted: webMessage }
-  );
-};
+// Función para buscar el video en YouTube
+async function searchVideo(query) {
+  try {
+    let results = await ytSearch(query);
+    let video = results.videos[0];
+    return video.url;
+  } catch (error) {
+    console.error('Error buscando video:', error);
+    return null;
+  }
+}
+
+// Función para convertir un stream a buffer
+function streamToBuffer(stream) {
+  return new Promise((resolve, reject) => {
+    const chunks = [];
+    stream.on('data', chunk => chunks.push(chunk));
+    stream.on('end', () => resolve(Buffer.concat(chunks)));
+    stream.on('error', reject);
+  });
+}
+```
+Este comando utiliza `yt-search` para buscar el video en YouTube y luego utiliza `ytdl-core` para descargar el audio del video. La función `streamToBuffer` se utiliza para convertir el stream de audio a un buffer.
