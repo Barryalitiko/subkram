@@ -1,69 +1,114 @@
-const playdl = require("play-dl");
-const fs = require("fs");
+const { default: makeWASocket, useMultiFileAuthState, fetchLatestBaileysVersion } = require('@adiwajshing/baileys');
+const playdl = require('play-dl');
+const fs = require('fs');
 
-(async () => {
+// Configuración para Baileys (crear y cargar sesión)
+const { state, saveState } = useMultiFileAuthState('./auth_info'); // Ruta para guardar sesión
+
+const startWhatsAppBot = async () => {
   try {
-    console.log("Probando conexión a YouTube...");
-    const searchResult = await playdl.search("Luis Fonsi - Despacito", { limit: 1 });
+    // Obtener la última versión de Baileys
+    const { version, isLatest } = await fetchLatestBaileysVersion();
+    console.log('Conectando a WhatsApp con la versión:', version);
 
-    if (searchResult.length === 0) {
-      console.log("No se encontró ningún resultado.");
-      return;
-    }
+    const socket = makeWASocket({
+      version,
+      auth: state,
+    });
 
-    const video = searchResult[0];
-    console.log("Video encontrado:", video);
+    // Guardar el estado de autenticación
+    socket.ev.on('connection.update', (update) => {
+      const { connection, lastDisconnect } = update;
+      if (connection === 'close') {
+        console.log('Conexión perdida. Motivo:', lastDisconnect.error);
+      } else if (connection === 'open') {
+        console.log('Conectado a WhatsApp.');
+      }
+      saveState();
+    });
 
-    console.log("Iniciando el streaming para:", video.title);
-    const streamInfo = await playdl.stream(video.url);
-    console.log("Stream de audio obtenido:", streamInfo);
+    // Manejar los mensajes
+    socket.ev.on('messages.upsert', async (m) => {
+      const message = m.messages[0];
+      const messageType = message.message?.conversation || message.message?.extendedTextMessage?.text;
 
-    console.log("Convirtiendo el stream a buffer...");
-    
-    // Aumentamos el tiempo de espera a 60 segundos
-    const audioBuffer = await timeoutPromise(streamToBuffer(streamInfo.stream), 60000); // Timeout de 60 segundos
-    console.log("Buffer generado, tamaño:", audioBuffer.length);
+      console.log('Mensaje recibido:', messageType);
 
-    // Guardar el buffer en un archivo temporal
-    const tempFilePath = "temp_audio.mp3";
-    console.log("Guardando el buffer en un archivo temporal:", tempFilePath);
-    fs.writeFileSync(tempFilePath, audioBuffer);
-    
-    console.log("Archivo guardado correctamente. Revisa el archivo:", tempFilePath);
+      // Verificar si el mensaje contiene el comando de música
+      if (messageType && messageType.startsWith('!música')) {
+        const query = messageType.replace('!música', '').trim();
+        console.log('Consulta recibida para búsqueda de música:', query);
+        if (query) {
+          await sendMusic(query, socket, message.key.remoteJid);
+        } else {
+          console.log('No se proporcionó consulta de música.');
+          socket.sendMessage(message.key.remoteJid, { text: 'Por favor, proporciona el nombre o enlace del video de YouTube.' });
+        }
+      }
+    });
+
+    // Función para enviar música desde YouTube
+    const sendMusic = async (query, socket, remoteJid) => {
+      try {
+        console.log(`Buscando video en YouTube: ${query}`);
+        const searchResult = await playdl.search(query, { limit: 1 });
+        console.log('Resultado de la búsqueda:', searchResult);
+
+        if (searchResult.length === 0) {
+          console.log('No se encontró ningún video.');
+          socket.sendMessage(remoteJid, { text: 'No se encontró ningún video para la consulta.' });
+          return;
+        }
+
+        const video = searchResult[0];
+        console.log('Video encontrado:', video.title);
+
+        // Obtener el stream de audio
+        const streamInfo = await playdl.stream(video.url);
+        console.log('Iniciando transmisión de audio desde YouTube...');
+
+        // Convertir el stream a buffer
+        const audioBuffer = await streamToBuffer(streamInfo.stream);
+        console.log('Stream convertido a buffer con éxito.');
+
+        // Guardar el buffer como archivo temporal
+        const tempFilePath = './temp_audio.mp3';
+        fs.writeFileSync(tempFilePath, audioBuffer);
+        console.log('Archivo de audio temporal guardado:', tempFilePath);
+
+        // Enviar el archivo de audio a WhatsApp
+        await socket.sendMessage(remoteJid, { audio: fs.createReadStream(tempFilePath), mimetype: 'audio/mp3', ptt: true });
+        console.log('Audio enviado con éxito.');
+
+        // Eliminar archivo temporal después de enviarlo
+        fs.unlinkSync(tempFilePath);
+        console.log('Archivo temporal eliminado.');
+
+      } catch (error) {
+        console.error('Error al manejar la música:', error);
+        socket.sendMessage(remoteJid, { text: 'Hubo un error al intentar obtener la música.' });
+      }
+    };
+
+    // Función para convertir el stream de audio en un buffer
+    const streamToBuffer = (stream) => {
+      return new Promise((resolve, reject) => {
+        const chunks = [];
+        stream.on('data', (chunk) => {
+          chunks.push(chunk);
+        });
+        stream.on('end', () => {
+          resolve(Buffer.concat(chunks));
+        });
+        stream.on('error', (error) => {
+          reject(error);
+        });
+      });
+    };
+
   } catch (error) {
-    console.error("Error durante el test:", error);
+    console.error('Error al iniciar el bot:', error);
   }
-})();
+};
 
-// Función para convertir stream a buffer
-function streamToBuffer(stream) {
-  return new Promise((resolve, reject) => {
-    const chunks = [];
-    stream.on("data", (chunk) => {
-      console.log("Chunk recibido:", chunk.length, "bytes");
-      chunks.push(chunk);
-    });
-    stream.on("end", () => {
-      console.log("Stream completado, generando buffer...");
-      resolve(Buffer.concat(chunks));
-    });
-    stream.on("error", (error) => {
-      console.error("Error en el stream:", error);
-      reject(error);
-    });
-  });
-}
-
-// Función para añadir un timeout a cualquier promesa
-function timeoutPromise(promise, ms) {
-  return new Promise((resolve, reject) => {
-    const timer = setTimeout(() => reject(new Error('Operación excedió el tiempo límite')), ms);
-    promise.then((result) => {
-      clearTimeout(timer);
-      resolve(result);
-    }).catch((error) => {
-      clearTimeout(timer);
-      reject(error);
-    });
-  });
-}
+startWhatsAppBot().catch(console.error);
