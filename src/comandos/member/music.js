@@ -1,4 +1,6 @@
-const playdl = require('play-dl');
+const { DeliriussAPI } = require('@bochilteam/scraper');
+const ytSearch = require('yt-search');
+const axios = require('axios');
 const { PREFIX } = require("../../krampus");
 
 module.exports = {
@@ -16,23 +18,33 @@ async function handleMusicCommand(args, sendReply, remoteJid, socket, webMessage
   const query = args.join(' ');
   console.log('Consulta recibida:', query);
   try {
-    // Buscar el video
+    // Buscar el video en YouTube usando yt-search
     console.log('Buscando video en YouTube...');
-    const searchResult = await playdl.search(query, { limit: 1 });
-    console.log('Resultado de la búsqueda:', searchResult);
-    if (searchResult.length === 0) {
+    const { videos } = await ytSearch(query);
+    if (!videos.length) {
       console.log('No se encontraron resultados para:', query);
       sendReply('No se encontró ningún video para la consulta.');
       return;
     }
-    const video = searchResult[0];
+    const video = videos[0];
     console.log('Video encontrado:', video);
+    
+    // Obtener el enlace de audio de la API DeliriussAPI
+    console.log('Obteniendo enlace de música...');
+    const musicUrl = await DeliriussAPI.getAudioUrl(video.url);
+
+    // Verificar tamaño del archivo
+    const fileSize = await getFileSize(musicUrl);
+    if (fileSize > 700 * 1024 * 1024) {
+      sendReply('El archivo es demasiado grande para enviarlo directamente.');
+      return;
+    }
+
     // Notificar que la música está siendo enviada
-    console.log('Enviando música...');
     sendReply(`Enviando música: ${video.title}`);
-    // Enviar el audio directamente desde la URL
-    console.log('Enviando audio desde la URL...');
-    await sendAudioFromURL(video.url, remoteJid, socket, webMessage);
+
+    // Enviar el audio
+    await sendAudioFromURL(musicUrl, remoteJid, socket, webMessage);
     console.log('Audio enviado con éxito.');
   } catch (error) {
     console.error('Error manejando el comando de música:', error);
@@ -40,6 +52,18 @@ async function handleMusicCommand(args, sendReply, remoteJid, socket, webMessage
   }
 }
 
+// Función para obtener el tamaño del archivo
+async function getFileSize(url) {
+  try {
+    const response = await axios.head(url);
+    return parseInt(response.headers['content-length'], 10);
+  } catch (error) {
+    console.error('Error al obtener el tamaño del archivo:', error);
+    return 0;
+  }
+}
+
+// Función para enviar el audio desde la URL
 const sendAudioFromURL = async (url, remoteJid, socket, webMessage) => {
   console.log('Enviando audio desde la URL:', url);
   return await socket.sendMessage(
@@ -48,6 +72,6 @@ const sendAudioFromURL = async (url, remoteJid, socket, webMessage) => {
       audio: { url, duration: 180 }, // Duración de 3 minutos
       mimetype: "audio/mpeg",
     },
-    { url, quoted: webMessage }
+    { quoted: webMessage }
   );
 };
