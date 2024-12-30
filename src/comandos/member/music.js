@@ -1,5 +1,7 @@
 const playdl = require('play-dl');
-const { PREFIX } = require("../../krampus");
+const fs = require('fs');
+const path = require('path');
+const { PREFIX } = require("../../krampus"); // Ajusta la ruta según tu proyecto
 
 module.exports = {
   name: 'música',
@@ -12,50 +14,60 @@ module.exports = {
   }
 };
 
+// Función principal para manejar el comando de música
 async function handleMusicCommand(args, sendReply) {
-  let query = args.join(' ');
+  const query = args.join(' ');
   console.log('Consulta recibida:', query);
 
   try {
-    let searchResult = await playdl.search(query, { limit: 1 });
+    // Buscar el video
+    const searchResult = await playdl.search(query, { limit: 1 });
     if (searchResult.length === 0) {
+      console.log('No se encontraron resultados para:', query);
       sendReply('No se encontró ningún video para la consulta.');
       return;
     }
 
-    let video = searchResult[0];
+    const video = searchResult[0];
     console.log('Video encontrado:', video);
 
+    // Notificar que la música está siendo descargada
     sendReply(`Descargando música: ${video.title}`);
-    let stream = await playdl.stream(video.url);
+    console.log('Iniciando la descarga de audio desde:', video.url);
+
+    // Obtener el stream de audio
+    const stream = await playdl.stream(video.url);
     console.log('Stream de audio obtenido:', stream);
 
-    let audioBuffer = await streamToBuffer(stream.stream);
-    console.log('Buffer de audio generado, tamaño:', audioBuffer.length);
+    // Guardar temporalmente el archivo
+    const tempFilePath = path.join(__dirname, `${video.title}.mp3`);
+    const writeStream = fs.createWriteStream(tempFilePath);
+    console.log('Creando stream de escritura para:', tempFilePath);
 
-    sendReply(audioBuffer, 'audio/mp3');
-    console.log('Audio enviado exitosamente.');
+    stream.stream.pipe(writeStream);
+
+    writeStream.on('finish', async () => {
+      console.log('Archivo guardado exitosamente:', tempFilePath);
+
+      // Leer el archivo y enviarlo
+      const audioBuffer = fs.readFileSync(tempFilePath);
+      console.log('Buffer de audio leído, tamaño:', audioBuffer.length);
+
+      sendReply(audioBuffer, { mimetype: 'audio/mp3', filename: `${video.title}.mp3` });
+      console.log('Audio enviado exitosamente.');
+
+      // Eliminar el archivo temporal
+      fs.unlinkSync(tempFilePath);
+      console.log('Archivo temporal eliminado:', tempFilePath);
+    });
+
+    writeStream.on('error', (error) => {
+      console.error('Error al guardar el archivo:', error);
+      sendReply('Hubo un error al guardar el archivo de audio.');
+    });
+
   } catch (error) {
     console.error('Error manejando el comando de música:', error);
     sendReply('Hubo un error al intentar obtener la música.');
   }
-}
-
-function streamToBuffer(stream) {
-  console.log('Convirtiendo stream a buffer...');
-  return new Promise((resolve, reject) => {
-    const chunks = [];
-    stream.on('data', chunk => {
-      console.log('Chunk recibido, tamaño:', chunk.length);
-      chunks.push(chunk);
-    });
-    stream.on('end', () => {
-      console.log('Stream completado, generando buffer...');
-      resolve(Buffer.concat(chunks));
-    });
-    stream.on('error', error => {
-      console.error('Error en el stream:', error);
-      reject(error);
-    });
-  });
 }
