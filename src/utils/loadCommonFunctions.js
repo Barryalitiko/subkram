@@ -26,9 +26,31 @@ exports.loadCommonFunctions = ({ socket, webMessage }) => {
   const isVideo = baileysIs(webMessage, "video");
   const isSticker = baileysIs(webMessage, "sticker");
 
-  const basicYoutubeRegex = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+$/;
-  const isValidYoutubeUrl = (url) => basicYoutubeRegex.test(url);
+  const downloadImage = async (webMessage, fileName) => {
+    return await download(webMessage, fileName, "image", "png");
+  };
 
+  const downloadSticker = async (webMessage, fileName) => {
+    return await download(webMessage, fileName, "sticker", "webp");
+  };
+
+  const downloadVideo = async (webMessage, fileName) => {
+    return await download(webMessage, fileName, "video", "mp4");
+  };
+
+  const sendText = async (text, mentions) => {
+    let optionalParams = {};
+
+    if (mentions?.length) {
+      optionalParams = { mentions };
+    }
+
+    return await socket.sendMessage(remoteJid, {
+      text: `${BOT_EMOJI} ${text}`,
+      ...optionalParams,
+    });
+  };
+  
   const sendReply = async (text) => {
     return await socket.sendMessage(
       remoteJid,
@@ -50,6 +72,11 @@ exports.loadCommonFunctions = ({ socket, webMessage }) => {
     return await sendReact("✅");
   };
 
+  const sendWarningReply = async (text) => {
+    await sendWarningReact();
+    return await sendReply(`⚠️ Advertencia! ${text}`);
+  };
+  
   const sendWaitReact = async () => {
     return await sendReact("⏳");
   };
