@@ -1,54 +1,61 @@
+const playdl = require('play-dl');
 const { PREFIX } = require("../../krampus");
-const ytSearch = require("yt-search");
-// Importación correcta de downloadAudio
-const { downloadAudio } = require("../../play-handler/downloadAudio");
 
 module.exports = {
-  name: 'musica',
-  description: 'Busca y envía música desde YouTube',
-  commands: ['musica', 'play'],
-  usage: `${PREFIX}musica <nombre de la canción o URL de YouTube>`,
+  name: 'música',
+  description: 'Descarga y envía música desde YouTube',
+  commands: ['m', 'play'],
+  usage: `${PREFIX}música <nombre de la canción o URL de YouTube>`,
   handle: async ({ args, remoteJid, sendReply, socket }) => {
-    if (args.length < 1) {
-      console.log("Uso incorrecto. No se proporcionó nombre de canción o URL.");
-      await sendReply(`Uso incorrecto. Por favor, proporciona el nombre de la canción o el URL. Ejemplo: ${PREFIX}musica [nombre o URL]`);
+    console.log('Comando música recibido con argumentos:', args);
+    await handleMusicCommand(args, sendReply);
+  }
+};
+
+async function handleMusicCommand(args, sendReply) {
+  let query = args.join(' ');
+  console.log('Consulta recibida:', query);
+
+  try {
+    let searchResult = await playdl.search(query, { limit: 1 });
+    if (searchResult.length === 0) {
+      sendReply('No se encontró ningún video para la consulta.');
       return;
     }
 
-    const query = args.join(" ");
-    console.log(`Buscando música para: ${query}`);
+    let video = searchResult[0];
+    console.log('Video encontrado:', video);
 
-    try {
-      // Buscar música en YouTube usando yt-search
-      console.log(`Iniciando búsqueda en YouTube para: ${query}`);
-      const results = await ytSearch(query);
-      
-      if (!results || results.videos.length === 0) {
-        console.log("No se encontraron resultados para la búsqueda.");
-        return await sendReply("No se encontraron resultados para la búsqueda.");
-      }
+    sendReply(`Descargando música: ${video.title}`);
+    let stream = await playdl.stream(video.url);
+    console.log('Stream de audio obtenido:', stream);
 
-      // Obtener el primer resultado de video
-      const video = results.videos[0];
-      console.log(`Encontrado: ${video.title} - ${video.url}`);
+    let audioBuffer = await streamToBuffer(stream.stream);
+    console.log('Buffer de audio generado, tamaño:', audioBuffer.length);
 
-      // Descargar el audio del video
-      console.log(`Iniciando descarga del audio de: ${video.url}`);
-      const audioBuffer = await downloadAudio(video.url);
-      console.log(`Audio descargado con éxito, tamaño: ${audioBuffer.length} bytes`);
+    sendReply(audioBuffer, 'audio/mp3');
+    console.log('Audio enviado exitosamente.');
+  } catch (error) {
+    console.error('Error manejando el comando de música:', error);
+    sendReply('Hubo un error al intentar obtener la música.');
+  }
+}
 
-      // Enviar el audio al usuario
-      console.log(`Enviando audio a: ${remoteJid}`);
-      await socket.sendMessage(remoteJid, {
-        audio: audioBuffer,
-        mimetype: "audio/mpeg",
-        caption: `🎶 Aquí tienes: ${video.title}`,
-      });
-
-      console.log(`Audio enviado con éxito: ${video.title}`);
-    } catch (error) {
-      console.error(`Error al buscar o descargar el audio: ${error}`);
-      await sendReply("Ocurrió un error al procesar tu solicitud. Por favor, inténtalo de nuevo.");
-    }
-  },
-};
+function streamToBuffer(stream) {
+  console.log('Convirtiendo stream a buffer...');
+  return new Promise((resolve, reject) => {
+    const chunks = [];
+    stream.on('data', chunk => {
+      console.log('Chunk recibido, tamaño:', chunk.length);
+      chunks.push(chunk);
+    });
+    stream.on('end', () => {
+      console.log('Stream completado, generando buffer...');
+      resolve(Buffer.concat(chunks));
+    });
+    stream.on('error', error => {
+      console.error('Error en el stream:', error);
+      reject(error);
+    });
+  });
+}
