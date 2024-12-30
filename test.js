@@ -28,7 +28,7 @@ const fs = require("fs");
     const tempFilePath = "temp_audio.mp3";
     console.log("Guardando el buffer en un archivo temporal:", tempFilePath);
     fs.writeFileSync(tempFilePath, audioBuffer);
-
+    
     console.log("Archivo guardado correctamente. Revisa el archivo:", tempFilePath);
   } catch (error) {
     console.error("Error durante el test:", error);
@@ -39,9 +39,18 @@ const fs = require("fs");
 function streamToBuffer(stream) {
   return new Promise((resolve, reject) => {
     const chunks = [];
-    stream.on("data", (chunk) => chunks.push(chunk));
-    stream.on("end", () => resolve(Buffer.concat(chunks)));
-    stream.on("error", (error) => reject(error));
+    stream.on("data", (chunk) => {
+      console.log("Chunk recibido:", chunk.length, "bytes");
+      chunks.push(chunk);
+    });
+    stream.on("end", () => {
+      console.log("Stream completado, generando buffer...");
+      resolve(Buffer.concat(chunks));
+    });
+    stream.on("error", (error) => {
+      console.error("Error en el stream:", error);
+      reject(error);
+    });
   });
 }
 
