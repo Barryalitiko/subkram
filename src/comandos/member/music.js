@@ -1,77 +1,68 @@
-const { DeliriussAPI } = require('@bochilteam/scraper');
-const ytSearch = require('yt-search');
-const axios = require('axios');
 const { PREFIX } = require("../../krampus");
+const ytSearch = require("yt-search");
+const ytdl = require("ytdl-core");
+const axios = require("axios");
 
-module.exports = {
-  name: 'música',
-  description: 'Descarga y envía música desde YouTube',
-  commands: ['m', 'prueba'],
-  usage: `${PREFIX}música <nombre de la canción o URL de YouTube>`,
-  handle: async ({ args, remoteJid, sendReply, socket, webMessage }) => {
-    console.log('Comando música recibido con argumentos:', args);
-    await handleMusicCommand(args, sendReply, remoteJid, socket, webMessage);
-  }
+exports.getBuffer = (url, options) => {
+  return new Promise((resolve, reject) => {
+    axios({
+      method: "get",
+      url,
+      headers: {
+        DNT: 1,
+        "Upgrade-Insecure-Request": 1,
+        range: "bytes=0-",
+      },
+      ...options,
+      responseType: "arraybuffer",
+      proxy: options?.proxy || false,
+    })
+    .then((res) => {
+      resolve(res.data);
+    })
+    .catch(reject);
+  });
 };
 
-async function handleMusicCommand(args, sendReply, remoteJid, socket, webMessage) {
-  const query = args.join(' ');
-  console.log('Consulta recibida:', query);
-  try {
-    // Buscar el video en YouTube usando yt-search
-    console.log('Buscando video en YouTube...');
-    const { videos } = await ytSearch(query);
-    if (!videos.length) {
-      console.log('No se encontraron resultados para:', query);
-      sendReply('No se encontró ningún video para la consulta.');
+module.exports = {
+  name: 'musica',
+  description: 'Busca y envía música desde YouTube',
+  commands: ['musica', 'play'],
+  usage: `${PREFIX}musica <nombre de la canción o URL de YouTube>`,
+  handle: async ({ args, remoteJid, sendReply, socket }) => {
+    if (args.length < 1) {
+      await sendReply(`Uso incorrecto. Por favor, proporciona el nombre de la canción o el URL. Ejemplo: ${PREFIX}musica [nombre o URL]`);
       return;
     }
-    const video = videos[0];
-    console.log('Video encontrado:', video);
-    
-    // Obtener el enlace de audio de la API DeliriussAPI
-    console.log('Obteniendo enlace de música...');
-    const musicUrl = await DeliriussAPI.getAudioUrl(video.url);
+    const query = args.join(" ");
+    console.log(`Buscando música para: ${query}`);
 
-    // Verificar tamaño del archivo
-    const fileSize = await getFileSize(musicUrl);
-    if (fileSize > 700 * 1024 * 1024) {
-      sendReply('El archivo es demasiado grande para enviarlo directamente.');
-      return;
+    try {
+      // Buscar música en YouTube usando yt-search
+      const results = await ytSearch(query);
+      if (!results || results.videos.length === 0) {
+        return await sendReply("No se encontraron resultados para la búsqueda.");
+      }
+
+      // Obtener el primer resultado de video
+      const video = results.videos[0];
+      console.log(`Encontrado: ${video.title} - ${video.url}`);
+
+      // Descargar el audio del video
+      const info = await ytdl.getInfo(video.url);
+      const audioUrl = info.formats.find(format => format.container === 'mp4' && format.audioCodec === 'aac').url;
+      const audioBuffer = await getBuffer(audioUrl);
+
+      // Enviar el audio al usuario
+      await socket.sendMessage(remoteJid, {
+        audio: audioBuffer,
+        mimetype: "audio/mpeg",
+        caption: `🎶 Aquí tienes: ${video.title}`,
+      });
+      console.log(`Audio enviado con éxito: ${video.title}`);
+    } catch (error) {
+      console.error(`Error al buscar o descargar el audio: ${error}`);
+      await sendReply("Ocurrió un error al procesar tu solicitud. Por favor, inténtalo de nuevo.");
     }
-
-    // Notificar que la música está siendo enviada
-    sendReply(`Enviando música: ${video.title}`);
-
-    // Enviar el audio
-    await sendAudioFromURL(musicUrl, remoteJid, socket, webMessage);
-    console.log('Audio enviado con éxito.');
-  } catch (error) {
-    console.error('Error manejando el comando de música:', error);
-    sendReply('Hubo un error al intentar obtener la música.');
-  }
-}
-
-// Función para obtener el tamaño del archivo
-async function getFileSize(url) {
-  try {
-    const response = await axios.head(url);
-    return parseInt(response.headers['content-length'], 10);
-  } catch (error) {
-    console.error('Error al obtener el tamaño del archivo:', error);
-    return 0;
-  }
-}
-
-// Función para enviar el audio desde la URL
-const sendAudioFromURL = async (url, remoteJid, socket, webMessage) => {
-  console.log('Enviando audio desde la URL:', url);
-  return await socket.sendMessage(
-    remoteJid,
-    {
-      audio: { url, duration: 180 }, // Duración de 3 minutos
-      mimetype: "audio/mpeg",
-    },
-    { quoted: webMessage }
-  );
+  },
 };
