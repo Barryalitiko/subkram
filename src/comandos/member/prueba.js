@@ -1,5 +1,3 @@
-Disculpa el error! Aquí te dejo el comando actualizado para utilizar `yt-search` en lugar de `yts`:
-```
 const ytdl = require('ytdl-core');
 const ytSearch = require('yt-search');
 
@@ -53,5 +51,3 @@ function streamToBuffer(stream) {
     stream.on('error', reject);
   });
 }
-```
-Este comando utiliza `yt-search` para buscar el video en YouTube y luego utiliza `ytdl-core` para descargar el audio del video. La función `streamToBuffer` se utiliza para convertir el stream de audio a un buffer.
