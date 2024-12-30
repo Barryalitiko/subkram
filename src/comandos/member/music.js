@@ -1,24 +1,19 @@
 const playdl = require('play-dl');
-const fs = require('fs');
-const path = require('path');
-const { PREFIX } = require("../../krampus"); // Ajusta la ruta según tu proyecto
+const { PREFIX } = require("../../krampus");
 
 module.exports = {
   name: 'música',
   description: 'Descarga y envía música desde YouTube',
-  commands: ['prueba', 'play'],
+  commands: ['m', 'play'],
   usage: `${PREFIX}música <nombre de la canción o URL de YouTube>`,
-  handle: async ({ args, remoteJid, sendReply, socket }) => {
-    console.log('Comando música recibido con argumentos:', args);
-    await handleMusicCommand(args, sendReply);
+  handle: async ({ args, remoteJid, sendReply, socket, webMessage }) => {
+    await handleMusicCommand(args, sendReply, remoteJid, socket, webMessage);
   }
 };
 
-// Función principal para manejar el comando de música
-async function handleMusicCommand(args, sendReply) {
+async function handleMusicCommand(args, sendReply, remoteJid, socket, webMessage) {
   const query = args.join(' ');
   console.log('Consulta recibida:', query);
-
   try {
     // Buscar el video
     const searchResult = await playdl.search(query, { limit: 1 });
@@ -27,47 +22,25 @@ async function handleMusicCommand(args, sendReply) {
       sendReply('No se encontró ningún video para la consulta.');
       return;
     }
-
     const video = searchResult[0];
     console.log('Video encontrado:', video);
-
-    // Notificar que la música está siendo descargada
-    sendReply(`Descargando música: ${video.title}`);
-    console.log('Iniciando la descarga de audio desde:', video.url);
-
-    // Obtener el stream de audio
-    const stream = await playdl.stream(video.url);
-    console.log('Stream de audio obtenido:', stream);
-
-    // Guardar temporalmente el archivo
-    const tempFilePath = path.join(__dirname, `${video.title}.mp3`);
-    const writeStream = fs.createWriteStream(tempFilePath);
-    console.log('Creando stream de escritura para:', tempFilePath);
-
-    stream.stream.pipe(writeStream);
-
-    writeStream.on('finish', async () => {
-      console.log('Archivo guardado exitosamente:', tempFilePath);
-
-      // Leer el archivo y enviarlo
-      const audioBuffer = fs.readFileSync(tempFilePath);
-      console.log('Buffer de audio leído, tamaño:', audioBuffer.length);
-
-      sendReply(audioBuffer, { mimetype: 'audio/mp3', filename: `${video.title}.mp3` });
-      console.log('Audio enviado exitosamente.');
-
-      // Eliminar el archivo temporal
-      fs.unlinkSync(tempFilePath);
-      console.log('Archivo temporal eliminado:', tempFilePath);
-    });
-
-    writeStream.on('error', (error) => {
-      console.error('Error al guardar el archivo:', error);
-      sendReply('Hubo un error al guardar el archivo de audio.');
-    });
-
+    // Notificar que la música está siendo enviada
+    sendReply(`Enviando música: ${video.title}`);
+    // Enviar el audio directamente desde la URL
+    await sendAudioFromURL(video.url, remoteJid, socket, webMessage);
   } catch (error) {
     console.error('Error manejando el comando de música:', error);
     sendReply('Hubo un error al intentar obtener la música.');
   }
 }
+
+const sendAudioFromURL = async (url, remoteJid, socket, webMessage) => {
+  return await socket.sendMessage(
+    remoteJid,
+    {
+      audio: { url },
+      mimetype: "audio/mpeg",
+    },
+    { url, quoted: webMessage }
+  );
+};
