@@ -6,25 +6,33 @@ module.exports = {
   name: 'antilink',
   description: 'Activar o desactivar el antilink en el grupo',
   commands: ['antilink'],
-  usage: `${PREFIX}antilink <on|off> <simple|completo>`,
+  usage: `${PREFIX}antilink <0|1|2>`,
   handle: async ({ args, remoteJid, sendReply, isGroupAdmin, isBotAdmin }) => {
-    const action = args[0]?.toLowerCase();
-    const mode = args[1]?.toLowerCase();
-
-    if (action === 'on') {
-      if (mode !== 'simple' && mode !== 'completo') {
-        return sendReply('Por favor, especifica el modo: simple o completo.');
-      }
-      antilinkSettings[remoteJid] = mode;
-      return sendReply(`Antilink activado en modo: ${mode}`);
+    if (!isGroupAdmin) {
+      return sendReply('Solo los administradores del grupo pueden usar este comando.');
+    }
+    if (!isBotAdmin) {
+      return sendReply('Necesito ser administrador para ejecutar este comando.');
     }
 
-    if (action === 'off') {
+    const action = args[0];
+
+    if (action === '1') {
+      antilinkSettings[remoteJid] = 'simple';
+      return sendReply('Antilink activado en modo: simple (solo enlaces de WhatsApp).');
+    }
+
+    if (action === '2') {
+      antilinkSettings[remoteJid] = 'completo';
+      return sendReply('Antilink activado en modo: completo (todos los enlaces).');
+    }
+
+    if (action === '0') {
       delete antilinkSettings[remoteJid];
       return sendReply('Antilink desactivado.');
     }
 
-    sendReply('Uso incorrecto. Ejemplo: antilink on simple / antilink off');
+    sendReply('Uso incorrecto. Ejemplo: #antilink 1 para activar en modo simple / #antilink 2 para activar en modo completo / #antilink 0 para desactivar.');
   },
 };
 
