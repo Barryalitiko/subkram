@@ -1,51 +1,61 @@
+const playdl = require('play-dl');
+const axios = require('axios');
 const { PREFIX } = require("../../krampus");
-const ytSearch = require("yt-search");
-const ytdl = require("ytdl-core");
 
 module.exports = {
-  name: "ytsearch",
-  description: "Busca un video en YouTube y te envía el enlace o audio.",
-  commands: ["ytsearch", "searchyt"],
-  usage: `${PREFIX}ytsearch <nombre de la canción o URL de YouTube>`,
-  handle: async ({ args, remoteJid, sendReply, socket }) => {
-    if (args.length < 1) {
-      console.log("Uso incorrecto. No se proporcionó consulta.");
-      return await sendReply(`Uso incorrecto. Por favor, proporciona el nombre de la canción o el URL. Ejemplo: ${PREFIX}ytsearch [nombre o URL]`);
+  name: 'música',
+  description: 'Descarga y envía música desde YouTube',
+  commands: ['m', 'play'],
+  usage: `${PREFIX}música <nombre de la canción o URL de YouTube>`,
+  handle: async ({ args, remoteJid, sendReply, socket, webMessage }) => {
+    console.log('Comando música recibido con argumentos:', args);
+    await handleMusicCommand(args, sendReply, remoteJid, socket, webMessage);
+  }
+};
+
+async function handleMusicCommand(args, sendReply, remoteJid, socket, webMessage) {
+  const query = args.join(' ');
+  console.log('Consulta recibida:', query);
+  try {
+    // Buscar el video
+    console.log('Buscando video en YouTube...');
+    const searchResult = await playdl.search(query, { limit: 1 });
+    console.log('Resultado de la búsqueda:', searchResult);
+    if (searchResult.length === 0) {
+      console.log('No se encontraron resultados para:', query);
+      sendReply('No se encontró ningún video para la consulta.');
+      return;
     }
+    const video = searchResult[0];
+    console.log('Video encontrado:', video);
+    // Notificar que la música está siendo enviada
+    console.log('Enviando música...');
+    sendReply(`Enviando música: ${video.title}`);
+    // Enviar el audio directamente desde la URL
+    console.log('Enviando audio desde la URL...');
+    await sendAudioFromURL(video.url, remoteJid, socket, webMessage);
+    console.log('Audio enviado con éxito.');
+  } catch (error) {
+    console.error('Error manejando el comando de música:', error);
+    sendReply('Hubo un error al intentar obtener la música.');
+  }
+}
 
-    const query = args.join(" ");
-    console.log(`Buscando video para: ${query}`);
-
-    try {
-      // Buscar video en YouTube
-      const results = await ytSearch(query);
-      console.log(`Resultados de búsqueda obtenidos: ${results.videos.length} videos encontrados.`);
-
-      if (!results || results.videos.length === 0) {
-        console.log("No se encontraron videos.");
-        return await sendReply("No se encontraron resultados para la búsqueda.");
-      }
-
-      // Obtener el primer resultado de video
-      const video = results.videos[0];
-      console.log(`Video encontrado: ${video.title} - URL: ${video.url}`);
-
-      // Enviar enlace del video encontrado
-      await sendReply(`🎥 Aquí está el video encontrado: ${video.url}`);
-
-      // Descargar el audio del video
-      const info = await ytdl.getInfo(video.url);
-      console.log("Información del video obtenida.");
-      
-      const audioUrl = info.formats.find(format => format.container === 'mp4' && format.audioCodec === 'aac').url;
-      console.log(`URL del audio extraída: ${audioUrl}`);
-
-      // Enviar el enlace de descarga del audio
-      await sendReply(`🎶 Aquí está el enlace para descargar el audio: ${audioUrl}`);
-
-    } catch (error) {
-      console.error(`Error al buscar o procesar el video: ${error}`);
-      await sendReply("Ocurrió un error al procesar tu solicitud. Por favor, inténtalo de nuevo.");
-    }
-  },
+const sendAudioFromURL = async (url, remoteJid, socket, webMessage) => {
+  console.log('Enviando audio desde la URL:', url);
+  try {
+    const response = await axios.get(url, { responseType: 'arraybuffer' });
+    const audioBuffer = Buffer.from(response.data, 'binary');
+    console.log('Tamaño del audio:', audioBuffer.length);
+    return await socket.sendMessage(
+      remoteJid,
+      {
+        audio: { url, duration: 0 },
+        mimetype: "audio/mp3",
+      },
+      { url, quoted: webMessage }
+    );
+  } catch (error) {
+    console.error('Error enviando audio:', error);
+  }
 };
