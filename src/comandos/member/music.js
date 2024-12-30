@@ -4,7 +4,7 @@ const { PREFIX } = require("../../krampus");
 module.exports = {
   name: 'música',
   description: 'Descarga y envía música desde YouTube',
-  commands: ['m', 'play'],
+  commands: ['prueba', 'play'],
   usage: `${PREFIX}música <nombre de la canción o URL de YouTube>`,
   handle: async ({ args, remoteJid, sendReply, socket, webMessage }) => {
     await handleMusicCommand(args, sendReply, remoteJid, socket, webMessage);
