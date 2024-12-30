@@ -6,7 +6,7 @@ const { PREFIX } = require("../../krampus"); // Ajusta la ruta según tu proyect
 module.exports = {
   name: 'música',
   description: 'Descarga y envía música desde YouTube',
-  commands: ['m', 'play'],
+  commands: ['m', 'pp'],
   usage: `${PREFIX}música <nombre de la canción o URL de YouTube>`,
   handle: async ({ args, remoteJid, sendReply, socket }) => {
     console.log('Comando música recibido con argumentos:', args);
