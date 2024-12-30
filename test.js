@@ -1,4 +1,5 @@
 const playdl = require('play-dl');
+const fs = require('fs');
 
 (async () => {
   try {
@@ -7,8 +8,19 @@ const playdl = require('play-dl');
     console.log('Resultado de la búsqueda:', searchResult);
 
     if (searchResult.length > 0) {
-      const stream = await playdl.stream(searchResult[0].url);
-      console.log('Stream obtenido correctamente:', stream);
+      const video = searchResult[0];
+      console.log('Iniciando el streaming para:', video.title);
+
+      const stream = await playdl.stream(video.url);
+      console.log('Stream obtenido correctamente.');
+
+      console.log('Convirtiendo stream a buffer...');
+      const buffer = await streamToBuffer(stream.stream);
+      console.log('Buffer generado, tamaño:', buffer.length);
+
+      // Guardar el buffer como archivo para verificar
+      fs.writeFileSync('despacito.mp3', buffer);
+      console.log('Archivo de audio guardado como "despacito.mp3".');
     } else {
       console.log('No se encontraron resultados.');
     }
@@ -16,3 +28,21 @@ const playdl = require('play-dl');
     console.error('Error conectando a YouTube:', error);
   }
 })();
+
+function streamToBuffer(stream) {
+  return new Promise((resolve, reject) => {
+    const chunks = [];
+    stream.on('data', chunk => {
+      console.log('Chunk recibido, tamaño:', chunk.length);
+      chunks.push(chunk);
+    });
+    stream.on('end', () => {
+      console.log('Stream completado, generando buffer...');
+      resolve(Buffer.concat(chunks));
+    });
+    stream.on('error', error => {
+      console.error('Error en el stream:', error);
+      reject(error);
+    });
+  });
+}
