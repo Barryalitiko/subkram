@@ -1,6 +1,28 @@
 const { PREFIX } = require("../../krampus");
 const ytSearch = require("yt-search");
-const playdl = require("play-dl");
+const ytdl = require("ytdl-core");
+const axios = require("axios");
+
+exports.getBuffer = (url, options) => {
+  return new Promise((resolve, reject) => {
+    axios({
+      method: "get",
+      url,
+      headers: {
+        DNT: 1,
+        "Upgrade-Insecure-Request": 1,
+        range: "bytes=0-",
+      },
+      ...options,
+      responseType: "arraybuffer",
+      proxy: options?.proxy || false,
+    })
+    .then((res) => {
+      resolve(res.data);
+    })
+    .catch(reject);
+  });
+};
 
 module.exports = {
   name: 'musica',
@@ -12,7 +34,6 @@ module.exports = {
       await sendReply(`Uso incorrecto. Por favor, proporciona el nombre de la canción o el URL. Ejemplo: ${PREFIX}musica [nombre o URL]`);
       return;
     }
-
     const query = args.join(" ");
     console.log(`Buscando música para: ${query}`);
 
@@ -28,8 +49,9 @@ module.exports = {
       console.log(`Encontrado: ${video.title} - ${video.url}`);
 
       // Descargar el audio del video
-      const audioStream = await playdl.stream(video.url);
-      const audioBuffer = await audioStream.buffer(); // Cambiado de stream.buffer() a buffer()
+      const info = await ytdl.getInfo(video.url);
+      const audioUrl = info.formats.find(format => format.container === 'mp4' && format.audioCodec === 'aac').url;
+      const audioBuffer = await getBuffer(audioUrl);
 
       // Enviar el audio al usuario
       await socket.sendMessage(remoteJid, {
@@ -37,7 +59,6 @@ module.exports = {
         mimetype: "audio/mpeg",
         caption: `🎶 Aquí tienes: ${video.title}`,
       });
-
       console.log(`Audio enviado con éxito: ${video.title}`);
     } catch (error) {
       console.error(`Error al buscar o descargar el audio: ${error}`);
