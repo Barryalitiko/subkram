@@ -8,13 +8,6 @@ module.exports = {
   commands: ['antilink'],
   usage: `${PREFIX}antilink <on|off> <simple|completo>`,
   handle: async ({ args, remoteJid, sendReply, isGroupAdmin, isBotAdmin }) => {
-    if (!isGroupAdmin) {
-      return sendReply('Solo los administradores del grupo pueden usar este comando.');
-    }
-    if (!isBotAdmin) {
-      return sendReply('Necesito ser administrador para ejecutar este comando.');
-    }
-
     const action = args[0]?.toLowerCase();
     const mode = args[1]?.toLowerCase();
 
