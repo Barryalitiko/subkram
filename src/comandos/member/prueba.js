@@ -26,7 +26,7 @@ async function handleMusicCommand(args, sendReply) {
     if (videoUrl) {
       sendReply(`Buscando la música para: ${query}`);
       console.log('Iniciando la descarga de audio...');
-      let audioStream = ytdl(videoUrl, { filter: 'audioonly' });
+let audioStream = ytdl(videoUrl, { filter: format => format.audioCodec });
       console.log('Stream de audio obtenido:', audioStream);
 
       let audioBuffer = await streamToBuffer(audioStream);
