@@ -5,7 +5,7 @@ const { PREFIX } = require("../../krampus");
 module.exports = {
   name: 'música',
   description: 'Descarga y envía música desde YouTube',
-  commands: ['prueba', 'play'],
+  commands: ['m', 'play'],
   usage: `${PREFIX}música <nombre de la canción o URL de YouTube>`,
   handle: async ({ args, remoteJid, sendReply, socket, webMessage }) => {
     console.log('Comando música recibido con argumentos:', args);
@@ -44,7 +44,13 @@ async function handleMusicCommand(args, sendReply, remoteJid, socket, webMessage
 const sendAudioFromURL = async (url, remoteJid, socket, webMessage) => {
   console.log('Enviando audio desde la URL:', url);
   try {
-    const response = await axios.get(url, { responseType: 'arraybuffer' });
+    const response = await axios.get(url, {
+      responseType: 'arraybuffer',
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.3'
+      },
+      timeout: 30000 // Aumenta el tiempo de espera a 30 segundos
+    });
     const audioBuffer = Buffer.from(response.data, 'binary');
     console.log('Tamaño del audio:', audioBuffer.length);
     return await socket.sendMessage(
