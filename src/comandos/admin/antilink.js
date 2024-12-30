@@ -7,14 +7,7 @@ module.exports = {
   description: 'Activar o desactivar el antilink en el grupo',
   commands: ['antilink'],
   usage: `${PREFIX}antilink <0|1|2>`,
-  handle: async ({ args, remoteJid, sendReply, isGroupAdmin, isBotAdmin }) => {
-    if (!isGroupAdmin) {
-      return sendReply('Solo los administradores del grupo pueden usar este comando.');
-    }
-    if (!isBotAdmin) {
-      return sendReply('Necesito ser administrador para ejecutar este comando.');
-    }
-
+  handle: async ({ args, remoteJid, sendReply, socket }) => {
     const action = args[0];
 
     if (action === '1') {
