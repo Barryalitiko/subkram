@@ -20,8 +20,8 @@ const fs = require("fs");
 
     console.log("Convirtiendo el stream a buffer...");
     
-    // Usamos setTimeout para extender el tiempo de espera
-    const audioBuffer = await timeoutPromise(streamToBuffer(streamInfo.stream), 30000); // Timeout de 30 segundos
+    // Aumentamos el tiempo de espera a 60 segundos
+    const audioBuffer = await timeoutPromise(streamToBuffer(streamInfo.stream), 60000); // Timeout de 60 segundos
     console.log("Buffer generado, tamaño:", audioBuffer.length);
 
     // Guardar el buffer en un archivo temporal
