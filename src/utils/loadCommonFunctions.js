@@ -135,62 +135,6 @@ exports.loadCommonFunctions = ({ socket, webMessage }) => {
     );
   };
   
-  // Función para buscar música en YouTube usando yt-search
-  const searchYouTubeMusic = async (query) => {
-    try {
-      const results = await ytSearch(query);
-      if (results && results.videos.length > 0) {
-        return results.videos[0]; // Retorna el primer resultado de video
-      }
-      throw new Error("No se encontraron resultados para la búsqueda.");
-    } catch (error) {
-      throw new Error("No se pudo buscar la música en YouTube.");
-    }
-  };
-
-  // Función para descargar audio de YouTube usando play-dl
-  const downloadYouTubeAudio = async (url, filePath) => {
-    try {
-      const stream = await playdl.stream(url);
-      const writeStream = fs.createWriteStream(filePath);
-      stream.stream.pipe(writeStream);
-      return new Promise((resolve, reject) => {
-        writeStream.on("finish", () => resolve(filePath));
-        writeStream.on("error", (err) => reject(err));
-      });
-    } catch (error) {
-      throw new Error("Error al descargar audio de YouTube.");
-    }
-  };
-
-  // Función para buscar y enviar música al usuario
-  const sendYouTubeMusic = async (query) => {
-    try {
-      await sendWaitReply("Buscando tu canción...");
-      const video = await searchYouTubeMusic(query);
-
-      if (!video || !video.url) {
-        return await sendErrorReply("No se pudo encontrar la música.");
-      }
-
-      const filePath = `./temp/${video.title}.mp3`;
-      await sendWaitReply("Descargando tu canción...");
-      await downloadYouTubeAudio(video.url, filePath);
-
-      await sendSuccessReply("¡Aquí está tu canción!");
-      return await socket.sendMessage(
-        remoteJid,
-        {
-          audio: fs.readFileSync(filePath),
-          mimetype: "audio/mpeg",
-        },
-        { quoted: webMessage }
-      );
-    } catch (error) {
-      return await sendErrorReply("Error al enviar la música.");
-    }
-  };
-
   return {
     args,
     commandName,
@@ -219,6 +163,5 @@ exports.loadCommonFunctions = ({ socket, webMessage }) => {
     sendReply,
     sendWarningReply,
     sendAudioFromURL,
-    sendYouTubeMusic,
   };
 };
