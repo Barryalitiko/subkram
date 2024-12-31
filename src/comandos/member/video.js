@@ -1,4 +1,4 @@
-const { PREFIX } = require("../../config");
+const { PREFIX } = require("../../krampus");
 const { getVideoURL } = require("../../services/play-dl/video");
 const { InvalidParameterError } = require("../../errors/InvalidParameterError");
 
