@@ -115,6 +115,16 @@ exports.loadCommonFunctions = ({ socket, webMessage }) => {
     );
   };
 
+    const sendVideoFromURL = async (url) => {
+    return await socket.sendMessage(
+      remoteJid,
+      {
+        video: { url },
+      },
+      { url, quoted: webMessage }
+    );
+  };
+
   const sendStickerFromFile = async (file) => {
     return await socket.sendMessage(
       remoteJid,
