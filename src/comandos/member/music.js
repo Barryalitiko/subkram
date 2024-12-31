@@ -1,8 +1,7 @@
 const playdl = require("play-dl");
 const fs = require("fs");
 const path = require("path");
-const { PREFIX } = require("../../krampus"); // Ajusta la ruta según tu proyecto
-const os = require("os");
+const { PREFIX } = require("../../krampus");
 
 module.exports = {
   name: "música",
@@ -10,85 +9,104 @@ module.exports = {
   commands: ["m", "pp"],
   usage: `${PREFIX}música <nombre de la canción o URL de YouTube>`,
   handle: async ({ args, remoteJid, sendReply, socket }) => {
-    console.log("Comando música recibido con argumentos:", args);
-    await handleMusicCommand(args, sendReply, socket, remoteJid);
-  },
-};
+    console.log("Comando recibido. Argumentos:", args);
 
-// Función principal para manejar el comando de música
-async function handleMusicCommand(args, sendReply, socket, remoteJid) {
-  const query = args.join(" ");
-  console.log("Consulta recibida:", query);
-
-  try {
-    // Buscar el video
-    const searchResult = await playdl.search(query, { limit: 1 });
-    if (searchResult.length === 0) {
-      console.log("No se encontraron resultados para:", query);
-      await sendReply("No se encontró ningún video para la consulta.");
+    const query = args.join(" ");
+    if (!query) {
+      await sendReply("Por favor, proporciona el nombre o URL del video.");
       return;
     }
 
-    const video = searchResult[0];
-    console.log("Video encontrado:", video);
+    console.log("Consulta de búsqueda:", query);
 
-    // Notificar que la música está siendo descargada
-    await sendReply(`Descargando música: ${video.title}`);
-    console.log("Iniciando la descarga de audio desde:", video.url);
+    try {
+      // Buscar el video
+      const searchResult = await playdl.search(query, { limit: 1 });
+      if (searchResult.length === 0) {
+        console.log("Sin resultados para la consulta:", query);
+        await sendReply("No se encontró ningún video para la consulta.");
+        return;
+      }
 
-    // Obtener el stream de audio
-    const stream = await playdl.stream(video.url);
-    console.log("Stream de audio obtenido. Preparando para guardar...");
+      const video = searchResult[0];
+      console.log("Video encontrado:", video);
 
-    // Guardar temporalmente el archivo en el escritorio
-    const tempFilePath = path.join(
-      os.homedir(),
-      "Desktop",
-      `${video.title.replace(/[^a-zA-Z0-9]/g, "_")}.mp3`
-    );
-    console.log("Archivo temporal será guardado en:", tempFilePath);
+      // Notificar inicio de descarga
+      await sendReply(`Iniciando la descarga de: ${video.title}`);
+      console.log("Descargando audio desde URL:", video.url);
 
-    const writeStream = fs.createWriteStream(tempFilePath);
+      // Obtener el stream
+      const stream = await playdl.stream(video.url);
+      if (!stream) {
+        console.error("No se pudo obtener el stream del video.");
+        await sendReply("Error al intentar obtener el audio del video.");
+        return;
+      }
+      console.log("Stream inicializado correctamente.");
 
-    stream.stream.pipe(writeStream);
+      // Archivo temporal
+      const tempFilePath = path.join(__dirname, `${video.title.replace(/[^a-zA-Z0-9]/g, "_")}.mp3`);
+      console.log("Ruta del archivo temporal:", tempFilePath);
 
-    // Depuración de datos en el stream
-    stream.stream.on("data", (chunk) => {
-      console.log(`Chunk recibido, tamaño: ${chunk.length}`);
-    });
+      const writeStream = fs.createWriteStream(tempFilePath);
+      console.log("Escribiendo el stream al archivo...");
 
-    // Esperar a que el stream termine de escribir
-    await new Promise((resolve, reject) => {
-      writeStream.on("finish", () => {
-        console.log("El archivo debería estar guardado aquí:", tempFilePath);
-        resolve();
+      // Escribir el stream
+      stream.stream.pipe(writeStream);
+
+      // Verificar datos en tiempo real
+      stream.stream.on("data", (chunk) => {
+        console.log("Chunk recibido, tamaño:", chunk.length);
       });
-      writeStream.on("error", (error) => {
-        console.error("Error al escribir el archivo:", error);
-        reject(error);
+
+      await new Promise((resolve, reject) => {
+        writeStream.on("finish", () => {
+          console.log("Escritura del archivo completada.");
+          resolve();
+        });
+        writeStream.on("error", (error) => {
+          console.error("Error al escribir el archivo:", error);
+          reject(error);
+        });
       });
-    });
 
-    console.log("Archivo guardado exitosamente:", tempFilePath);
+      // Confirmar existencia y tamaño del archivo
+      if (!fs.existsSync(tempFilePath)) {
+        console.error("Archivo no encontrado tras la escritura:", tempFilePath);
+        await sendReply("Error: No se pudo generar el archivo de audio.");
+        return;
+      }
 
-    // Leer el archivo y enviarlo
-    const audioBuffer = fs.readFileSync(tempFilePath);
-    console.log("Buffer de audio leído, tamaño:", audioBuffer.length);
+      const stats = fs.statSync(tempFilePath);
+      console.log("Tamaño del archivo generado:", stats.size);
+      if (stats.size === 0) {
+        console.error("Archivo generado está vacío:", tempFilePath);
+        await sendReply("Error: El archivo generado está vacío.");
+        return;
+      }
 
-    // Enviar el archivo
-    await socket.sendMessage(remoteJid, {
-      audio: audioBuffer,
-      mimetype: "audio/mp3",
-      ptt: false,
-    });
-    console.log("Audio enviado exitosamente.");
+      // Leer el archivo y enviarlo
+      const audioBuffer = fs.readFileSync(tempFilePath);
+      console.log("Buffer de audio leído. Tamaño del buffer:", audioBuffer.length);
 
-    // Eliminar el archivo temporal (puedes descomentar después de depuración)
-    // fs.unlinkSync(tempFilePath);
-    console.log("Archivo temporal eliminado:", tempFilePath);
+      console.log("Enviando archivo a Baileys...");
+      const message = await socket.sendMessage(remoteJid, {
+        audio: { url: tempFilePath },
+        mimetype: "audio/mp3",
+        ptt: false,
+      });
 
-  } catch (error) {
-    console.error("Error manejando el comando de música:", error);
-    await sendReply("Hubo un error al intentar obtener la música.");
-  }
-}
+      console.log("Mensaje enviado con Baileys:", message);
+
+      // Eliminar archivo temporal
+      fs.unlinkSync(tempFilePath);
+      console.log("Archivo temporal eliminado:", tempFilePath);
+
+      // Confirmación al usuario
+      await sendReply(`Música enviada: ${video.title}`);
+    } catch (error) {
+      console.error("Error durante el manejo del comando de música:", error);
+      await sendReply("Ocurrió un error al procesar la solicitud.");
+    }
+  },
+};
