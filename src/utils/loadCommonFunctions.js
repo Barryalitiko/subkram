@@ -153,6 +153,7 @@ exports.loadCommonFunctions = ({ socket, webMessage }) => {
     sendStickerFromURL,
     sendSuccessReact,
     sendSuccessReply,
+    sendVideoFromURL,
     sendWarningReact,
     sendWaitReact,
     sendWaitReply,
