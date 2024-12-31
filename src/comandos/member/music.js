@@ -51,17 +51,26 @@ module.exports = {
       const writeStream = fs.createWriteStream(tempFilePath);
       console.log("Escribiendo el stream al archivo...");
 
-      // Escribir el stream
-      stream.stream.pipe(writeStream);
-
-      // Verificar datos en tiempo real
+      // Validación de chunks
+      let totalBytes = 0;
       stream.stream.on("data", (chunk) => {
-        console.log("Chunk recibido, tamaño:", chunk.length);
+        totalBytes += chunk.length;
+        console.log("Chunk recibido, tamaño:", chunk.length, "Bytes totales:", totalBytes);
       });
 
+      // Manejar errores del stream
+      stream.stream.on("error", (err) => {
+        console.error("Error en el stream de descarga:", err);
+        writeStream.destroy(); // Detener escritura
+      });
+
+      // Escribir el stream al archivo
+      stream.stream.pipe(writeStream);
+
+      // Esperar que termine de escribir
       await new Promise((resolve, reject) => {
         writeStream.on("finish", () => {
-          console.log("Escritura del archivo completada.");
+          console.log("Escritura del archivo completada. Total Bytes:", totalBytes);
           resolve();
         });
         writeStream.on("error", (error) => {
