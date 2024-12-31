@@ -9,113 +9,87 @@ module.exports = {
   commands: ["m", "pp"],
   usage: `${PREFIX}música <nombre de la canción o URL de YouTube>`,
   handle: async ({ args, remoteJid, sendReply, socket }) => {
-    console.log("Comando recibido. Argumentos:", args);
+    console.log("Comando música recibido con argumentos:", args);
 
-    const query = args.join(" ");
-    if (!query) {
-      await sendReply("Por favor, proporciona el nombre o URL del video.");
+    if (!args || args.length === 0) {
+      await sendReply(`Uso incorrecto. Proporciona el nombre de la canción o URL. Ejemplo: ${PREFIX}música <nombre o URL>`);
       return;
     }
 
-    console.log("Consulta de búsqueda:", query);
+    const query = args.join(" ");
+    console.log("Consulta recibida:", query);
 
     try {
       // Buscar el video
       const searchResult = await playdl.search(query, { limit: 1 });
+      console.log("Resultados de búsqueda obtenidos:", searchResult.length);
+
       if (searchResult.length === 0) {
-        console.log("Sin resultados para la consulta:", query);
+        console.log("No se encontraron resultados para:", query);
         await sendReply("No se encontró ningún video para la consulta.");
         return;
       }
 
       const video = searchResult[0];
-      console.log("Video encontrado:", video);
+      console.log(`Video encontrado: ${video.title} - URL: ${video.url}`);
 
-      // Notificar inicio de descarga
-      await sendReply(`Iniciando la descarga de: ${video.title}`);
+      // Notificar que la música está siendo descargada
+      await sendReply(`Descargando música: ${video.title}`);
       console.log("Descargando audio desde URL:", video.url);
 
-      // Obtener el stream
+      // Obtener el stream de audio
       const stream = await playdl.stream(video.url);
-      if (!stream) {
-        console.error("No se pudo obtener el stream del video.");
-        await sendReply("Error al intentar obtener el audio del video.");
-        return;
-      }
       console.log("Stream inicializado correctamente.");
 
-      // Archivo temporal
-      const tempFilePath = path.join(__dirname, `${video.title.replace(/[^a-zA-Z0-9]/g, "_")}.mp3`);
+      // Ruta temporal para guardar el archivo
+      const tempFilePath = path.join(require("os").tmpdir(), `${video.title.replace(/[^a-zA-Z0-9]/g, "_")}.mp3`);
       console.log("Ruta del archivo temporal:", tempFilePath);
 
+      // Crear el stream de escritura
       const writeStream = fs.createWriteStream(tempFilePath);
       console.log("Escribiendo el stream al archivo...");
 
-      // Validación de chunks
+      // Eventos del stream para depuración
       let totalBytes = 0;
+
       stream.stream.on("data", (chunk) => {
         totalBytes += chunk.length;
-        console.log("Chunk recibido, tamaño:", chunk.length, "Bytes totales:", totalBytes);
+        console.log("Chunk recibido, tamaño:", chunk.length, "Bytes totales acumulados:", totalBytes);
       });
 
-      // Manejar errores del stream
       stream.stream.on("error", (err) => {
         console.error("Error en el stream de descarga:", err);
-        writeStream.destroy(); // Detener escritura
       });
 
-      // Escribir el stream al archivo
+      writeStream.on("error", (error) => {
+        console.error("Error al escribir el archivo:", error);
+      });
+
+      writeStream.on("finish", async () => {
+        console.log("Escritura finalizada correctamente. Total bytes escritos:", totalBytes);
+
+        // Leer el archivo y enviarlo
+        const audioBuffer = fs.readFileSync(tempFilePath);
+        console.log("Buffer de audio leído, tamaño:", audioBuffer.length);
+
+        // Enviar el archivo
+        await socket.sendMessage(remoteJid, {
+          audio: audioBuffer,
+          mimetype: "audio/mp3",
+          fileName: `${video.title}.mp3`,
+        });
+        console.log("Audio enviado exitosamente.");
+
+        // Eliminar el archivo temporal
+        fs.unlinkSync(tempFilePath);
+        console.log("Archivo temporal eliminado:", tempFilePath);
+      });
+
+      // Conectar los streams
       stream.stream.pipe(writeStream);
-
-      // Esperar que termine de escribir
-      await new Promise((resolve, reject) => {
-        writeStream.on("finish", () => {
-          console.log("Escritura del archivo completada. Total Bytes:", totalBytes);
-          resolve();
-        });
-        writeStream.on("error", (error) => {
-          console.error("Error al escribir el archivo:", error);
-          reject(error);
-        });
-      });
-
-      // Confirmar existencia y tamaño del archivo
-      if (!fs.existsSync(tempFilePath)) {
-        console.error("Archivo no encontrado tras la escritura:", tempFilePath);
-        await sendReply("Error: No se pudo generar el archivo de audio.");
-        return;
-      }
-
-      const stats = fs.statSync(tempFilePath);
-      console.log("Tamaño del archivo generado:", stats.size);
-      if (stats.size === 0) {
-        console.error("Archivo generado está vacío:", tempFilePath);
-        await sendReply("Error: El archivo generado está vacío.");
-        return;
-      }
-
-      // Leer el archivo y enviarlo
-      const audioBuffer = fs.readFileSync(tempFilePath);
-      console.log("Buffer de audio leído. Tamaño del buffer:", audioBuffer.length);
-
-      console.log("Enviando archivo a Baileys...");
-      const message = await socket.sendMessage(remoteJid, {
-        audio: { url: tempFilePath },
-        mimetype: "audio/mp3",
-        ptt: false,
-      });
-
-      console.log("Mensaje enviado con Baileys:", message);
-
-      // Eliminar archivo temporal
-      fs.unlinkSync(tempFilePath);
-      console.log("Archivo temporal eliminado:", tempFilePath);
-
-      // Confirmación al usuario
-      await sendReply(`Música enviada: ${video.title}`);
     } catch (error) {
-      console.error("Error durante el manejo del comando de música:", error);
-      await sendReply("Ocurrió un error al procesar la solicitud.");
+      console.error("Error manejando el comando de música:", error);
+      await sendReply("Hubo un error al intentar obtener la música.");
     }
   },
 };
