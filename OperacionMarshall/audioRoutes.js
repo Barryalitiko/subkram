@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const ytSearch = require("yt-search");
-const ytdl = require("ytdl-core");
+const ytdlp = require("yt-dlp");
 
 router.get("/download", async (req, res) => {
   try {
@@ -19,17 +19,25 @@ router.get("/download", async (req, res) => {
       return res.status(404).json({ error: "No se encontró un video" });
     }
 
-    // Obtener la URL de descarga del video usando ytdl-core
+    // Obtener la URL de descarga del video usando yt-dlp
     const videoUrl = video.url;
-    const info = await ytdl.getInfo(videoUrl);
-    const audioFormat = ytdl.chooseFormat(info.formats, { quality: 'highestaudio' });
 
-    if (!audioFormat) {
-      return res.status(404).json({ error: "No se encontró un formato de audio" });
-    }
+    // Usar yt-dlp para obtener la información del video
+    ytdlp.getInfo(videoUrl).then((info) => {
+      // Filtrar el formato de audio de mayor calidad
+      const audioFormat = info.formats.find((format) => format.audioCodec && format.acodec !== 'none' && format.ext === 'm4a');
+      
+      if (!audioFormat) {
+        return res.status(404).json({ error: "No se encontró un formato de audio" });
+      }
 
-    // Devolver la URL del audio
-    res.json({ audioUrl: audioFormat.url });
+      // Devolver la URL de audio
+      res.json({ audioUrl: audioFormat.url });
+    }).catch((error) => {
+      console.error("Error al obtener la información del video:", error);
+      res.status(500).json({ error: "Error al obtener la información del video" });
+    });
+
   } catch (error) {
     console.error("Error al procesar la solicitud:", error);
     res.status(500).json({ error: "Error al procesar la solicitud" });
