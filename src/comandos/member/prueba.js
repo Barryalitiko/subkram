@@ -1,6 +1,7 @@
 const { PREFIX } = require("../../krampus");
 const axios = require("axios"); // Usaremos axios para hacer peticiones a la ruta Express
 const { InvalidParameterError } = require("../../errors/InvalidParameterError");
+const playDL = require('play-dl'); // Requiere la librería play-dl
 
 module.exports = {
   name: "play-audio",
@@ -15,12 +16,14 @@ module.exports = {
     await sendWaitReact();
 
     try {
-      // Enviar la solicitud a la ruta Express
+      // Crear la búsqueda a partir de los argumentos
       const searchQuery = args.join(" ");
-      const response = await axios.get(`http://localhost:3000/audio/download?search=${encodeURIComponent(searchQuery)}`);
       
+      // Usar play-dl para obtener el stream del audio
+      const stream = await playDL.stream(searchQuery);
+
       // Si obtenemos la URL del audio
-      const audioUrl = response.data.url;
+      const audioUrl = stream.url;
       
       if (!audioUrl) {
         await sendErrorReply("Nenhum resultado encontrado!");
