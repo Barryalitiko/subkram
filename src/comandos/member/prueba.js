@@ -1,54 +1,40 @@
-const ytdl = require('ytdl-core');
-const ytSearch = require('yt-search');
-const { PREFIX } = require("../../krampus"); // Ajusta la ruta según tu proyecto
+const { PREFIX } = require("../../krampus");
+const axios = require("axios"); // Usaremos axios para hacer peticiones a la ruta Express
+const { InvalidParameterError } = require("../../errors/InvalidParameterError");
 
 module.exports = {
-  name: 'música',
-  description: 'Descarga y envía música desde YouTube',
-  commands: ['música', 'play'],
-  usage: `${PREFIX}música <nombre de la canción o URL de YouTube>`,
-  handle: async ({ args, remoteJid, sendReply, socket }) => {
-    await handleMusicCommand(args, sendReply);
-  }
-};
-
-// Función para manejar el comando de música
-async function handleMusicCommand(args, sendReply) {
-  let query = args.join(' ');
-  try {
-    let videoUrl = await searchVideo(query);
-    if (videoUrl) {
-      sendReply(`Buscando la música para: ${query}`);
-      let audioStream = ytdl(videoUrl, { filter: 'audioonly' });
-      let audioBuffer = await streamToBuffer(audioStream);
-      sendReply(audioBuffer, 'audio/mp3');
-    } else {
-      sendReply('No se pudo encontrar el video.');
+  name: "play-audio",
+  description: "Busca y descarga audio desde YouTube",
+  commands: ["play-audio", "play", "pa"],
+  usage: `${PREFIX}play-audio ella me vivía`,
+  handle: async ({ sendAudioFromURL, args, sendWaitReact, sendSuccessReact, sendErrorReply }) => {
+    if (!args.length) {
+      throw new InvalidParameterError("Você precisa me dizer o que deseja buscar!");
     }
-  } catch (error) {
-    console.error(error);
-    sendReply('Hubo un error al intentar obtener la música.');
-  }
-}
 
-// Función para buscar el video en YouTube
-async function searchVideo(query) {
-  try {
-    let results = await ytSearch(query);
-    let video = results.videos[0];
-    return video.url;
-  } catch (error) {
-    console.error('Error buscando video:', error);
-    return null;
-  }
-}
+    await sendWaitReact();
 
-// Función para convertir un stream a buffer
-function streamToBuffer(stream) {
-  return new Promise((resolve, reject) => {
-    const chunks = [];
-    stream.on('data', chunk => chunks.push(chunk));
-    stream.on('end', () => resolve(Buffer.concat(chunks)));
-    stream.on('error', reject);
-  });
-}
+    try {
+      // Enviar la solicitud a la ruta Express
+      const searchQuery = args.join(" ");
+      const response = await axios.get(`http://localhost:3000/audio/download?search=${encodeURIComponent(searchQuery)}`);
+      
+      // Si obtenemos la URL del audio
+      const audioUrl = response.data.url;
+      
+      if (!audioUrl) {
+        await sendErrorReply("Nenhum resultado encontrado!");
+        return;
+      }
+
+      await sendSuccessReact();
+
+      // Enviar el audio
+      await sendAudioFromURL(audioUrl);
+
+    } catch (error) {
+      console.log(error);
+      await sendErrorReply(error.message);
+    }
+  },
+};
