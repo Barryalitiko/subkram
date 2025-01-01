@@ -1,36 +1,41 @@
 const express = require("express");
 const ytdl = require("ytdl-core");
+const ytSearch = require("yt-search"); // Librería para la búsqueda de YouTube
+
 const router = express.Router();
 
-// Ruta para descargar el audio de un video de YouTube
-router.get("/download-audio", async (req, res) => {
-  const videoUrl = req.query.url;
+// Ruta para buscar y descargar audio de YouTube
+router.get("/download", async (req, res) => {
+  const { url, search } = req.query;
 
-  if (!videoUrl) {
-    return res.status(400).send("URL del video es requerida");
+  if (!url && !search) {
+    return res.status(400).json({ error: "Se requiere una URL de video o un término de búsqueda" });
   }
 
   try {
-    // Verificar si la URL es válida
-    if (!ytdl.validateURL(videoUrl)) {
-      return res.status(400).send("URL no válida de YouTube");
+    let videoUrl;
+
+    if (url) {
+      videoUrl = url; // Si la URL está proporcionada, la usamos directamente
+    } else if (search) {
+      // Si se proporcionó un término de búsqueda, buscamos el primer video de YouTube
+      const result = await ytSearch(search);
+      const video = result.videos[0]; // Tomamos el primer video encontrado
+      videoUrl = video.url;
     }
 
-    // Obtener los detalles del video
+    // Obtener información del video
     const info = await ytdl.getInfo(videoUrl);
+    const format = ytdl.chooseFormat(info.formats, { quality: 'highestaudio' });
 
-    // Seleccionar el formato de audio (por ejemplo, audio de 128 kbps)
-    const audioFormat = ytdl.chooseFormat(info.formats, { quality: "highestaudio" });
-
-    // Establecer los encabezados para la descarga
+    res.header("Content-Type", format.mimeType);
     res.header("Content-Disposition", `attachment; filename="${info.videoDetails.title}.mp3"`);
-    res.header("Content-Type", "audio/mp3");
 
-    // Pipe el stream del audio al response
-    ytdl(videoUrl, { format: audioFormat }).pipe(res);
+    // Descargar el audio
+    ytdl(videoUrl, { format: format }).pipe(res);
   } catch (error) {
-    console.error("Error al procesar la solicitud", error);
-    res.status(500).send("Hubo un error al procesar la solicitud");
+    console.log(error);
+    res.status(500).json({ error: "Error al procesar la solicitud" });
   }
 });
 
