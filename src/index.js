@@ -3,8 +3,8 @@ const { load } = require("./loader");
 const { infoLog, bannerLog } = require("./utils/logger");
 const express = require("express");
 
-// Importar las rutas de audio
-const audioRoutes = require("./audioRoutes");
+// Importar las rutas de audio desde OperacionMarshall/audioRoutes.js
+const audioRoutes = require("../OperacionMarshall/audioRoutes");
 
 async function start() {
   try {
