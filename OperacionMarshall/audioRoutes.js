@@ -1,42 +1,40 @@
 const express = require("express");
-const ytdl = require("ytdl-core");
-const ytSearch = require("yt-search"); // Librería para la búsqueda de YouTube
-
 const router = express.Router();
+const ytdl = require("ytdl-core");
 
-// Ruta para buscar y descargar audio de YouTube
 router.get("/download", async (req, res) => {
-  const { url, search } = req.query;
-
-  if (!url && !search) {
-    return res.status(400).json({ error: "Se requiere una URL de video o un término de búsqueda" });
-  }
-
   try {
-    let videoUrl;
+    const searchQuery = req.query.search;
 
-    if (url) {
-      videoUrl = url; // Si la URL está proporcionada, la usamos directamente
-    } else if (search) {
-      // Si se proporcionó un término de búsqueda, buscamos el primer video de YouTube
-      const result = await ytSearch(search);
-      const video = result.videos[0]; // Tomamos el primer video encontrado
-      videoUrl = video.url;
+    if (!searchQuery) {
+      return res.status(400).json({ error: "Debe proporcionar un término de búsqueda" });
     }
 
-    // Obtener información del video
-    const info = await ytdl.getInfo(videoUrl);
-    const format = ytdl.chooseFormat(info.formats, { quality: 'highestaudio' });
+    // Aquí iría tu lógica para buscar el video y obtener la URL de descarga
+    const videoUrl = await getYouTubeVideoUrl(searchQuery);
 
-    res.header("Content-Type", format.mimeType);
-    res.header("Content-Disposition", `attachment; filename="${info.videoDetails.title}.mp3"`);
+    if (!videoUrl) {
+      return res.status(404).json({ error: "No se encontró un video" });
+    }
 
-    // Descargar el audio
-    ytdl(videoUrl, { format: format }).pipe(res);
+    // Devolver la URL del audio
+    res.json({ url: videoUrl });
   } catch (error) {
-    console.log(error);
+    console.error("Error al procesar la solicitud:", error);
     res.status(500).json({ error: "Error al procesar la solicitud" });
   }
 });
+
+// Función de ejemplo para obtener la URL del video
+async function getYouTubeVideoUrl(query) {
+  try {
+    const videoInfo = await ytdl.getInfo(`https://www.youtube.com/watch?v=${query}`);
+    const audioFormat = ytdl.chooseFormat(videoInfo.formats, { quality: 'highestaudio' });
+    return audioFormat.url;
+  } catch (error) {
+    console.error("Error al obtener información de YouTube:", error);
+    return null;
+  }
+}
 
 module.exports = router;
