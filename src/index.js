@@ -4,7 +4,7 @@ const { infoLog, bannerLog } = require("./utils/logger");
 const express = require("express");
 
 // Importar las rutas de audio
-const audioRoutes = require("./OperacionMarshall/audioRoutes");
+const audioRoutes = require("OperacionMarshall/audioRoutes");
 
 async function start() {
   try {
