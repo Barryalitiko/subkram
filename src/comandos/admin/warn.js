@@ -3,7 +3,7 @@ const path = require('path');
 const { PREFIX } = require("../../krampus");
 
 // Ruta del archivo donde se guardan las advertencias
-const warningsFile = path.join(__dirname, '../warnings.json');
+const warningsFile = path.join(__dirname, "../../assets/warnings.json");
 
 // Cargar advertencias desde un archivo
 let warnings = {};
