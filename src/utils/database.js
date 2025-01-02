@@ -11,6 +11,7 @@ if (!fs.existsSync(databasePath)) {
 const INACTIVE_GROUPS_FILE = "inactive-groups";
 const NOT_WELCOME_GROUPS_FILE = "not-welcome-groups";
 const INACTIVE_AUTO_RESPONDER_GROUPS_FILE = "inactive-auto-responder-groups";
+const CLOSED_GROUPS_FILE = "closed-groups";  
 
 function createIfNotExists(fullPath) {
   // Aseguramos que el directorio exista antes de crear el archivo
