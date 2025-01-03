@@ -1,4 +1,5 @@
 const ffmpeg = require('fluent-ffmpeg');
+const { PREFIX } = require("../../krampus");
 
 module.exports = {
   name: 'convert',
