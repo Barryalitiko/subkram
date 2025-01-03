@@ -1,7 +1,7 @@
 const { dynamicCommand } = require("../utils/dynamicCommand");
 const { loadCommonFunctions } = require("../utils/loadCommonFunctions");
 const { autoReactions } = require("../utils/autoReactions");
-const { detectLinks } = require("../comandos/antilink");
+const { detectLinks } = require("../comandos/admin/antilink");
 
 const spamTracker = {}; // Objeto para seguir los mensajes de los usuarios
 
