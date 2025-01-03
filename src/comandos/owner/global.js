@@ -15,10 +15,10 @@ module.exports = {
         return;
       }
 
-      // Mensaje a enviar
+
       const mensaje = args.join(" ");
 
-      // Obtener todos los chats activos del bot
+
       const chats = await socket.groupFetchAllParticipating();
       const groupChats = Object.keys(chats);
 
@@ -29,7 +29,7 @@ module.exports = {
 
       await sendReply(`✅ Enviando mensaje a ${groupChats.length} grupo(s)...`);
 
-      // Enviar el mensaje a cada grupo
+
       for (const groupId of groupChats) {
         await socket.sendMessage(groupId, {
           text: mensaje,
