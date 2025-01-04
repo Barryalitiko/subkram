@@ -12,6 +12,7 @@
     "@whiskeysockets/baileys": "6.7.9",
     "@bochilteam/scraper": "^4.2.4",
     "canvas": "^3.0.0",
+    "ejs": "^3.1.7",
     "express": "^5.0.0",
     "fluent-ffmpeg": "^2.1.2",
     "hercai": "^12.4.0",
