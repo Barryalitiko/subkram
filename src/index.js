@@ -2,6 +2,7 @@ const { connect } = require("./connect");
 const { load } = require("./loader");
 const { infoLog, bannerLog } = require("./utils/logger");
 const express = require("express");
+const path = require("path");
 
 // Importar las rutas de audio desde OperacionMarshall/audioRoutes.js
 const audioRoutes = require("../OperacionMarshall/audioRoutes");
@@ -12,15 +13,32 @@ async function start() {
     const app = express();
     const PORT = process.env.PORT || 3000;
 
-    // Middleware para manejar las solicitudes JSON
+    // Configurar motor de plantillas
+    app.set("view engine", "ejs");
+    app.set("views", path.join(__dirname, "views"));
+
+    // Middleware para manejar solicitudes JSON
     app.use(express.json());
 
-    // Usar las rutas de audio
+    // Archivos estáticos (CSS, JS, imágenes)
+    app.use(express.static(path.join(__dirname, "public")));
+
+    // Rutas personalizadas
     app.use("/audio", audioRoutes);
 
-    // Definir una ruta de ejemplo
+    // Ruta principal: Mostrar una página de inicio para el panel
     app.get("/", (req, res) => {
-      res.send("¡Servidor Express está funcionando!");
+      res.render("index", { title: "Panel de Control", message: "Bienvenido al panel de control" });
+    });
+
+    // Ruta para estadísticas del bot
+    app.get("/stats", async (req, res) => {
+      const stats = {
+        uptime: process.uptime(),
+        usersConnected: 123, // Simulado
+        messagesProcessed: 4567, // Simulado
+      };
+      res.json(stats);
     });
 
     // Iniciar el servidor Express
