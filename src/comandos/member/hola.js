@@ -9,8 +9,7 @@ module.exports = {
     try {
       await socket.sendMessage(remoteJid, {
         text: "👋 ¡Hola! Este es un mensaje interactivo de prueba. ¿Qué te gustaría hacer?",
-        button: {
-          buttonText: "¿Qué te gustaría hacer?",
+        templateMessage: {
           buttons: [
             {
               buttonId: "info",
@@ -23,8 +22,7 @@ module.exports = {
               type: 1
             }
           ]
-        },
-        headerType: 1
+        }
       });
     } catch (error) {
       console.error("Error al enviar el mensaje interactivo:", error);
