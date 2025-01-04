@@ -1,19 +1,20 @@
 import express from 'express';
-import path from 'path';
+import path from 'path'; // Para manejar rutas de archivos
 
 const app = express();
 const PORT = 3000;
 
-// Middleware para servir archivos estáticos
+// Middleware para servir archivos estáticos (CSS, JS, imágenes)
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Configuración de vistas (si quieres usar plantillas como EJS, Pug, etc.)
+// Configuración de vistas
 app.set('views', path.join(__dirname, 'views'));
-app.set('view engine', 'ejs'); // O usa 'html' si no necesitas plantillas dinámicas
+app.engine('html', require('ejs').renderFile); // Configuración para renderizar HTML con EJS
+app.set('view engine', 'html');
 
-// Ruta principal
+// Ruta principal (Inicio)
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'views', 'index.html'));
+  res.render('index.html'); // Renderiza el archivo `views/index.html`
 });
 
 // Ruta para estadísticas
@@ -23,10 +24,10 @@ app.get('/stats', (req, res) => {
     usuariosActivos: 50,
     grupos: 10,
   };
-  res.render('stats.html', stats); // Usa render si es un motor de plantillas, sendFile para HTML puro
+  res.render('stats.html', stats); // Renderiza `views/stats.html` con datos dinámicos
 });
 
-// Iniciar servidor
+// Iniciar el servidor
 app.listen(PORT, () => {
-  console.log(`Panel corriendo en http://localhost:${PORT}`);
+  console.log(`Servidor Express está funcionando en http://localhost:${PORT}`);
 });
