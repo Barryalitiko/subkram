@@ -3,6 +3,8 @@ const { load } = require("./loader");
 const { infoLog, bannerLog } = require("./utils/logger");
 const express = require("express");
 const path = require("path");
+const mongoose = require("mongoose");
+const { logCommandUsage, logGroupStats } = require("./db"); // Aquí importamos las funciones para registrar los datos en MongoDB
 
 // Importar las rutas de audio desde OperacionMarshall/audioRoutes.js
 const audioRoutes = require("../OperacionMarshall/audioRoutes");
@@ -33,11 +35,7 @@ async function start() {
 
     // Ruta para estadísticas del bot
     app.get("/stats", async (req, res) => {
-      const stats = {
-        uptime: process.uptime(),
-        usersConnected: 123, // Simulado
-        messagesProcessed: 4567, // Simulado
-      };
+      const stats = await logGroupStats();  // Función para obtener estadísticas del grupo desde la base de datos
       res.json(stats);
     });
 
@@ -49,6 +47,13 @@ async function start() {
     // Mostrar el banner de inicio y el log de información
     bannerLog();
     infoLog("Kram está procesando...");
+
+    // Conectar a MongoDB
+    await mongoose.connect('mongodb://localhost:27017/krampus-bot', {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    });
+    console.log("Conectado a la base de datos");
 
     // Conectar el socket
     const socket = await connect();
