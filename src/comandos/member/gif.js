@@ -1,7 +1,6 @@
 const axios = require('axios');
 const fs = require('fs');
 const { PREFIX } = require("../../krampus"); // Asegúrate de que este archivo tiene el prefijo configurado
-const { sendVideoFromURL } = require("./baileys-functions"); // Asegúrate de que esta función esté bien definida
 
 module.exports = {
   name: "gif",
