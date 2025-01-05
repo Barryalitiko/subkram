@@ -1,5 +1,4 @@
 const { PREFIX } = require("../../krampus");  // Para acceder al prefijo
-const { downloadVideo } = require("../../services/loadCommon");  // Importar la función de descarga
 const axios = require('axios');  // Para realizar las peticiones HTTP
 
 module.exports = {
