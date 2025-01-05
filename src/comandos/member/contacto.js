@@ -1,36 +1,49 @@
-const { PREFIX } = require("../../krampus");
+const { PREFIX } = require("../../krampus"); // Asegúrate de que este archivo tenga el prefijo configurado
 
 module.exports = {
   name: "contacto",
-  description: "Envía el número de un contacto mencionado o respondido.",
+  description: "Envía el número de teléfono de un contacto respondiendo o etiquetando",
   commands: [`${PREFIX}contacto`],
   usage: `${PREFIX}contacto`,
-  handle: async ({ socket, sendReply, isReply, webMessage, remoteJid }) => {
+  handle: async ({ sendReply, sendReact, webMessage, socket, remoteJid }) => {
     try {
-      if (isReply) {
-        // Si el mensaje es una respuesta
-        const repliedMessage = webMessage.message[Object.keys(webMessage.message)[0]];
-        const contact = repliedMessage?.userJid; // Extraemos el Jid del contacto respondido
+      await sendReact("⏳"); // Reaccionamos con el emoji de espera
 
-        if (!contact) {
-          return await sendReply("No se pudo obtener el número del contacto.");
-        }
+      let contactJid = null;
 
-        // Enviar el número de teléfono como contacto
-        await socket.sendMessage(remoteJid, {
-          contact: {
-            displayName: "Contacto Respondido", // Nombre del contacto
-            jid: contact, // Número del contacto
-          },
-        });
-        await sendReply("El número del contacto ha sido enviado.");
-      } else {
-        // Si el mensaje no es una respuesta, enviar un mensaje de error
-        await sendReply("Por favor, responde a un mensaje o menciona a un contacto.");
+      // Si es una respuesta a un mensaje
+      if (webMessage.message.extendedTextMessage && webMessage.message.extendedTextMessage.contextInfo) {
+        contactJid = webMessage.message.extendedTextMessage.contextInfo.participant; // JID del contacto respondido
       }
+
+      // Si se ha etiquetado a un usuario
+      if (webMessage.message["mentionedJidList"] && webMessage.message["mentionedJidList"].length > 0) {
+        contactJid = webMessage.message["mentionedJidList"][0]; // JID del primer usuario etiquetado
+      }
+
+      if (!contactJid) {
+        return await sendReply("Por favor, responde a un mensaje o etiqueta a un usuario para obtener su número.");
+      }
+
+      // Extraer el número de teléfono del JID
+      const userNumber = contactJid.split("@")[0]; // Extraemos el número del JID
+
+      // Enviar el número como contacto
+      await socket.sendMessage(remoteJid, {
+        contact: {
+          displayName: "Contacto",
+          phoneNumber: userNumber,
+        },
+      });
+
+      console.log("[CONTACTO] Contacto enviado:", userNumber);
+
+      await sendReact("✅"); // Reaccionamos con el emoji de éxito
+      await sendReply(`El número de teléfono del contacto es: ${userNumber}`);
     } catch (error) {
-      console.error("[CONTACTO] Error al obtener el número del contacto:", error);
-      await sendReply("❌ Ocurrió un error al intentar obtener el número del contacto.");
+      console.error("[CONTACTO] Error:", error);
+      await sendReact("❌"); // Reaccionamos con el emoji de error
+      await sendReply("Hubo un error al intentar obtener el contacto.");
     }
   },
 };
