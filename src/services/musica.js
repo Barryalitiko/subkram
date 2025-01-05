@@ -4,7 +4,6 @@ const ytSearch = require('yt-search');
 const fs = require('fs');
 const path = require('path');
 const axios = require('axios');  // Axios para peticiones HTTP
-const fetch = require('node-fetch');  // Node-fetch para peticiones HTTP
 const { default: Scraper } = require('@bochilteam/scraper');  // @bochilteam/scraper
 
 // Función para buscar el video en YouTube usando yt-search
@@ -60,18 +59,12 @@ async function downloadVideo(videoUrl, outputPath) {
   }
 }
 
-// Función para obtener información adicional usando Axios o Node-fetch
+// Función para obtener información adicional usando Axios
 async function getVideoInfo(videoUrl) {
   try {
     // Usando Axios
     const response = await axios.get(`https://www.youtube.com/oembed?url=${videoUrl}&format=json`);
     console.log("Información adicional (usando Axios):", response.data);
-
-    // Usando Node-fetch
-    const fetchResponse = await fetch(`https://www.youtube.com/oembed?url=${videoUrl}&format=json`);
-    const fetchData = await fetchResponse.json();
-    console.log("Información adicional (usando Node-fetch):", fetchData);
-    
   } catch (error) {
     console.error("Error al obtener información adicional:", error);
   }
@@ -116,7 +109,7 @@ async function downloadMedia(query, mediaType = 'audio') {
     console.log("Tipo de medio no reconocido. Usa 'audio' o 'video'.");
   }
 
-  // Obtener información adicional con Axios, Node-fetch y scraper
+  // Obtener información adicional con Axios y scraper
   await getVideoInfo(videoUrl);
   await scrapeVideoDetails(videoUrl);
 }
