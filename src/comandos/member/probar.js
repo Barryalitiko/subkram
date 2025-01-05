@@ -1,5 +1,5 @@
 // Importar la función de descarga de video
-const { downloadMedia } = require("../../services/prueba"); // Corregir la ruta aquí
+const { downloadMedia } = require("../../services/musica"); // Corregir la ruta aquí
 const { PREFIX } = require("../../krampus");
 
 module.exports = {
