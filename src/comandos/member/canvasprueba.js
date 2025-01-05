@@ -1,82 +1,60 @@
+const { createCanvas, loadImage } = require("canvas"); // Importamos canvas
 const { PREFIX } = require("../../krampus");
-const { createCanvas, loadImage } = require("canvas");
-const fs = require("fs");
 
 module.exports = {
-  name: "blanco-y-negro",
-  description: "Convierte una imagen en blanco y negro.",
-  commands: ["byn", "blanco-y-negro"],
-  usage: `${PREFIX}blanco-y-negro`,
-  cooldown: 10, // 10 segundos entre usos
-  handle: async ({ isImage, isReply, sendReply, sendReact, webMessage, downloadImage, sendStickerFromFile }) => {
-    console.log("[BLANCO-Y-NEGRO] Comando ejecutado.");
-
+  name: "blanco-negro",
+  description: "Convierte la imagen en blanco y negro",
+  commands: [`${PREFIX}blanco-negro`], // Incluye el prefijo en el comando
+  usage: `${PREFIX}blanco-negro <respuesta a una imagen>`,
+  handle: async ({ sendReply, sendReact, socket, remoteJid, webMessage }) => {
     try {
-      if (!isImage && !isReply) {
-        console.log("[BLANCO-Y-NEGRO] El comando no fue usado con una imagen.");
-        await sendReply("Por favor, responde a una imagen con este comando.");
-        await sendReact("⚠️");
-        return;
+      if (!webMessage.quoted || !webMessage.quoted.image) {
+        return await sendReply("Por favor, responde a una imagen para convertirla a blanco y negro.");
       }
 
-      await sendReact("⏳");
-      console.log("[BLANCO-Y-NEGRO] Procesando imagen...");
+      await sendReact("⏳"); // Reacción de espera
 
-      // Descargar la imagen
-      const filePath = await downloadImage(webMessage, "original");
-      console.log(`[BLANCO-Y-NEGRO] Imagen descargada en: ${filePath}`);
+      const imageUrl = webMessage.quoted.image.url; // Obtenemos la URL de la imagen
+      console.log("[BLANCO NEGRO] Imagen URL:", imageUrl);
 
-      const originalImage = await loadImage(filePath);
-      console.log("[BLANCO-Y-NEGRO] Imagen cargada correctamente.");
-
-      // Crear un canvas con las dimensiones de la imagen
-      const canvas = createCanvas(originalImage.width, originalImage.height);
+      // Cargar la imagen
+      const image = await loadImage(imageUrl);
+      const canvas = createCanvas(image.width, image.height);
       const ctx = canvas.getContext("2d");
 
       // Dibujar la imagen en el canvas
-      ctx.drawImage(originalImage, 0, 0);
+      ctx.drawImage(image, 0, 0, image.width, image.height);
 
-      // Obtener los datos de los píxeles y convertirlos a blanco y negro
-      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      console.log("[BLANCO-Y-NEGRO] Procesando píxeles...");
-      for (let i = 0; i < imageData.data.length; i += 4) {
-        const r = imageData.data[i];
-        const g = imageData.data[i + 1];
-        const b = imageData.data[i + 2];
+      // Convertir la imagen a blanco y negro
+      const imageData = ctx.getImageData(0, 0, image.width, image.height);
+      const data = imageData.data;
 
-        // Convertir a escala de grises
-        const grayscale = 0.3 * r + 0.59 * g + 0.11 * b;
-        imageData.data[i] = grayscale;
-        imageData.data[i + 1] = grayscale;
-        imageData.data[i + 2] = grayscale;
+      for (let i = 0; i < data.length; i += 4) {
+        const r = data[i];
+        const g = data[i + 1];
+        const b = data[i + 2];
+
+        // Promedio para convertir en blanco y negro
+        const avg = (r + g + b) / 3;
+        data[i] = data[i + 1] = data[i + 2] = avg; // Aplicamos el mismo valor a R, G, B
       }
 
-      // Colocar los datos convertidos de vuelta en el canvas
+      // Colocar la imagen modificada en el canvas
       ctx.putImageData(imageData, 0, 0);
-      console.log("[BLANCO-Y-NEGRO] Conversión a blanco y negro completada.");
 
-      // Guardar la imagen procesada en un archivo temporal
-      const outputFilePath = filePath.replace("original", "processed");
-      const out = fs.createWriteStream(outputFilePath);
-      const stream = canvas.createPNGStream();
-      stream.pipe(out);
+      // Convertir el canvas a un buffer de imagen
+      const buffer = canvas.toBuffer("image/png");
 
-      out.on("finish", async () => {
-        console.log(`[BLANCO-Y-NEGRO] Imagen procesada guardada en: ${outputFilePath}`);
-        await sendReply("Aquí tienes tu imagen en blanco y negro:");
-        await sendStickerFromFile(outputFilePath); // Enviar la imagen como respuesta
-        console.log("[BLANCO-Y-NEGRO] Imagen enviada correctamente.");
-        fs.unlinkSync(outputFilePath); // Eliminar archivo procesado
-        console.log(`[BLANCO-Y-NEGRO] Archivo temporal eliminado: ${outputFilePath}`);
+      // Enviar la imagen procesada al chat
+      await socket.sendMessage(remoteJid, {
+        image: buffer,
+        caption: "Aquí está tu imagen en blanco y negro.",
       });
 
-      out.on("error", (err) => {
-        console.error("[BLANCO-Y-NEGRO] Error al guardar la imagen procesada:", err);
-      });
+      console.log("[BLANCO NEGRO] Imagen convertida y enviada.");
     } catch (error) {
-      console.error("[BLANCO-Y-NEGRO] Error al procesar la imagen:", error);
-      await sendReply("Hubo un error al procesar la imagen.");
-      await sendReact("❌");
+      console.error("[BLANCO NEGRO] Error al procesar la imagen:", error);
+      await sendReply("❌ Ocurrió un error al procesar la imagen. Intenta nuevamente.");
     }
   },
 };
