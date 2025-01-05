@@ -20,7 +20,6 @@
     "node-fetch": "^3.2.10",
     "node-cache": "^5.1.2",
     "mongodb": "^8.0.4",
-    "mongoose": "^8.9.2",
     "ytdl-core": "^4.11.5",
     "play-dl": "^1.9.7"
   }
