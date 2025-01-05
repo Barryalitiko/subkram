@@ -1,49 +1,44 @@
-const mongoose = require("mongoose");
+const { MongoClient } = require("mongodb");
 
-// Crear un esquema para registrar eventos de los comandos
-const commandUsageSchema = new mongoose.Schema({
-  command: String,
-  timestamp: { type: Date, default: Date.now },
-  groupId: String,
-  userId: String,
-});
+const url = "mongodb://localhost:27017";
+const dbName = "krampus-bot";
 
-const groupStatsSchema = new mongoose.Schema({
-  groupId: String,
-  usersJoined: { type: Number, default: 0 },
-  usersLeft: { type: Number, default: 0 },
-  totalMembers: { type: Number, default: 0 },
-  date: { type: Date, default: Date.now },
-});
+// Función para conectar a la base de datos
+async function connectDB() {
+  const client = new MongoClient(url, { useNewUrlParser: true, useUnifiedTopology: true });
+  await client.connect();
+  console.log("Conectado a MongoDB");
+  return client.db(dbName);
+}
 
-// Modelos
-const CommandUsage = mongoose.model("CommandUsage", commandUsageSchema);
-const GroupStats = mongoose.model("GroupStats", groupStatsSchema);
-
-// Función para registrar el uso de un comando
+// Función para registrar el uso de comandos
 async function logCommandUsage(command, groupId, userId) {
-  const newCommandUsage = new CommandUsage({
-    command,
-    groupId,
-    userId,
-  });
-  await newCommandUsage.save();
+  const db = await connectDB();
+  const collection = db.collection("commandUsage");
+  const newCommandUsage = { command, groupId, userId, timestamp: new Date() };
+  await collection.insertOne(newCommandUsage);
 }
 
 // Función para registrar estadísticas del grupo
 async function logGroupStats(groupId, members, newJoins, newLeaves) {
-  const newGroupStats = new GroupStats({
+  const db = await connectDB();
+  const collection = db.collection("groupStats");
+  const newGroupStats = {
     groupId,
     usersJoined: newJoins,
     usersLeft: newLeaves,
     totalMembers: members,
-  });
-  await newGroupStats.save();
+    date: new Date(),
+  };
+  await collection.insertOne(newGroupStats);
 }
 
 // Obtener estadísticas
 async function getGroupStats(groupId) {
-  return await GroupStats.find({ groupId }).sort({ date: -1 }).limit(1);
+  const db = await connectDB();
+  const collection = db.collection("groupStats");
+  const stats = await collection.find({ groupId }).sort({ date: -1 }).limit(1).toArray();
+  return stats[0]; // Devolvemos el último registro de estadísticas
 }
 
 module.exports = {
