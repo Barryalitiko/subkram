@@ -1,34 +1,41 @@
+const axios = require('axios');
 const fs = require('fs');
-const { PREFIX } = require("../../krampus");
+const { PREFIX } = require("../../krampus"); // Asegúrate de que este archivo tiene el prefijo configurado
 
 module.exports = {
   name: "gif",
-  description: "Envía un GIF aleatorio desde una lista predefinida",
-  commands: ["gif"],
+  description: "Enviar un GIF aleatorio",
+  commands: [`${PREFIX}gif`], // Incluye el prefijo en el comando
   usage: `${PREFIX}gif`,
-  cooldown: 60, // 1 minuto de cooldown
-  handle: async ({ socket, sendReply, sendReact, remoteJid }) => {
+  cooldown: 180, // 3 minutos de cooldown
+  handle: async ({ socket, sendReply, remoteJid }) => {
+    const gifs = [
+      "https://media1.tenor.com/m/YhGc7aQAI4oAAAAd/megumi-kato-kiss.gif"
+      // Puedes agregar más enlaces de GIFs aquí
+    ];
+
     try {
-      // Leer el archivo JSON con los enlaces de los GIFs
-      const gifsData = JSON.parse(fs.readFileSync('./gifs.json', 'utf8'));
-      const gifsList = gifsData.gifs;
+      // Elegir un enlace aleatorio de la lista de GIFs
+      const randomGifUrl = gifs[Math.floor(Math.random() * gifs.length)];
 
-      // Seleccionar un GIF aleatorio
-      const randomGif = gifsList[Math.floor(Math.random() * gifsList.length)];
+      // Descargar el archivo GIF
+      const response = await axios.get(randomGifUrl, { responseType: 'arraybuffer' });
+      const gifBuffer = Buffer.from(response.data, 'binary');
 
-      // Enviar el GIF
-      await socket.sendMessage(remoteJid, {
-        video: { url: randomGif },
-        caption: "Aquí tienes un GIF aleatorio!",
-        mimetype: "image/gif",
-      });
+      // Guardar el GIF en un archivo temporal
+      const tempFilePath = './tempGif.gif';
+      fs.writeFileSync(tempFilePath, gifBuffer);
 
-      console.log("[GIF] GIF enviado con éxito.");
-      await sendReact("✅");
+      // Enviar el GIF como un video (WhatsApp lo mostrará como un GIF)
+      await sendVideoFromURL(socket, remoteJid, tempFilePath, "Aquí tienes un GIF");
+
+      // Eliminar el archivo temporal después de enviarlo
+      fs.unlinkSync(tempFilePath);
+      
+      console.log("[GIF] GIF enviado con éxito");
     } catch (error) {
-      console.error("[GIF] Error al enviar el GIF:", error);
-      await sendReply("❌ Ocurrió un error al enviar el GIF.");
-      await sendReact("❌");
+      console.error("[GIF] Error al descargar o enviar el GIF:", error);
+      await sendReply("❌ Hubo un error al intentar enviar el GIF.");
     }
   }
 };
