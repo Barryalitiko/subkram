@@ -8,7 +8,11 @@ module.exports = {
   cooldown: 180, // 3 minutos de cooldown
   handle: async ({ sendReply, sendReact, socket, remoteJid }) => {
     try {
-      // Cambiar el enlace de invitación
+      // Revocar el enlace actual
+      await socket.groupRevokeInvite(remoteJid);
+      console.log("[CAMBIO ENLACE] Enlace revocado");
+
+      // Generar un nuevo enlace de invitación
       const newInviteCode = await socket.groupInviteCode(remoteJid);
       console.log("[CAMBIO ENLACE] Nuevo enlace generado:", newInviteCode);
 
