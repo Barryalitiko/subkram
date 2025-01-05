@@ -5,7 +5,7 @@ const { PREFIX } = require("../../krampus");
 module.exports = {
   name: "video",  // Nombre del comando
   description: "Comando para descargar solo videos desde YouTube",
-  commands: ["descargar-video", "yt-video"],  // Comandos asociados
+  commands: ["descargar-video", "yt"],  // Comandos asociados
   usage: `${PREFIX}descargar-video <video_name>`,
   cooldown: 120,  // 2 minutos de cooldown
   handle: async ({ args, sendReply, sendReact }) => {
