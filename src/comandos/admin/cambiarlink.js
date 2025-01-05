@@ -4,19 +4,10 @@ module.exports = {
   name: "cambiar-enlace",
   description: "Cambiar el enlace de invitación de un grupo",
   commands: [`${PREFIX}cambiar-enlace`], // El comando que usará el usuario
-  usage: `${PREFIX}clink`,
-  handle: async ({ sendReply, sendReact, socket, remoteJid, webMessage }) => {
+  usage: `${PREFIX}cambiar-enlace`,
+  cooldown: 180, // 3 minutos de cooldown
+  handle: async ({ sendReply, sendReact, socket, remoteJid }) => {
     try {
-      // Comprobamos si el usuario es un administrador
-      const groupMetadata = await socket.groupMetadata(remoteJid);
-      const isAdmin = groupMetadata.participants.find(
-        (participant) => participant.id === webMessage.sender && participant.isAdmin
-      );
-
-      if (!isAdmin) {
-        return await sendReply("❌ Solo los administradores pueden cambiar el enlace de invitación.");
-      }
-
       // Cambiar el enlace de invitación
       const newInviteCode = await socket.groupInviteCode(remoteJid);
       console.log("[CAMBIO ENLACE] Nuevo enlace generado:", newInviteCode);
