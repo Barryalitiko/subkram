@@ -1,3 +1,5 @@
+const { PREFIX } = require("../../krampus"); // Para acceder al prefix
+
 module.exports = {
   name: "grupos",
   description: "Obtener información de los grupos donde está el bot",
