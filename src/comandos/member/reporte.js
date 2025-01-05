@@ -1,5 +1,8 @@
 const { PREFIX } = require("../../krampus");
 
+// Objeto para rastrear el tiempo de uso del comando por grupo
+const cooldowns = {};
+
 module.exports = {
   name: "tagadmins",
   description: "Etiqueta a todos los administradores del grupo.",
@@ -8,6 +11,16 @@ module.exports = {
   handle: async ({ remoteJid, sendReply, socket }) => {
     if (!remoteJid.endsWith("@g.us")) {
       await sendReply("Este comando solo puede usarse en grupos.");
+      return;
+    }
+
+    const now = Date.now();
+    const cooldownTime = 90 * 1000; // 90 segundos
+
+    // Verificar si el comando está en tiempo de espera
+    if (cooldowns[remoteJid] && now - cooldowns[remoteJid] < cooldownTime) {
+      const remainingTime = Math.ceil((cooldownTime - (now - cooldowns[remoteJid])) / 1000);
+      await sendReply(`Espera ${remainingTime} segundos antes de volver a usar este comando.`);
       return;
     }
 
@@ -29,6 +42,9 @@ module.exports = {
 
       // Enviar el mensaje con menciones
       await socket.sendMessage(remoteJid, { text: message, mentions });
+
+      // Registrar el tiempo de uso del comando
+      cooldowns[remoteJid] = now;
     } catch (error) {
       console.error("Error al etiquetar administradores:", error);
       await sendReply("Ocurrió un error al intentar etiquetar a los administradores.");
