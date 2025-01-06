@@ -4,10 +4,6 @@ const ytdl = require('ytdl-core');
 const app = express();
 const port = 3000;
 
-// Middleware para manejo de CORS (si lo necesitas)
-const cors = require('cors');
-app.use(cors());
-
 // Ruta para buscar música o video y obtener enlace de descarga
 app.get('/media', async (req, res) => {
   const query = req.query.query;
