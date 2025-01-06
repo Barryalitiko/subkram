@@ -1,6 +1,7 @@
 const ytSearch = require("yt-search");
 const ytdl = require("ytdl-core");
 const axios = require("axios");
+const { PREFIX } = require("../../krampus"); // Asumiendo que este es el archivo donde está el PREFIX
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'; // Desactiva la verificación SSL (temporal, no recomendado en producción)
 
@@ -30,10 +31,10 @@ module.exports = {
   name: "musica",
   description: "Busca y envía música desde YouTube",
   commands: ["musica", "play"],
-  usage: `!musica <nombre de la canción o URL de YouTube>`,
+  usage: `${PREFIX}musica <nombre de la canción o URL de YouTube>`,
   handle: async ({ args, remoteJid, sendReply, socket }) => {
     if (args.length < 1) {
-      await sendReply(`Uso incorrecto. Por favor, proporciona el nombre de la canción o el URL. Ejemplo: !musica [nombre o URL]`);
+      await sendReply(`Uso incorrecto. Por favor, proporciona el nombre de la canción o el URL. Ejemplo: ${PREFIX}musica [nombre o URL]`);
       return;
     }
 
