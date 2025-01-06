@@ -7,7 +7,7 @@ const path = require('path');
 class MyApiRestBaseUrl {
   constructor() {
     this.app = express(); // Crear la instancia de Express
-    this.port = process.env.PORT || 3000; // Configurar el puerto
+    this.port = process.env.PORT || 4000; // Configurar el puerto
     this.middlewares(); // Cargar middlewares globales
     this.routes(); // Definir rutas
     this.handleErrors(); // Manejo de errores
