@@ -105,6 +105,8 @@ exports.loadCommonFunctions = ({ socket, webMessage }) => {
   };
 
   const sendAudioFromURL = async (url) => {
+  try {
+    console.log(`Enviando audio desde URL: ${url}`);
     return await socket.sendMessage(
       remoteJid,
       {
@@ -113,17 +115,22 @@ exports.loadCommonFunctions = ({ socket, webMessage }) => {
       },
       { quoted: webMessage }
     );
-  };
+  } catch (error) {
+    console.error("Error al enviar el audio:", error);
+    throw new Error("No se pudo enviar el audio.");
+  }
+};
 
     const sendVideoFromURL = async (url) => {
-    return await socket.sendMessage(
-      remoteJid,
-      {
-        video: { url },
-      },
-      { url, quoted: webMessage }
-    );
-  };
+  console.log(`Enviando video desde URL: ${url}`); // Registro del URL
+  return await socket.sendMessage(
+    remoteJid,
+    {
+      video: { url },
+    },
+    { quoted: webMessage }
+  );
+};
 
   const sendStickerFromFile = async (file) => {
     return await socket.sendMessage(
