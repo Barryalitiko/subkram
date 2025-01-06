@@ -6,7 +6,16 @@ module.exports = {
   description: "Busca y envía música o video desde YouTube",
   commands: ["musica", "play"],
   usage: `${PREFIX}musica <nombre de la canción o URL de YouTube>`,
-  handle: async ({ args, remoteJid, sendReply, sendWaitReact, sendSuccessReact, sendErrorReply, sendErrorReact, socket }) => {
+  handle: async ({
+    args,
+    remoteJid,
+    sendReply,
+    sendWaitReact,
+    sendSuccessReact,
+    sendErrorReply,
+    sendErrorReact,
+    socket,
+  }) => {
     if (args.length < 1) {
       return await sendReply(`Uso incorrecto. Por favor, proporciona el nombre de la canción o el URL. Ejemplo: ${PREFIX}musica [nombre o URL]`);
     }
