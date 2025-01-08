@@ -1,7 +1,6 @@
 const axios = require("axios");
 const ytSearch = require("yt-search");
-
-const BASE_API_URL = "http://localhost:4000";
+const { BASE_API_URL } = require("../krampus"); // Importar la URL base de la API
 
 // Función para buscar un video en YouTube
 async function searchVideo(query) {
@@ -14,10 +13,16 @@ async function searchVideo(query) {
 
 // Función para procesar audio o video con la API
 async function fetchFromApi(endpoint, url) {
-  const response = await axios.get(`${BASE_API_URL}/${endpoint}`, {
-    params: { url },
-  });
-  return response.data;
+  try {
+    const response = await axios.get(`${BASE_API_URL}/${endpoint}`, {
+      params: { url },
+    });
+    return response.data;
+  } catch (error) {
+    throw new Error(
+      `Error al obtener datos desde la API (${endpoint}): ${error.message}`
+    );
+  }
 }
 
 // Comando del bot
@@ -35,14 +40,19 @@ async function handleCommand(args) {
     console.log(`Video encontrado: ${video.title} (${video.url})`);
   }
 
-  // Usar la API para obtener el enlace de descarga
+  // Usar la API para obtener los enlaces de descarga
   try {
     const audioData = await fetchFromApi("audio", videoUrl);
     const videoData = await fetchFromApi("video", videoUrl);
 
-    console.log("Audio URL:", audioData.downloadUrl);
-    console.log("Video URL:", videoData.downloadUrl);
+    return {
+      audioUrl: audioData.downloadUrl,
+      videoUrl: videoData.downloadUrl,
+    };
   } catch (error) {
     console.error("Error al procesar la solicitud:", error.message);
+    throw error;
   }
 }
+
+module.exports = { handleCommand, searchVideo, fetchFromApi };
