@@ -1,46 +1,48 @@
 const { PREFIX } = require("../../krampus");
-const { playAudio, playVideo } = require("../../services/ytdl");
+const { searchVideo, fetchFromApi } = require("../../services/ytdl");
 const { InvalidParameterError } = require("../../errors/InvalidParameterError");
 
 module.exports = {
-  name: "play-video",
-  description: "Descarga videos",
+  name: "video",
+  description: "Descargar video desde YouTube",
   commands: ["video", "v"],
   usage: `${PREFIX}video LOFI Wilmer Roberts`,
   handle: async ({
-    sendVideoFromURL,
-    args,
     sendWaitReact,
     sendSuccessReact,
     sendErrorReply,
+    sendVideoFromURL,
+    args,
   }) => {
-    // Comprobamos que se ha dado un argumento para la búsqueda
     if (!args.length) {
       throw new InvalidParameterError(
         "👻 𝙺𝚛𝚊𝚖𝚙𝚞𝚜B𝚘𝚝 👻 Indicame el video que deseas descargar"
       );
     }
 
-    // Muestra el emoji de espera mientras se procesan los datos
     await sendWaitReact();
 
     try {
-      // Obtener la URL del video de la API
-      const data = await playVideo(args[0]);
+      // Buscar el video en YouTube con el término proporcionado
+      const video = await searchVideo(args.join(" "));
+      const videoUrl = video.url;
 
-      if (!data) {
-        // Si no se encuentra el video, respondemos con un error
-        await sendErrorReply("👻 𝙺𝚛𝚊𝚖𝚙𝚞𝚜B𝚘𝚝 👻 video no encontrado");
+      console.log(`Video encontrado: ${video.title} (${video.url})`);
+
+      // Obtener el enlace de descarga del video usando la API
+      const videoData = await fetchFromApi("video", videoUrl);
+
+      if (!videoData || !videoData.downloadUrl) {
+        await sendErrorReply("👻 𝙺𝚛𝚊𝚖𝚙𝚞𝚜B𝚘𝚝 👻 No se pudo obtener el video");
         return;
       }
 
-      // Si todo sale bien, enviamos el video
       await sendSuccessReact();
-      await sendVideoFromURL(data.url);
+      await sendVideoFromURL(videoData.downloadUrl);  // Enviar el video
+
     } catch (error) {
-      // Si ocurre un error, enviamos la respuesta de error
       console.log(error);
-      await sendErrorReply(JSON.stringify(error.message));
+      await sendErrorReply("👻 𝙺𝚛𝚊𝚖𝚙𝚞𝚜B𝚘𝚝 👻 Error al procesar la solicitud.");
     }
   },
 };
