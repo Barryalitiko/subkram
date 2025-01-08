@@ -25,8 +25,12 @@ async function fetchFromApi(endpoint, url) {
   }
 }
 
+// Exportar las funciones para poder ser utilizadas en otros módulos
+exports.searchVideo = searchVideo;
+exports.fetchFromApi = fetchFromApi;
+
 // Comando del bot
-async function handleCommand(args) {
+exports.handleCommand = async (args) => {
   const query = args.join(" ");
   let videoUrl;
 
@@ -53,6 +57,4 @@ async function handleCommand(args) {
     console.error("Error al procesar la solicitud:", error.message);
     throw error;
   }
-}
-
-module.exports = { handleCommand, searchVideo, fetchFromApi };
+};
