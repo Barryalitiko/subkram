@@ -1,11 +1,11 @@
-const { connect } = require("./src/connect");
-const { load } = require("./src/loader");
-const { infoLog, bannerLog } = require("./src/utils/logger");
+const { connect } = require("./connect");
+const { load } = require("./loader");
+const { infoLog, bannerLog } = require("./utils/logger");
 
 async function start() {
   try {
     bannerLog();
-    infoLog("Krampus se está iniciando...");
+    infoLog("Kram está procesando...");
 
     const socket = await connect();
 
