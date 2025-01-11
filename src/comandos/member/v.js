@@ -1,18 +1,17 @@
 const { PREFIX } = require("../../krampus");
-const { searchVideo } = require("../../services/ytdl"); // Usamos yt-search para búsqueda
-const { fetchPlayDlAudio } = require("../../services/audioService"); // Usamos play-dl para obtener el audio
+const { fetchPlayDlVideo } = require("../../services/audioService"); // Ahora importamos fetchPlayDlVideo
 const { InvalidParameterError } = require("../../errors/InvalidParameterError");
 
 module.exports = {
-  name: "download-video",
-  description: "Descargar el video de YouTube (solo audio)",
-  commands: ["download-video", "dv"],
-  usage: `${PREFIX}download-video <nombre del video>`,
+  name: "play-video",
+  description: "Descargar video desde YouTube",
+  commands: ["play-video", "video"],
+  usage: `${PREFIX}play-video <nombre del video>`,
   handle: async ({
     sendWaitReact,
     sendSuccessReact,
     sendErrorReply,
-    sendAudioFromURL,
+    sendVideoFromURL,
     args,
   }) => {
     if (!args.length) {
@@ -32,24 +31,24 @@ module.exports = {
       const videoUrl = video.url;
 
       console.log(`Video encontrado, URL directa: ${videoUrl}`);
-
-      // Llamar a play-dl para obtener el audio del video
       console.log("Llamando al servicio para obtener el enlace de descarga...");
-      const audioData = await fetchPlayDlAudio(videoUrl);
 
-      if (!audioData || !audioData.downloadUrl) {
+      // Llamar al servicio para obtener el enlace de descarga
+      const videoData = await fetchPlayDlVideo(videoUrl);
+
+      if (!videoData || !videoData.downloadUrl) {
         console.log("Error: No se pudo obtener un enlace de descarga válido.");
-        await sendErrorReply("👻 𝙺𝚛𝚊𝚖𝚙𝚞𝚜B𝚘𝚝 👻 No se pudo obtener el audio.");
+        await sendErrorReply("👻 𝙺𝚛𝚊𝚖𝚙𝚞𝚜B𝚘𝚝 👻 No se pudo obtener el video.");
         return;
       }
 
-      console.log(`Enlace de descarga obtenido: ${audioData.downloadUrl}`);
+      console.log(`Enlace de descarga obtenido: ${videoData.downloadUrl}`);
       await sendSuccessReact();
 
-      // Enviar el audio descargado
-      console.log("Enviando el audio...");
-      await sendAudioFromURL(audioData.downloadUrl);
-      console.log("Audio enviado con éxito.");
+      // Enviar el video descargado
+      console.log("Enviando el video...");
+      await sendVideoFromURL(videoData.downloadUrl);
+      console.log("Video enviado con éxito.");
     } catch (error) {
       console.error("Error en el manejo del comando:", error.message);
       await sendErrorReply(
