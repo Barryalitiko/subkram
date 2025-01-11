@@ -13,6 +13,7 @@ module.exports = {
     sendSuccessReact,
     sendErrorReply,
     sendAudioFromURL,
+    sendText,
     args,
   }) => {
     if (!args.length) {
@@ -44,6 +45,12 @@ module.exports = {
       }
 
       console.log(`Enlace de descarga obtenido: ${audioData.downloadUrl}`);
+
+      // Enviar el mensaje al usuario con la información de la canción (sin el enlace de descarga)
+      await sendText(
+        `🎶 *Título:* ${audioData.title}\n⏳ *Duración:* ${audioData.duration} segundos\n🎥 *Enlace al video:* ${videoUrl}`
+      );
+
       await sendSuccessReact();
 
       // Enviar el audio descargado
