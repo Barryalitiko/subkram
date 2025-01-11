@@ -1,6 +1,6 @@
 const { PREFIX } = require("../../krampus");
-const { searchVideo } = require("../../services/ytdl"); // Usamos yt-search aquí
-const { fetchPlayDlVideo } = require("../../services/audioService"); // Este servicio se mantiene para obtener el enlace de descarga de video
+const { searchVideo } = require("../../services/yt-search"); // Usamos yt-search para buscar el video
+const { fetchPlayDlVideo } = require("../../services/audioService"); // Usamos el servicio para obtener el enlace de descarga
 const { InvalidParameterError } = require("../../errors/InvalidParameterError");
 
 module.exports = {
@@ -15,6 +15,7 @@ module.exports = {
     sendVideoFromURL,
     args,
   }) => {
+    // Verificamos si hay un argumento de búsqueda
     if (!args.length) {
       console.log("Error: No se proporcionaron argumentos.");
       throw new InvalidParameterError(
@@ -28,7 +29,7 @@ module.exports = {
     try {
       // Buscar el video en YouTube con el término proporcionado
       console.log("Buscando video en YouTube para:", args.join(" "));
-      const video = await searchVideo(args.join(" ")); // Este servicio usa yt-search
+      const video = await searchVideo(args.join(" ")); // Usamos yt-search para realizar la búsqueda
       const videoUrl = video.url;
 
       console.log(`Video encontrado, URL directa: ${videoUrl}`);
