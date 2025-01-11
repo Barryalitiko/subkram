@@ -1,5 +1,6 @@
 const { PREFIX } = require("../../krampus");
 const { getAudioDownloadLink } = require("../../services/audioService"); // Importamos el servicio
+const ytSearch = require("yt-search"); // Importamos yt-search
 const { InvalidParameterError } = require("../../errors/InvalidParameterError");
 
 module.exports = {
@@ -25,15 +26,26 @@ module.exports = {
     await sendWaitReact();
 
     try {
-      // Construir la URL de búsqueda en YouTube o recibir URL directamente
+      // Buscar el video en YouTube con el término proporcionado
       const query = args.join(" ");
-      const videoUrl = query.startsWith("http") ? query : `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`;
+      console.log(`Buscando video en YouTube para: ${query}`);
 
-      console.log(`Buscando audio para la URL: ${videoUrl}`);
+      const videoResults = await ytSearch(query);
+      if (!videoResults || !videoResults.videos.length) {
+        console.log("No se encontró un video válido.");
+        await sendErrorReply("👻 𝙺𝚛𝚊𝚖𝚙𝚞𝚜B𝚘𝚝 👻 No se pudo encontrar un video válido.");
+        return;
+      }
 
-      // Llamamos al servicio para obtener el enlace de descarga
+      // Obtener el primer video de los resultados
+      const video = videoResults.videos[0];
+      const videoUrlDirect = video.url;
+
+      console.log(`Video encontrado, URL directa: ${videoUrlDirect}`);
+
+      // Llamar al servicio para obtener el enlace de descarga
       console.log("Llamando al servicio para obtener el enlace de descarga...");
-      const downloadUrl = await getAudioDownloadLink(videoUrl);
+      const downloadUrl = await getAudioDownloadLink(videoUrlDirect);
 
       if (!downloadUrl) {
         console.log("Error: No se pudo obtener un enlace de descarga válido.");
