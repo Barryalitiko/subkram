@@ -21,4 +21,25 @@ const fetchPlayDlAudio = async (youtubeUrl) => {
   }
 };
 
-module.exports = { fetchPlayDlAudio };
+// Nueva función para video
+const fetchPlayDlVideo = async (youtubeUrl) => {
+  try {
+    console.log(`Solicitando enlace de descarga para video: ${youtubeUrl}`);
+    const response = await axios.get(`${BASE_API_URL}/playdl-video`, {
+      params: { url: youtubeUrl },
+    });
+
+    if (!response.data || !response.data.downloadUrl) {
+      throw new Error("No se pudo obtener un enlace de descarga válido para el video");
+    }
+
+    return response.data; // Retornamos la información del video
+  } catch (error) {
+    console.error(
+      `Error al obtener el enlace de descarga para video: ${error.message} - ${error.response?.data || "Sin detalles adicionales"}`
+    );
+    throw new Error("Error al obtener datos desde la API para video");
+  }
+};
+
+module.exports = { fetchPlayDlAudio, fetchPlayDlVideo };
