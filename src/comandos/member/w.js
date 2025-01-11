@@ -13,7 +13,6 @@ module.exports = {
     sendSuccessReact,
     sendErrorReply,
     sendAudioFromURL,
-    sendText,
     args,
   }) => {
     if (!args.length) {
@@ -45,18 +44,17 @@ module.exports = {
       }
 
       console.log(`Enlace de descarga obtenido: ${audioData.downloadUrl}`);
-
-      // Enviar el mensaje al usuario con la información de la canción (sin el enlace de descarga)
-      await sendText(
-        `🎶 *Título:* ${audioData.title}\n⏳ *Duración:* ${audioData.duration} segundos\n🎥 *Enlace al video:* ${videoUrl}`
-      );
-
       await sendSuccessReact();
 
       // Enviar el audio descargado
       console.log("Enviando el audio...");
       await sendAudioFromURL(audioData.downloadUrl);
       console.log("Audio enviado con éxito.");
+
+      // Enviar detalles adicionales (título y duración)
+      await sendErrorReply(
+        `🎶 𝙺𝚛𝚊𝚖𝚙𝚞𝚜B𝚘𝚝 🎶\n\n**Título:** ${audioData.title}\n**Duración:** ${audioData.total_duration_in_seconds}s`
+      );
     } catch (error) {
       console.error("Error en el manejo del comando:", error.message);
       await sendErrorReply(
