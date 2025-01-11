@@ -1,5 +1,6 @@
 const { PREFIX } = require("../../krampus");
-const { fetchPlayDlVideo } = require("../../services/audioService"); // Ahora importamos fetchPlayDlVideo
+const { searchVideo } = require("../../services/ytdl"); // Usamos yt-search aquí
+const { fetchPlayDlVideo } = require("../../services/audioService"); // Este servicio se mantiene para obtener el enlace de descarga de video
 const { InvalidParameterError } = require("../../errors/InvalidParameterError");
 
 module.exports = {
