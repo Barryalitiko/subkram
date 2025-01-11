@@ -1,12 +1,12 @@
 const { PREFIX } = require("../../krampus");
-const { searchVideo } = require("../../services/ytdl");
+const { searchVideo } = require("../../services/ytdl"); // Usamos yt-search internamente en este servicio
 const { fetchPlayDlAudio } = require("../../services/audioService");
 const { InvalidParameterError } = require("../../errors/InvalidParameterError");
 
 module.exports = {
   name: "play-audio",
   description: "Descargar audio desde YouTube",
-  commands: ["play-audio", "audio"],
+  commands: ["play-audio", "w"],
   usage: `${PREFIX}play-audio <nombre del audio>`,
   handle: async ({
     sendWaitReact,
@@ -28,7 +28,7 @@ module.exports = {
     try {
       // Buscar el video en YouTube con el término proporcionado
       console.log("Buscando video en YouTube para:", args.join(" "));
-      const video = await searchVideo(args.join(" "));
+      const video = await searchVideo(args.join(" ")); // Este servicio usa yt-search
       const videoUrl = video.url;
 
       console.log(`Video encontrado, URL directa: ${videoUrl}`);
