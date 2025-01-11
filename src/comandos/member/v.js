@@ -1,17 +1,18 @@
 const { PREFIX } = require("../../krampus");
-const { searchVideo, fetchFromApi } = require("../../services/ytdl");
+const { searchVideo } = require("../../services/ytdl"); // Usamos yt-search para búsqueda
+const { fetchPlayDlAudio } = require("../../services/audioService"); // Usamos play-dl para obtener el audio
 const { InvalidParameterError } = require("../../errors/InvalidParameterError");
 
 module.exports = {
-  name: "video",
-  description: "Descargar video desde YouTube",
-  commands: ["video", "v"],
-  usage: `${PREFIX}video LOFI Wilmer Roberts`,
+  name: "download-video",
+  description: "Descargar el video de YouTube (solo audio)",
+  commands: ["download-video", "dv"],
+  usage: `${PREFIX}download-video <nombre del video>`,
   handle: async ({
     sendWaitReact,
     sendSuccessReact,
     sendErrorReply,
-    sendVideoFromURL,
+    sendAudioFromURL,
     args,
   }) => {
     if (!args.length) {
@@ -26,33 +27,34 @@ module.exports = {
 
     try {
       // Buscar el video en YouTube con el término proporcionado
-      console.log("Iniciando búsqueda del video en YouTube...");
-      const video = await searchVideo(args.join(" "));
+      console.log("Buscando video en YouTube para:", args.join(" "));
+      const video = await searchVideo(args.join(" ")); // Este servicio usa yt-search
       const videoUrl = video.url;
 
-      console.log(`Video encontrado: ${video.title} (${video.url})`);
+      console.log(`Video encontrado, URL directa: ${videoUrl}`);
 
-      // Obtener el enlace de descarga del video usando la API
-      console.log(`Llamando a la API para obtener el enlace de descarga del video: ${videoUrl}`);
-      const videoData = await fetchFromApi("video", videoUrl);
+      // Llamar a play-dl para obtener el audio del video
+      console.log("Llamando al servicio para obtener el enlace de descarga...");
+      const audioData = await fetchPlayDlAudio(videoUrl);
 
-      if (!videoData || !videoData.downloadUrl) {
+      if (!audioData || !audioData.downloadUrl) {
         console.log("Error: No se pudo obtener un enlace de descarga válido.");
-        await sendErrorReply("👻 𝙺𝚛𝚊𝚖𝚙𝚞𝚜B𝚘𝚝 👻 No se pudo obtener el video");
+        await sendErrorReply("👻 𝙺𝚛𝚊𝚖𝚙𝚞𝚜B𝚘𝚝 👻 No se pudo obtener el audio.");
         return;
       }
 
-      console.log(`Enlace de descarga obtenido: ${videoData.downloadUrl}`);
+      console.log(`Enlace de descarga obtenido: ${audioData.downloadUrl}`);
       await sendSuccessReact();
 
-      // Enviar el video descargado
-      console.log("Enviando el video...");
-      await sendVideoFromURL(videoData.downloadUrl);
-      console.log("Video enviado con éxito.");
-
+      // Enviar el audio descargado
+      console.log("Enviando el audio...");
+      await sendAudioFromURL(audioData.downloadUrl);
+      console.log("Audio enviado con éxito.");
     } catch (error) {
-      console.log("Error en el manejo del comando:", error.message);
-      await sendErrorReply("👻 𝙺𝚛𝚊𝚖𝚙𝚞𝚜B𝚘𝚝 👻 Error al procesar la solicitud.");
+      console.error("Error en el manejo del comando:", error.message);
+      await sendErrorReply(
+        "👻 𝙺𝚛𝚊𝚖𝚙𝚞𝚜B𝚘𝚝 👻 Error al procesar la solicitud de video."
+      );
     }
   },
 };
