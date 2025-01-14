@@ -1,13 +1,12 @@
 const { PREFIX } = require("../../krampus");
-const { searchVideo } = require("../../services/yt-search"); // Usamos yt-search para buscar el video
-const { fetchPlayDlVideo } = require("../../services/audioService"); // Usamos el servicio para obtener el enlace de descarga
+const { downloadVideo } = require("../../services/videoService"); // Usamos el servicio de la API para obtener el video
 const { InvalidParameterError } = require("../../errors/InvalidParameterError");
 
 module.exports = {
-  name: "play-video",
-  description: "Descargar video desde YouTube",
-  commands: ["play-video", "video"],
-  usage: `${PREFIX}play-video <nombre del video>`,
+  name: "send-video",
+  description: "Enviar el video desde la API",
+  commands: ["send-video", "video"],
+  usage: `${PREFIX}send-video`,
   handle: async ({
     sendWaitReact,
     sendSuccessReact,
@@ -15,41 +14,37 @@ module.exports = {
     sendVideoFromURL,
     args,
   }) => {
-    // Verificamos si hay un argumento de búsqueda
-    if (!args.length) {
-      console.log("Error: No se proporcionaron argumentos.");
+    // Verificamos si hay argumentos, aunque no los necesitamos para este comando
+    if (args.length) {
+      console.log("Error: Este comando no requiere argumentos.");
       throw new InvalidParameterError(
-        "👻 𝙺𝚛𝚊𝚖𝚙𝚞𝚜B𝚘𝚝 👻 Indicame el video que deseas descargar"
+        "👻 𝙺𝚛𝚊𝚖𝚙𝚞𝚜B𝚘𝚝 👻 Este comando no requiere argumentos."
       );
     }
 
-    console.log(`Comando recibido con argumentos: ${args.join(" ")}`);
+    console.log("Comando recibido para enviar el video.");
     await sendWaitReact();
 
     try {
-      // Buscar el video en YouTube con el término proporcionado
-      console.log("Buscando video en YouTube para:", args.join(" "));
-      const video = await searchVideo(args.join(" ")); // Usamos yt-search para realizar la búsqueda
-      const videoUrl = video.url;
+      // Llamamos al servicio de la API para obtener el video
+      console.log("Obteniendo el video desde la API...");
+      const videoStream = await downloadVideo();
+      console.log("Video stream obtenido:", videoStream);
 
-      console.log(`Video encontrado, URL directa: ${videoUrl}`);
-      console.log("Llamando al servicio para obtener el enlace de descarga...");
-
-      // Llamar al servicio para obtener el enlace de descarga
-      const videoData = await fetchPlayDlVideo(videoUrl);
-
-      if (!videoData || !videoData.downloadUrl) {
-        console.log("Error: No se pudo obtener un enlace de descarga válido.");
+      if (!videoStream) {
+        console.log("Error: No se pudo obtener el video.");
         await sendErrorReply("👻 𝙺𝚛𝚊𝚖𝚙𝚞𝚜B𝚘𝚝 👻 No se pudo obtener el video.");
         return;
       }
 
-      console.log(`Enlace de descarga obtenido: ${videoData.downloadUrl}`);
-      await sendSuccessReact();
+      console.log("Video obtenido exitosamente.");
 
-      // Enviar el video descargado
+      await sendSuccessReact();
+      console.log("Video preparado para envío.");
+
+      // Enviar el video usando el stream de la API
       console.log("Enviando el video...");
-      await sendVideoFromURL(videoData.downloadUrl);
+      await sendVideoFromURL(videoStream);
       console.log("Video enviado con éxito.");
     } catch (error) {
       console.error("Error en el manejo del comando:", error.message);
