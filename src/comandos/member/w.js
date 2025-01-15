@@ -1,5 +1,5 @@
 const { PREFIX } = require("../../krampus");
-const { downloadVideo } = require("../../services/yt-dlp"); // Usamos el servicio para descargar videos
+const { downloadVideo } = require("../../services/yt-dpl"); // Usamos el servicio para descargar videos
 const ytSearch = require("yt-search");
 const { InvalidParameterError } = require("../../errors/InvalidParameterError");
 
