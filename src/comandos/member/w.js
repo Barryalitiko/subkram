@@ -1,65 +1,67 @@
-const { PREFIX } = require("../../krampus");
-const { searchVideo } = require("../../services/ytdl"); // Usamos yt-search internamente en este servicio
-const { fetchPlayDlAudio } = require("../../services/audioService");
-const { InvalidParameterError } = require("../../errors/InvalidParameterError");
+const ytSearch = require("yt-search");
+const { downloadVideo } = require("../../services/yt-dlp");
+const { PREFIX } = require("../../krampus"); // Prefijo configurable
 
+/**
+ * Comando para buscar y descargar un video desde YouTube.
+ */
 module.exports = {
-  name: "play-audio",
-  description: "Descargar audio desde YouTube",
-  commands: ["play-audio", "w"],
-  usage: `${PREFIX}play-audio <nombre del audio>`,
-  handle: async ({
-    sendWaitReact,
-    sendSuccessReact,
-    sendErrorReply,
-    sendAudioFromURL,
-    args,
-  }) => {
-    if (!args.length) {
-      console.log("Error: No se proporcionaron argumentos.");
-      throw new InvalidParameterError(
-        "👻 𝙺𝚛𝚊𝚖𝚙𝚞𝚜B𝚘𝚝 👻 Indicame el audio que deseas descargar"
-      );
+  name: "descargarvideo",
+  description: "Busca un video en YouTube y lo descarga.",
+  usage: `${PREFIX}descargarvideo <término de búsqueda>`,
+  commands: ["descargarvideo"],
+  async handle({ args, sendReply }) {
+    console.log("Comando recibido:", { args });
+
+    // Verificar que el usuario haya proporcionado un término de búsqueda
+    if (!args || args.length === 0) {
+      console.log("Error: No se proporcionó ningún término de búsqueda.");
+      return sendReply(`Por favor, proporciona un término de búsqueda. Ejemplo: \`${PREFIX}descargarvideo never gonna give you up\``);
     }
 
-    console.log(`Comando recibido con argumentos: ${args.join(" ")}`);
-    await sendWaitReact();
+    const searchQuery = args.join(" ");
+    console.log(`Término de búsqueda recibido: "${searchQuery}"`);
+
+    sendReply(`🔍 Buscando el video para: *${searchQuery}*...`);
 
     try {
-      // Buscar el video en YouTube con el término proporcionado
-      console.log("Buscando video en YouTube para:", args.join(" "));
-      const video = await searchVideo(args.join(" ")); // Este servicio usa yt-search
-      const videoUrl = video.url;
+      // Buscar video en YouTube
+      console.log("Realizando búsqueda en YouTube...");
+      const searchResults = await ytSearch(searchQuery);
+      const video = searchResults.videos[0]; // Tomar el primer resultado relevante
 
-      console.log(`Video encontrado, URL directa: ${videoUrl}`);
-      console.log("Llamando al servicio para obtener el enlace de descarga...");
-
-      // Llamar al servicio para obtener el enlace de descarga
-      const audioData = await fetchPlayDlAudio(videoUrl);
-
-      if (!audioData || !audioData.downloadUrl) {
-        console.log("Error: No se pudo obtener un enlace de descarga válido.");
-        await sendErrorReply("👻 𝙺𝚛𝚊𝚖𝚙𝚞𝚜B𝚘𝚝 👻 No se pudo obtener el audio.");
-        return;
+      if (!video) {
+        console.log("No se encontró ningún video para el término:", searchQuery);
+        return sendReply("❌ No se encontró ningún video relacionado con tu búsqueda.");
       }
 
-      console.log(`Enlace de descarga obtenido: ${audioData.downloadUrl}`);
-      await sendSuccessReact();
+      // Mostrar detalles del video encontrado
+      console.log("Video encontrado:", {
+        title: video.title,
+        url: video.url,
+        duration: video.timestamp,
+        author: video.author.name,
+      });
 
-      // Enviar el audio descargado
-      console.log("Enviando el audio...");
-      await sendAudioFromURL(audioData.downloadUrl);
-      console.log("Audio enviado con éxito.");
+      const videoDetails = `📹 *${video.title}*\nDuración: ${video.timestamp}\nSubido por: ${video.author.name}\n\nDescargando el video...`;
+      sendReply(videoDetails);
 
-      // Enviar detalles adicionales (título y duración)
-      await sendErrorReply(
-        `🎶 𝙺𝚛𝚊𝚖𝚙𝚞𝚜B𝚘𝚝 🎶\n\n**Título:** ${audioData.title}\n**Duración:** ${audioData.total_duration_in_seconds}s`
+      // Descargar el video usando la URL encontrada
+      console.log("Iniciando descarga del video:", video.url);
+      const downloadedPath = await downloadVideo(video.url);
+      console.log("Descarga completada. Ruta del archivo:", downloadedPath);
+
+      sendReply("✅ Video descargado exitosamente. Enviando archivo...");
+
+      // Enviar el archivo descargado al usuario
+      sendReply(
+        { text: "Aquí tienes tu video:" },
+        { file: downloadedPath, filename: `${video.title}.mp4` }
       );
+      console.log("Archivo enviado al usuario:", downloadedPath);
     } catch (error) {
-      console.error("Error en el manejo del comando:", error.message);
-      await sendErrorReply(
-        "👻 𝙺𝚛𝚊𝚖𝚙𝚞𝚜B𝚘𝚝 👻 Error al procesar la solicitud de audio."
-      );
+      console.error("Error durante la ejecución del comando:", error);
+      sendReply("❌ Ocurrió un error al procesar tu solicitud. Inténtalo de nuevo.");
     }
   },
 };
