@@ -1,28 +1,33 @@
+const { PREFIX } = require("../../krampus");
+const { downloadVideo } = require("../../services/yt-dlp"); // Usamos el servicio para descargar videos
 const ytSearch = require("yt-search");
-const { downloadVideo } = require("../../services/yt-dlp");
-const { PREFIX } = require("../../krampus"); // Prefijo configurable
+const { InvalidParameterError } = require("../../errors/InvalidParameterError");
 
-/**
- * Comando para buscar y descargar un video desde YouTube.
- */
 module.exports = {
-  name: "descargarvideo",
-  description: "Busca un video en YouTube y lo descarga.",
-  usage: `${PREFIX}descargarvideo <término de búsqueda>`,
-  commands: ["descargarvideo"],
-  async handle({ args, sendReply }) {
-    console.log("Comando recibido:", { args });
+  name: "descargar-video",
+  description: "Busca y descarga un video de YouTube y lo envía.",
+  commands: ["descargar-video", "w"],
+  usage: `${PREFIX}descargar-video <término de búsqueda>`,
+  handle: async ({
+    sendWaitReact,
+    sendSuccessReact,
+    sendErrorReply,
+    sendVideo,
+    args,
+  }) => {
+    console.log("Comando recibido para descargar un video.");
 
     // Verificar que el usuario haya proporcionado un término de búsqueda
-    if (!args || args.length === 0) {
-      console.log("Error: No se proporcionó ningún término de búsqueda.");
-      return sendReply(`Por favor, proporciona un término de búsqueda. Ejemplo: \`${PREFIX}descargarvideo never gonna give you up\``);
+    if (!args.length) {
+      console.log("Error: No se proporcionó un término de búsqueda.");
+      throw new InvalidParameterError(
+        `👻 𝙺𝚛𝚊𝚖𝚙𝚞𝚜B𝚘𝚝 👻 Por favor, proporciona un término de búsqueda. Ejemplo: \`${PREFIX}descargar-video never gonna give you up\``
+      );
     }
 
     const searchQuery = args.join(" ");
     console.log(`Término de búsqueda recibido: "${searchQuery}"`);
-
-    sendReply(`🔍 Buscando el video para: *${searchQuery}*...`);
+    await sendWaitReact();
 
     try {
       // Buscar video en YouTube
@@ -32,10 +37,12 @@ module.exports = {
 
       if (!video) {
         console.log("No se encontró ningún video para el término:", searchQuery);
-        return sendReply("❌ No se encontró ningún video relacionado con tu búsqueda.");
+        await sendErrorReply(
+          "👻 𝙺𝚛𝚊𝚖𝚙𝚞𝚜B𝚘𝚝 👻 No se encontró ningún video relacionado con tu búsqueda."
+        );
+        return;
       }
 
-      // Mostrar detalles del video encontrado
       console.log("Video encontrado:", {
         title: video.title,
         url: video.url,
@@ -43,25 +50,24 @@ module.exports = {
         author: video.author.name,
       });
 
-      const videoDetails = `📹 *${video.title}*\nDuración: ${video.timestamp}\nSubido por: ${video.author.name}\n\nDescargando el video...`;
-      sendReply(videoDetails);
+      // Mostrar detalles del video encontrado al usuario
+      await sendSuccessReact();
+      await sendErrorReply(`📹 *${video.title}*\nDuración: ${video.timestamp}\nSubido por: ${video.author.name}\n\nDescargando el video...`);
 
       // Descargar el video usando la URL encontrada
       console.log("Iniciando descarga del video:", video.url);
       const downloadedPath = await downloadVideo(video.url);
       console.log("Descarga completada. Ruta del archivo:", downloadedPath);
 
-      sendReply("✅ Video descargado exitosamente. Enviando archivo...");
-
       // Enviar el archivo descargado al usuario
-      sendReply(
-        { text: "Aquí tienes tu video:" },
-        { file: downloadedPath, filename: `${video.title}.mp4` }
-      );
-      console.log("Archivo enviado al usuario:", downloadedPath);
+      console.log("Enviando el video...");
+      await sendVideo(downloadedPath);
+      console.log("Video enviado con éxito.");
     } catch (error) {
-      console.error("Error durante la ejecución del comando:", error);
-      sendReply("❌ Ocurrió un error al procesar tu solicitud. Inténtalo de nuevo.");
+      console.error("Error en el manejo del comando:", error.message);
+      await sendErrorReply(
+        "👻 𝙺𝚛𝚊𝚖𝚙𝚞𝚜B𝚘𝚝 👻 Error al procesar la solicitud de descarga de video."
+      );
     }
   },
 };
