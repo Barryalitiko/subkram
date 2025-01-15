@@ -1,18 +1,19 @@
 const { PREFIX } = require("../../krampus");
-const { downloadVideo } = require("../../services/yt-dpl"); // Usamos el servicio para descargar videos
+const { downloadVideo } = require("../../services/yt-dpl"); // Servicio de descarga
 const ytSearch = require("yt-search");
 const { InvalidParameterError } = require("../../errors/InvalidParameterError");
 
 module.exports = {
   name: "descargar-video",
   description: "Busca y descarga un video de YouTube y lo envía.",
-  commands: ["descargar-video", "w"],
+  commands: ["descargar-video", "video"],
   usage: `${PREFIX}descargar-video <término de búsqueda>`,
   handle: async ({
     sendWaitReact,
     sendSuccessReact,
     sendErrorReply,
-    sendVideo,
+    sock, // Objeto del cliente de Baileys
+    remoteJid, // ID del chat o grupo donde se ejecuta el comando
     args,
   }) => {
     console.log("Comando recibido para descargar un video.");
@@ -59,9 +60,12 @@ module.exports = {
       const downloadedPath = await downloadVideo(video.url);
       console.log("Descarga completada. Ruta del archivo:", downloadedPath);
 
-      // Enviar el archivo descargado al usuario
+      // Enviar el video usando Baileys
       console.log("Enviando el video...");
-      await sendVideo(downloadedPath);
+      await sock.sendMessage(remoteJid, {
+        video: { url: downloadedPath },
+        caption: `📹 *${video.title}*\nDuración: ${video.timestamp}\nSubido por: ${video.author.name}`,
+      });
       console.log("Video enviado con éxito.");
     } catch (error) {
       console.error("Error en el manejo del comando:", error.message);
