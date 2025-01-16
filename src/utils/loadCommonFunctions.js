@@ -152,13 +152,11 @@ exports.loadCommonFunctions = ({ socket, webMessage }) => {
     );
   };
   
-  const sendMessage = async ({ messageType, content, caption = '', mimetype = '', url = '' }) => {
+  const sendMessage = async ({ messageType, caption = '', mimetype = '', url = '' }) => {
   try {
     let messageContent = {};
     
-    if (messageType === 'text') {
-      messageContent = { text: `${BOT_EMOJI} ${content}` };
-    } else if (messageType === 'audio') {
+    if (messageType === 'audio') {
       messageContent = { audio: { url }, mimetype };
     } else if (messageType === 'video') {
       messageContent = { video: { url }, caption, mimetype };
