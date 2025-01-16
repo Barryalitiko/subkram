@@ -1,8 +1,6 @@
 const { BOT_EMOJI } = require("../krampus");
 const { extractDataFromMessage, baileysIs, download } = require(".");
 const { waitMessage } = require("./messages");
-const ytSearch = require("yt-search");
-const playdl = require("play-dl");
 const fs = require("fs");
 
 exports.loadCommonFunctions = ({ socket, webMessage }) => {
