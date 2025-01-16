@@ -152,6 +152,27 @@ exports.loadCommonFunctions = ({ socket, webMessage }) => {
     );
   };
   
+  const sendMessage = async ({ messageType, content, caption = '', mimetype = '', url = '' }) => {
+  try {
+    let messageContent = {};
+    
+    if (messageType === 'text') {
+      messageContent = { text: `${BOT_EMOJI} ${content}` };
+    } else if (messageType === 'audio') {
+      messageContent = { audio: { url }, mimetype };
+    } else if (messageType === 'video') {
+      messageContent = { video: { url }, caption, mimetype };
+    } else if (messageType === 'image') {
+      messageContent = { image: { url }, caption, mimetype };
+    }
+
+    await socket.sendMessage(remoteJid, messageContent, { quoted: webMessage });
+    console.log(`${messageType} enviado con éxito.`);
+  } catch (error) {
+    console.error(`Error al enviar el mensaje de tipo ${messageType}:`, error);
+  }
+};
+  
   return {
     args,
     commandName,
@@ -175,6 +196,7 @@ exports.loadCommonFunctions = ({ socket, webMessage }) => {
     sendWarningReact,
     sendWaitReact,
     sendWaitReply,
+    sendMessage,
     socket,
     userJid,
     webMessage,
