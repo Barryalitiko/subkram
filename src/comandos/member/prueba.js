@@ -1,5 +1,5 @@
 const { PREFIX } = require("../../krampus");
-const axios = require('axios');
+const fs = require('fs');
 
 module.exports = {
   name: "gif",
@@ -8,9 +8,8 @@ module.exports = {
   usage: `${PREFIX}gif`,
   handle: async ({ socket, remoteJid, sendReply }) => {
     try {
-      const gifUrl = 'https://media2.giphy.com/media/RboGiiSBHeJpu/200.webp?cid=790b761154lvsktm7pyivxrld3kt9xaf7ozdn3m1n1zy4x84&ep=v1_gifs_search&rid=200.webp&ct=g';
-      const response = await axios.get(gifUrl, { responseType: 'arraybuffer' });
-      const gifBuffer = response.data;
+      const gifPath = 'C:/Desktop/Nueva carpeta/beso.gif';
+      const gifBuffer = fs.readFileSync(gifPath);
 
       await socket.sendMessage(remoteJid, {
         video: gifBuffer,
