@@ -4,7 +4,7 @@ const axios = require('axios');  // Para realizar las peticiones HTTP
 module.exports = {
   name: "sendgif",  // Nombre del comando
   description: "Envía un GIF aleatorio desde un enlace",
-  commands: ["sendgif", "gif"],  // Comandos asociados
+  commands: ["sendgif", "gift"],  // Comandos asociados
   usage: `${PREFIX}sendgif`,  // Cómo usar el comando
   cooldown: 180,  // 3 minutos de cooldown
   handle: async ({ args, sendReply, sendReact, socket, remoteJid }) => {
