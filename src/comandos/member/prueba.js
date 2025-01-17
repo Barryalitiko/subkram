@@ -14,7 +14,6 @@ module.exports = {
 
       await socket.sendMessage(remoteJid, {
         video: gifBuffer,
-        caption: 'GIF enviado',
         gifPlayback: true,
       });
     } catch (error) {
