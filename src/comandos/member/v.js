@@ -1,15 +1,15 @@
 const { PREFIX } = require("../../krampus");
-const fs = require('fs');
-const path = require('path');
-const ytdlp = require('yt-dpl');
-const ytSearch = require('yt-search');
+const path = require("path");
+const fs = require("fs");
+const ytSearch = require("yt-search");
+const { downloadVideo } = require("../../services/ytdpl");
 
 module.exports = {
   name: "video",
   description: "Buscar y enviar un video",
-  commands: ["kram"],
+  commands: ["kramp"],
   usage: `${PREFIX}video <nombre del video>`,
-  handle: async ({ socket, remoteJid, sendReply, fullArgs }) => {
+  handle: async ({ sock, remoteJid, sendReply, fullArgs }) => {
     try {
       const videoQuery = fullArgs.join(" ");
       if (!videoQuery) {
@@ -17,6 +17,7 @@ module.exports = {
         return;
       }
 
+      // Buscar el video usando yt-search
       const searchResult = await ytSearch(videoQuery);
       const video = searchResult.videos[0];
       if (!video) {
@@ -27,21 +28,25 @@ module.exports = {
       const videoUrl = video.url;
       console.log(`Video encontrado: ${video.title}, URL: ${videoUrl}`);
 
-      const videoFolder = path.join(__dirname, '../../assets/videos');
-      if (!fs.existsSync(videoFolder)) {
-        fs.mkdirSync(videoFolder, { recursive: true });
+      // Descargar el video usando la función downloadVideo
+      const videoPath = await downloadVideo(videoUrl);
+      if (!videoPath) {
+        await sendReply("❌ Hubo un error al descargar el video.");
+        return;
       }
 
-      const videoName = `${video.title}.mp4`;
-      const videoPath = path.join(videoFolder, videoName);
-
-      await ytdlp.exec(videoUrl, ['-o', videoPath]);
-      console.log(`Video descargado correctamente: ${videoPath}`);
-
-      await sendVideoFromFile(videoPath, `Aquí tienes el video: ${video.title}`);
+      // Enviar el video a través de Baileys
+      await sock.sendMessage(
+        remoteJid,
+        {
+          video: { url: `./assets/videos/${path.basename(videoPath)}` },
+          caption: `Aquí tienes el video: ${video.title}`,
+          ptv: false, // Enviar como video normal
+        }
+      );
     } catch (error) {
       console.error("Error al buscar o enviar el video:", error);
       await sendReply("❌ Hubo un error al procesar el video.");
     }
-  }
+  },
 };
