@@ -1,71 +1,55 @@
-const { getProfileImageData } = require("@whiskeysockets/baileys");
-const fs = require("fs");
-const { onlyNumbers } = require("../utils");
-const { isActiveWelcomeGroup } = require("../utils/database");
-const { warningLog } = require("../utils/logger");
+const { getProfileImageData } = require('@whiskeysockets/baileys');
+const fs = require('fs');
+const { onlyNumbers } = require('../utils');
+const welcomeConfigPath = require('path').resolve(__dirname, "..", "..", "assets", "welcome-config.json");
 
-exports.onGroupParticipantsUpdate = async ({
-  groupParticipantsUpdate,
-  socket,
-}) => {
+function getWelcomeConfig() {
+  if (!fs.existsSync(welcomeConfigPath)) {
+    fs.writeFileSync(welcomeConfigPath, JSON.stringify({}));
+  }
+  return JSON.parse(fs.readFileSync(welcomeConfigPath, 'utf8'));
+}
+
+exports.onGroupParticipantsUpdate = async ({ groupParticipantsUpdate, socket }) => {
   const remoteJid = groupParticipantsUpdate.id;
   const userJid = groupParticipantsUpdate.participants[0];
+  const config = getWelcomeConfig();
+  const welcomeOption = config[remoteJid];
 
-  if (!isActiveWelcomeGroup(remoteJid)) {
+  if (!welcomeOption || groupParticipantsUpdate.action !== "add") {
     return;
   }
 
-  if (groupParticipantsUpdate.action === "add") {
-    // Si alguien entra al grupo
-    try {
-      const { buffer, profileImage } = await getProfileImageData(
-        socket,
-        userJid
-      );
+  try {
+    const { buffer, profileImage } = await getProfileImageData(socket, userJid);
 
+    if (welcomeOption === '1') {
+      // Opción 1: Enviar mensaje de bienvenida con etiquetado
       await socket.sendMessage(remoteJid, {
-        image: buffer,
-        caption: ` ¡𝗕𝗶𝗲𝗻𝘃𝗲𝗻𝗶𝗱@ 𝗮𝗹 𝗴𝗿𝘂𝗽𝗼!
-@${onlyNumbers(userJid)}
-𝘗𝘳𝘦𝘴𝘦𝘯𝘵𝘢𝘵𝘦 ᶜᵒⁿ 𝐟𝐨𝐭𝐨 y 𝐧𝐨𝐦𝐛𝐫𝐞 
-
-> Bot by Krampus OM
-Oᴘᴇʀᴀᴄɪᴏɴ Mᴀʀsʜᴀʟʟ ༴༎𝙾𝙼༎
-> https://t.me/krampusiano`,
+        text: `¡𝗕𝗶𝗲𝗻𝗲𝘃𝗲𝗻𝗶𝗱@ al grupo!\n@${onlyNumbers(userJid)}`,
         mentions: [userJid],
       });
-
-      if (!profileImage.includes("default-user")) {
-        fs.unlinkSync(profileImage);
+    } else if (welcomeOption === '2') {
+      // Opción 2: Enviar foto de perfil con mensaje
+      if (profileImage) {
+        await socket.sendMessage(remoteJid, {
+          image: buffer,
+          caption: `¡𝗕𝗶𝗲𝗻𝗲𝘃𝗲𝗻𝗶𝗱@ al grupo!\n@${onlyNumbers(userJid)}`,
+          mentions: [userJid],
+        });
+      } else {
+        await socket.sendMessage(remoteJid, {
+          text: `¡𝗕𝗶𝗲𝗻𝗲𝗻𝗶𝗱@ al grupo!\n@${onlyNumbers(userJid)}\nNota: Esta persona no tiene foto de perfil.`,
+          mentions: [userJid],
+        });
       }
-    } catch (error) {
-      warningLog(
-        "👻 𝙺𝚛𝚊𝚖𝚙𝚞𝚜.𝚋𝚘𝚝 👻 No se pudo enviar el mensaje de Bienvenida"
-      );
     }
-  } else if (groupParticipantsUpdate.action === "remove") {
-    // Si alguien sale del grupo
-    try {
-      const { buffer, profileImage } = await getProfileImageData(
-        socket,
-        userJid
-      );
 
-      await socket.sendMessage(remoteJid, {
-        image: buffer,
-        caption: ` ¡𝗙𝗲𝗹𝗶𝚌𝗲𝘀 𝗹𝗲𝗰𝗵𝗼𝘀 𝗮𝗹 𝗽𝗮𝗿𝗮𝗷𝗲!
-@${onlyNumbers(userJid)}
-𝘌𝘴𝘵𝘢𝘳𝗲𝗺𝘰𝘴 𝗮𝗹 𝗮𝗷𝘂𝘀𝘁𝗲, 𝘧𝘶𝘦𝗿𝗼 𝗮 𝗰𝗹𝗮𝘀𝗲 𝘥𝗲 𝗿𝗮𝗯𝗶𝗮 𝗽𝘂𝗲𝗱𝗲 𝗲𝘀𝘁𝗮𝗿 𝗮𝗻𝗾𝘂𝗲𝘀 𝘁𝘂 𝘀𝗲𝗿𝗶𝗮 🧠 𝘌𝘴𝘵𝘦 𝘢 𝘮𝘰𝘳𝘪𝘳 𝗻𝘂𝗲𝘀𝘁𝘳𝗮.` ,
-        mentions: [userJid],
-      });
-
-      if (!profileImage.includes("default-user")) {
-        fs.unlinkSync(profileImage);
-      }
-    } catch (error) {
-      warningLog(
-        "👻 𝙺𝚛𝚊𝚖𝚙𝚞𝚜.𝚋𝚘𝚝 👻 No se pudo enviar el mensaje de despedida"
-      );
+    // Si no hay foto de perfil, se borra el archivo temporal
+    if (profileImage && !profileImage.includes('default-user')) {
+      fs.unlinkSync(profileImage);
     }
+  } catch (error) {
+    console.error('Error al gestionar la bienvenida:', error);
   }
 };
