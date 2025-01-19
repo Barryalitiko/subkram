@@ -1,56 +1,47 @@
 const { PREFIX } = require("../../krampus");
-const { downloadVideo } = require("../../services/videoService"); // Usamos el servicio de la API para obtener el video
-const { InvalidParameterError } = require("../../errors/InvalidParameterError");
+const fs = require('fs');
+const path = require('path');
+const ytdlp = require('yt-dlp');
+const ytSearch = require('yt-search');
 
 module.exports = {
-  name: "send-video",
-  description: "Enviar el video desde la API",
-  commands: ["send-video", "video"],
-  usage: `${PREFIX}send-video`,
-  handle: async ({
-    sendWaitReact,
-    sendSuccessReact,
-    sendErrorReply,
-    sendVideoFromURL,
-    args,
-  }) => {
-    // Verificamos si hay argumentos, aunque no los necesitamos para este comando
-    if (args.length) {
-      console.log("Error: Este comando no requiere argumentos.");
-      throw new InvalidParameterError(
-        "👻 𝙺𝚛𝚊𝚖𝚙𝚞𝚜B𝚘𝚝 👻 Este comando no requiere argumentos."
-      );
-    }
-
-    console.log("Comando recibido para enviar el video.");
-    await sendWaitReact();
-
+  name: "video",
+  description: "Buscar y enviar un video",
+  commands: ["video"],
+  usage: `${PREFIX}video <nombre del video>`,
+  handle: async ({ socket, remoteJid, sendReply, fullArgs }) => {
     try {
-      // Llamamos al servicio de la API para obtener el video
-      console.log("Obteniendo el video desde la API...");
-      const videoStream = await downloadVideo();
-      console.log("Video stream obtenido:", videoStream);
-
-      if (!videoStream) {
-        console.log("Error: No se pudo obtener el video.");
-        await sendErrorReply("👻 𝙺𝚛𝚊𝚖𝚙𝚞𝚜B𝚘𝚝 👻 No se pudo obtener el video.");
+      const videoQuery = fullArgs.join(" ");
+      if (!videoQuery) {
+        await sendReply("❌ Por favor, proporciona el nombre del video que deseas buscar.");
         return;
       }
 
-      console.log("Video obtenido exitosamente.");
+      const searchResult = await ytSearch(videoQuery);
+      const video = searchResult.videos[0];
+      if (!video) {
+        await sendReply("❌ No se encontró ningún video con ese nombre.");
+        return;
+      }
 
-      await sendSuccessReact();
-      console.log("Video preparado para envío.");
+      const videoUrl = video.url;
+      console.log(`Video encontrado: ${video.title}, URL: ${videoUrl}`);
 
-      // Enviar el video usando el stream de la API
-      console.log("Enviando el video...");
-      await sendVideoFromURL(videoStream);
-      console.log("Video enviado con éxito.");
+      const videoFolder = path.join(__dirname, '../../assets/videos');
+      if (!fs.existsSync(videoFolder)) {
+        fs.mkdirSync(videoFolder, { recursive: true });
+      }
+
+      const videoName = `${video.title}.mp4`;
+      const videoPath = path.join(videoFolder, videoName);
+
+      await ytdlp.exec(videoUrl, ['-o', videoPath]);
+      console.log(`Video descargado correctamente: ${videoPath}`);
+
+      await sendVideoFromFile(videoPath, `Aquí tienes el video: ${video.title}`);
     } catch (error) {
-      console.error("Error en el manejo del comando:", error.message);
-      await sendErrorReply(
-        "👻 𝙺𝚛𝚊𝚖𝚙𝚞𝚜B𝚘𝚝 👻 Error al procesar la solicitud de video."
-      );
+      console.error("Error al buscar o enviar el video:", error);
+      await sendReply("❌ Hubo un error al procesar el video.");
     }
-  },
+  }
 };
