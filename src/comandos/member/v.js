@@ -1,7 +1,7 @@
 const { PREFIX } = require("../../krampus");
 const fs = require('fs');
 const path = require('path');
-const ytdlp = require('yt-dlp');
+const ytdlp = require('yt-dpl');
 const ytSearch = require('yt-search');
 
 module.exports = {
