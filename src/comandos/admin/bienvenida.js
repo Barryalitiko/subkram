@@ -23,16 +23,6 @@ module.exports = {
   commands: ["bienvenida", "welcome"],
   usage: `${PREFIX}bienvenida [opción]`,
   handle: async ({ args, sendReply, socket, remoteJid, participantJid }) => {
-    // Obtener los administradores del grupo
-    const groupMetadata = await socket.groupMetadata(remoteJid);
-    const adminJids = groupMetadata.participants.filter(p => p.isAdmin).map(p => p.id);
-
-    // Verificar si el usuario que invoca el comando es administrador
-    if (!adminJids.includes(participantJid)) {
-      await sendReply('❌ Solo los administradores pueden configurar la bienvenida.');
-      return;
-    }
-
     const option = args[0];
 
     if (!option || !['0', '1', '2'].includes(option)) {
