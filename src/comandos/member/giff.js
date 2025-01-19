@@ -3,7 +3,7 @@ module.exports = {
   name: "gif",
   description: "Enviar un GIF",
   commands: ["gif"],
-  usage: `${PREFIX}gif`,
+  usage: `${PREFIX}giff`,
   handle: async ({ socket, remoteJid, sendReply }) => {
     try {
       const gifUrl = 'https://drive.google.com/uc?id=1nKsYxXKjCOaQjYIytsVRYfNMpqZ4urvj';
