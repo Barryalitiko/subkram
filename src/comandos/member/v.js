@@ -7,11 +7,12 @@ const { downloadVideo } = require("../../services/ytdpl");
 module.exports = {
   name: "video",
   description: "Buscar y enviar un video",
-  commands: ["kramp"],
+  commands: ["kram"],
   usage: `${PREFIX}video <nombre del video>`,
   handle: async ({ sock, remoteJid, sendReply, fullArgs }) => {
     try {
-      const videoQuery = fullArgs.join(" ");
+      // Aseguramos que fullArgs sea un array, y luego lo unimos en un string
+      const videoQuery = fullArgs ? fullArgs.join(" ") : "";
       if (!videoQuery) {
         await sendReply("❌ Por favor, proporciona el nombre del video que deseas buscar.");
         return;
