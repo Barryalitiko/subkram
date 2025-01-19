@@ -1,36 +1,36 @@
+const fs = require('fs');
+const path = require('path');
 const { PREFIX } = require("../../krampus");
-const { setWelcomeMode, getWelcomeMode } = require("../../utils/database"); // Para manejar la configuración
+
+const welcomeConfigPath = path.resolve(__dirname, "..", "..", "..", "assets", "welcome-config.json");
+
+function getWelcomeConfig() {
+  if (!fs.existsSync(welcomeConfigPath)) {
+    fs.writeFileSync(welcomeConfigPath, JSON.stringify({}));
+  }
+  return JSON.parse(fs.readFileSync(welcomeConfigPath, 'utf8'));
+}
+
+function setWelcomeConfig(groupId, option) {
+  const config = getWelcomeConfig();
+  config[groupId] = option;
+  fs.writeFileSync(welcomeConfigPath, JSON.stringify(config, null, 2));
+}
 
 module.exports = {
   name: "bienvenida",
-  description: "Configura el modo de bienvenida para el grupo.",
+  description: "Configura la opción de bienvenida para el grupo.",
   commands: ["bienvenida", "welcome"],
-  usage: `${PREFIX}bienvenida [modo]`,
+  usage: `${PREFIX}bienvenida [opción]`,
   handle: async ({ args, sendReply, socket, remoteJid }) => {
-    // Verificar el argumento proporcionado
-    const mode = args[0];
+    const option = args[0];
 
-    if (!mode || !["0", "1", "2"].includes(mode)) {
-      return sendReply(`Por favor, usa uno de los siguientes modos:\n1. ${PREFIX}bienvenida 0 (Desactiva la bienvenida)\n2. ${PREFIX}bienvenida 1 (Etiqueta al usuario con mensaje de bienvenida)\n3. ${PREFIX}bienvenida 2 (Envía la foto de perfil junto a mensaje de bienvenida)`);
+    if (!option || !['0', '1', '2'].includes(option)) {
+      await sendReply(`Por favor, proporciona una opción válida: 0 (apagar), 1 (con mensaje de bienvenida) o 2 (con foto de perfil).`);
+      return;
     }
 
-    try {
-      // Guardar la configuración
-      await setWelcomeMode(remoteJid, mode);
-      let responseMessage;
-
-      if (mode === "0") {
-        responseMessage = "La bienvenida ha sido desactivada para este grupo.";
-      } else if (mode === "1") {
-        responseMessage = "La bienvenida por etiqueta ha sido activada para este grupo.";
-      } else if (mode === "2") {
-        responseMessage = "La bienvenida con foto de perfil ha sido activada para este grupo.";
-      }
-
-      await sendReply(responseMessage);
-    } catch (error) {
-      console.error("Error al configurar la bienvenida: ", error);
-      await sendReply("❌ Hubo un problema al configurar la bienvenida.");
-    }
+    setWelcomeConfig(remoteJid, option);
+    await sendReply(`✅ La opción de bienvenida ha sido configurada a ${option === '0' ? 'apagada' : option === '1' ? 'con mensaje de bienvenida' : 'con foto de perfil'}.`);
   },
 };
