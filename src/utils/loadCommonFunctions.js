@@ -168,6 +168,18 @@ exports.loadCommonFunctions = ({ socket, webMessage }) => {
     console.error(`Error al enviar el mensaje de tipo ${messageType}:`, error);
   }
 };
+
+const sendVideoFromFile = async (filePath, caption = '') => {
+  console.log(`Enviando video desde archivo: ${filePath}`); // Registro de la ruta local
+  return await socket.sendMessage(
+    remoteJid,
+    {
+      video: fs.readFileSync(filePath), // Le pasas el archivo leído desde el sistema local
+      caption: caption, // Añadir un pie de foto, si lo deseas
+    },
+    { quoted: webMessage }
+  );
+};
   
   return {
     args,
@@ -199,6 +211,7 @@ exports.loadCommonFunctions = ({ socket, webMessage }) => {
     sendReact,
     sendReply,
     sendWarningReply,
+    sendVideoFromFile,
     sendAudioFromURL,
   };
 };
