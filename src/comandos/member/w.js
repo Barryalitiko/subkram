@@ -28,11 +28,11 @@ module.exports = {
       const videoUrl = video.url;
       console.log(`Video encontrado: ${video.title}, URL: ${videoUrl}`);
 
-      // Llamamos al script para descargar la música
+      // Llamamos a la función downloadMusic para descargar la música
       const musicPath = await downloadMusic(videoUrl);
       console.log(`Música descargada correctamente: ${musicPath}`);
 
-      // Enviamos la música como archivo
+      // Enviar la música como archivo
       await socket.sendMessage(remoteJid, {
         audio: { url: musicPath },
         mimetype: "audio/mp4",  // El formato es mp4 para WhatsApp, aunque sea mp3
