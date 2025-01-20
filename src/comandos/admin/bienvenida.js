@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const { PREFIX } = require("../../krampus");
 
-const welcomeConfigPath = path.resolve(__dirname, "../../assets/welcome.json");
+const welcomeConfigPath = path.resolve(__dirname, "../../..", "assets", "welcome.json");
 
 function getWelcomeConfig() {
   if (!fs.existsSync(welcomeConfigPath)) {
