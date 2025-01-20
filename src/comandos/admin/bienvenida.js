@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const { PREFIX } = require("../../krampus");
 
-const welcomeConfigPath = path.resolve(__dirname, "../../assets/welcome.json");
+const welcomeConfigPath = path.resolve(__dirname, "../../assets/welcome-config.json");
 
 function getWelcomeConfig() {
   if (!fs.existsSync(welcomeConfigPath)) {
@@ -15,6 +15,7 @@ function setWelcomeConfig(groupId, option) {
   const config = getWelcomeConfig();
   config[groupId] = option;
   fs.writeFileSync(welcomeConfigPath, JSON.stringify(config, null, 2));
+  console.log(`Configuración de bienvenida para ${groupId} actualizada a ${option}`);
 }
 
 module.exports = {
