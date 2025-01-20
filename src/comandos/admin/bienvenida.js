@@ -1,37 +1,44 @@
-const fs = require('fs');
-const path = require('path');
 const { PREFIX } = require("../../krampus");
-
-const welcomeConfigPath = path.resolve(__dirname, "../../..", "assets", "welcome.json");
-
-function getWelcomeConfig() {
-  if (!fs.existsSync(welcomeConfigPath)) {
-    fs.writeFileSync(welcomeConfigPath, JSON.stringify({}));
-  }
-  return JSON.parse(fs.readFileSync(welcomeConfigPath, 'utf8'));
-}
-
-function setWelcomeConfig(groupId, option) {
-  const config = getWelcomeConfig();
-  config[groupId] = option;
-  fs.writeFileSync(welcomeConfigPath, JSON.stringify(config, null, 2));
-  console.log(`Configuración de bienvenida para ${groupId} actualizada a ${option}`);
-}
+const { InvalidParameterError } = require("../../errors/InvalidParameterError");
+const {
+  activateWelcomeGroup,
+  deactivateWelcomeGroup,
+} = require("../../utils/database");
 
 module.exports = {
-  name: "bienvenida",
-  description: "Configura la opción de bienvenida para el grupo.",
-  commands: ["bienvenida", "welcome"],
-  usage: `${PREFIX}bienvenida [opción]`,
-  handle: async ({ args, sendReply, socket, remoteJid, participantJid }) => {
-    const option = args[0];
-
-    if (!option || !['0', '1', '2'].includes(option)) {
-      await sendReply(`Por favor, proporciona una opción válida: 0 (apagar), 1 (con mensaje de bienvenida) o 2 (con foto de perfil).`);
-      return;
+  name: "welcome",
+  description: "Activa o desactiva la bienvenida",
+  commands: [
+    "welcome",
+    "bienvenida",
+  ],
+  usage: `${PREFIX}welcome (1/0)`,
+  handle: async ({ args, sendReply, sendSuccessReact, remoteJid }) => {
+    if (!args.length) {
+      throw new InvalidParameterError(
+        " 👻 𝙺𝚛𝚊𝚖𝚙𝚞𝚜.𝚋𝚘𝚝 👻 𝙴𝚜𝚌𝚛𝚒𝚋𝚎 1 𝚘 0 𝚙𝚊𝚛𝚊 𝚊𝚌𝚝𝚒𝚟𝚊𝚛 𝚘 𝚍𝚎𝚜𝚊𝚌𝚝𝚒𝚟𝚊𝚛 𝚎𝚕 𝚌𝚘𝚖𝚊𝚗𝚍𝚘"
+      );
     }
 
-    setWelcomeConfig(remoteJid, option);
-    await sendReply(`✅ La opción de bienvenida ha sido configurada a ${option === '0' ? 'apagada' : option === '1' ? 'con mensaje de bienvenida' : 'con foto de perfil'}.`);
+    const welcome = args[0] === "1";
+    const notWelcome = args[0] === "0";
+
+    if (!welcome && !notWelcome) {
+      throw new InvalidParameterError(
+        " 👻 𝙺𝚛𝚊𝚖𝚙𝚞𝚜.𝚋𝚘𝚝 👻 𝙴𝚜𝚌𝚛𝚒𝚋𝚎 1 𝚘 0 𝚙𝚊𝚛𝚊 𝚊𝚌𝚝𝚒𝚟𝚊𝚛 𝚘 𝚍𝚎𝚜𝚊𝚌𝚝𝚒𝚟𝚊𝚛 𝚎𝚕 𝚌𝚘𝚖𝚊𝚗𝚍𝚘"
+      );
+    }
+
+    if (welcome) {
+      activateWelcomeGroup(remoteJid);
+    } else {
+      deactivateWelcomeGroup(remoteJid);
+    }
+
+    await sendSuccessReact();
+
+    const context = welcome ? "*Activada*" : "*Apagada";
+
+    await sendReply( `👻 𝙺𝚛𝚊𝚖𝚙𝚞𝚜.𝚋𝚘𝚝 👻 𝙻𝚊 𝙱𝚒𝚎𝚗𝚟𝚎𝚗𝚒𝚍𝚊 𝚑𝚊 𝚜𝚒𝚍𝚘 ${context}`);
   },
 };
