@@ -1,4 +1,4 @@
-const { getProfileImageData } = require("../services/om");
+const { profilePictureUrl, downloadMediaMessage } = require('@whiskeysockets/baileys');
 const fs = require("fs");
 const { onlyNumbers } = require("../utils");
 const { isActiveWelcomeGroup } = require("../utils/database");
@@ -17,11 +17,13 @@ exports.onGroupParticipantsUpdate = async ({
 
   if (groupParticipantsUpdate.action === "add") {
     try {
-      const { buffer, profileImage } = await getProfileImageData(
-        socket,
-        userJid
-      );
+      // Obtener la URL de la foto de perfil del usuario
+      const profilePicUrl = await profilePictureUrl(userJid, 'image');
+      
+      // Descargar la imagen
+      const buffer = await downloadMediaMessage(profilePicUrl);
 
+      // Enviar el mensaje de bienvenida
       await socket.sendMessage(remoteJid, {
         image: buffer,
         caption: ` ¡𝗕𝗶𝗲𝗻𝘃𝗲𝗻𝗶𝗱@ 𝗮𝗹 𝗴𝗿𝘂𝗽𝗼!
@@ -35,9 +37,6 @@ Oᴘᴇʀᴀᴄɪᴏɴ Mᴀʀsʜᴀʟʟ ༴༎𝙾𝙼༎
         mentions: [userJid],
       });
 
-      if (!profileImage.includes("default-user")) {
-        fs.unlinkSync(profileImage);
-      }
     } catch (error) {
       warningLog(
         "👻 𝙺𝚛𝚊𝚖𝚙𝚞𝚜.𝚋𝚘𝚝 👻 No se pudo enviar el mensaje de Bienvenida"
