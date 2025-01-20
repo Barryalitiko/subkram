@@ -2,16 +2,25 @@ const fs = require("fs");
 const { onlyNumbers } = require("../utils");
 const { getWelcomeMode } = require("../utils/database");
 const { warningLog } = require("../utils/logger");
+const { isActiveAutoApproveGroup } = require("../../utils/database");
 
-exports.onGroupParticipantsUpdate = async ({
-  groupParticipantsUpdate,
-  socket,
-}) => {
-  const remoteJid = groupParticipantsUpdate.id;
-  const userJid = groupParticipantsUpdate.participants[0];
+exports.onGroupParticipantsUpdate = async ({ groupParticipantsUpdate, socket }) => {
+  const { action, participants } = groupParticipantsUpdate;
+  const groupId = groupParticipantsUpdate.remoteJid;
+
+  // Verificamos si el auto-aprobado está activo para el grupo
+  if (isActiveAutoApproveGroup(groupId) && action === "add") {
+    // Aprobamos automáticamente a los nuevos miembros
+    for (let userJid of participants) {
+      await socket.sendMessage(groupId, {
+        text: `✅ Se ha aprobado automáticamente a @${userJid}`,
+        mentions: [userJid],
+      });
+    }
+  }
 
   // Obtener el modo de bienvenida
-  const welcomeMode = getWelcomeMode(remoteJid);
+  const welcomeMode = getWelcomeMode(groupId);
 
   // Si el modo de bienvenida es 0, está desactivado
   if (welcomeMode === "0") {
@@ -19,14 +28,14 @@ exports.onGroupParticipantsUpdate = async ({
   }
 
   // Cuando alguien se une al grupo
-  if (groupParticipantsUpdate.action === "add") {
+  if (action === "add") {
     try {
       let buffer = null;
 
       // Si el modo es 1 (con foto), obtenemos la imagen de perfil
       if (welcomeMode === "1") {
         try {
-          const profilePictureUrl = await socket.profilePictureUrl(userJid, "image");
+          const profilePictureUrl = await socket.profilePictureUrl(participants[0], "image");
           const response = await fetch(profilePictureUrl);
           buffer = await response.buffer();
         } catch {
@@ -39,9 +48,8 @@ exports.onGroupParticipantsUpdate = async ({
 
       // Crear el mensaje de bienvenida
       const welcomeMessage = ` ¡𝗕𝗶𝗲𝗻𝘃𝗲𝗻𝗶𝗱@ 𝗮𝗹 𝗴𝗿𝘂𝗽𝗼!
-@${onlyNumbers(userJid)}
+@${onlyNumbers(participants[0])}
 𝘗𝘳𝘦𝘴𝘦𝘯𝘵𝘢𝘵𝘦 ᶜᵒⁿ 𝐟𝐨𝐭𝐨 y 𝐧𝐨𝐦𝐛𝐫𝐞 
-
 
 > Bot by Krampus OM
 Oᴘᴇʀᴀᴄɪᴏɴ Mᴀʀsʜᴀʟʟ ༴༎𝙾𝙼༎
@@ -49,15 +57,15 @@ Oᴘᴇʀᴀᴄɪᴏɴ Mᴀʀsʜᴀʟʟ ༴༎𝙾𝙼༎
 
       // Enviar mensaje según el modo
       if (welcomeMode === "1" && buffer) {
-        await socket.sendMessage(remoteJid, {
+        await socket.sendMessage(groupId, {
           image: buffer,
           caption: welcomeMessage,
-          mentions: [userJid],
+          mentions: [participants[0]],
         });
       } else if (welcomeMode === "2") {
-        await socket.sendMessage(remoteJid, {
+        await socket.sendMessage(groupId, {
           text: welcomeMessage,
-          mentions: [userJid],
+          mentions: [participants[0]],
         });
       }
     } catch (error) {
