@@ -7,7 +7,7 @@ module.exports = {
   description: "Descargar y enviar música desde YouTube",
   commands: ["musica", "m"],
   usage: `${PREFIX}musica <nombre del video>`,
-  handle: async ({ socket, remoteJid, sendReply, args, sendWaitReact, sendSuccessReact, userJid }) => {
+  handle: async ({ socket, remoteJid, sendReply, args, sendWaitReact, sendSuccessReact, userJid, webMessage }) => {
     try {
       const videoQuery = args.join(" ");
       if (!videoQuery) {
@@ -38,12 +38,12 @@ module.exports = {
       // Reacción para indicar que la música está lista
       await sendSuccessReact("🎵");
 
-      // Enviar la música como archivo, mencionando al usuario que usó el comando
+      // Enviar la música como archivo, respondiendo al mensaje de quien usó el comando
       await socket.sendMessage(remoteJid, {
         audio: { url: musicPath },
         mimetype: "audio/mp4",  // El formato es mp4 para WhatsApp, aunque sea mp3
         caption: `Aquí tienes la música 🎶 - ${video.title}`,
-        mentions: [userJid],  // Mencionamos a la persona que usó el comando
+        quoted: webMessage,  // Responde al mensaje original
         ptt: false  // No es un mensaje de nota de voz
       });
 
@@ -56,7 +56,7 @@ module.exports = {
             console.log(`Archivo de música eliminado: ${musicPath}`);
           }
         });
-      }, 3 * 60 * 1000);  // Eliminar después de 3 minutos
+      }, 1 * 60 * 1000);  // Eliminar después de 3 minutos
     } catch (error) {
       console.error("Error al descargar o enviar la música:", error);
       await sendReply("❌ Hubo un error al procesar la música.");
