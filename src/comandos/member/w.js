@@ -5,7 +5,7 @@ const ytSearch = require('yt-search');
 module.exports = {
   name: "musica",
   description: "Descargar y enviar música desde YouTube",
-  commands: ["musica"],
+  commands: ["musica", "m"],
   usage: `${PREFIX}musica <nombre del video>`,
   handle: async ({ socket, remoteJid, sendReply, args, sendWaitReact, sendSuccessReact, userJid }) => {
     try {
