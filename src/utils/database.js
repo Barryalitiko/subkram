@@ -4,12 +4,12 @@ const fs = require("fs");
 const databasePath = path.resolve(__dirname, "..", "..", "database");
 
 const INACTIVE_GROUPS_FILE = "inactive-groups";
-const NOT_WELCOME_GROUPS_FILE = "not-welcome-groups";
 const ANTI_LINK_GROUPS_FILE = "anti-link-groups";
+const WELCOME_MODE_GROUPS_FILE = "welcome-mode-groups";
 
 function createIfNotExists(fullPath) {
   if (!fs.existsSync(fullPath)) {
-    fs.writeFileSync(fullPath, JSON.stringify([]));
+    fs.writeFileSync(fullPath, JSON.stringify({}));
   }
 }
 
@@ -25,6 +25,7 @@ function writeJSON(jsonFile, data) {
   fs.writeFileSync(fullPath, JSON.stringify(data));
 }
 
+// Manejo del estado general de los grupos
 exports.activateGroup = (groupId) => {
   const inactiveGroups = readJSON(INACTIVE_GROUPS_FILE);
   const index = inactiveGroups.indexOf(groupId);
@@ -48,29 +49,19 @@ exports.isActiveGroup = (groupId) => {
   return !inactiveGroups.includes(groupId);
 };
 
-exports.activateWelcomeGroup = (groupId) => {
-  const notWelcomeGroups = readJSON(NOT_WELCOME_GROUPS_FILE);
-  const index = notWelcomeGroups.indexOf(groupId);
-
-  if (index !== -1) {
-    notWelcomeGroups.splice(index, 1);
-    writeJSON(NOT_WELCOME_GROUPS_FILE, notWelcomeGroups);
-  }
+// Manejo del modo de bienvenida
+exports.setWelcomeMode = (groupId, mode) => {
+  const welcomeModes = readJSON(WELCOME_MODE_GROUPS_FILE);
+  welcomeModes[groupId] = mode;
+  writeJSON(WELCOME_MODE_GROUPS_FILE, welcomeModes);
 };
 
-exports.deactivateWelcomeGroup = (groupId) => {
-  const notWelcomeGroups = readJSON(NOT_WELCOME_GROUPS_FILE);
-  if (!notWelcomeGroups.includes(groupId)) {
-    notWelcomeGroups.push(groupId);
-    writeJSON(NOT_WELCOME_GROUPS_FILE, notWelcomeGroups);
-  }
+exports.getWelcomeMode = (groupId) => {
+  const welcomeModes = readJSON(WELCOME_MODE_GROUPS_FILE);
+  return welcomeModes[groupId] || "1"; // Por defecto, modo desactivado
 };
 
-exports.isActiveWelcomeGroup = (groupId) => {
-  const notWelcomeGroups = readJSON(NOT_WELCOME_GROUPS_FILE);
-  return !notWelcomeGroups.includes(groupId);
-};
-
+// Manejo del anti-link
 exports.activateAntiLinkGroup = (groupId) => {
   const antiLinkGroups = readJSON(ANTI_LINK_GROUPS_FILE);
   if (!antiLinkGroups.includes(groupId)) {
@@ -93,4 +84,3 @@ exports.isActiveAntiLinkGroup = (groupId) => {
   const antiLinkGroups = readJSON(ANTI_LINK_GROUPS_FILE);
   return antiLinkGroups.includes(groupId);
 };
-
