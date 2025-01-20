@@ -1,4 +1,4 @@
-const { getProfileImageData } = require("../services/baileys");
+const { getProfileImageData } = require("../services/om");
 const fs = require("fs");
 const { onlyNumbers } = require("../utils");
 const { isActiveWelcomeGroup } = require("../utils/database");
