@@ -8,11 +8,6 @@ const {
   isAdmin,
 } = require("../middlewares");
 const { checkPermission } = require("../middlewares/checkPermission");
-const {
-  isActiveGroup,
-  getAutoResponderResponse,
-  isActiveAutoResponderGroup,
-} = require("./database");
 const { errorLog } = require("../utils/logger");
 const { ONLY_GROUP_ID } = require("../krampus");
 
@@ -37,14 +32,6 @@ exports.dynamicCommand = async (paramsHandler) => {
   }
 
   if (!verifyPrefix(prefix) || !hasTypeOrCommand({ type, command })) {
-    if (isActiveAutoResponderGroup(remoteJid)) {
-      const response = getAutoResponderResponse(fullMessage);
-
-      if (response) {
-        await sendReply(response);
-      }
-    }
-
     return;
   }
 
