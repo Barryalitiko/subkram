@@ -3,7 +3,7 @@ const { onlyNumbers } = require("../utils");
 const { warningLog } = require("../utils/logger");
 const path = require("path");
 
-const welcomeConfigPath = path.resolve(__dirname, "../../assets/welcome.json");
+const welcomeConfigPath = path.resolve(__dirname, "../../..", "assets", "welcome.json");
 
 function getWelcomeConfig() {
   if (!fs.existsSync(welcomeConfigPath)) {
