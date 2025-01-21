@@ -8,23 +8,39 @@ module.exports = {
   description: "Descargar y enviar música desde YouTube",
   commands: ["musica", "m"],
   usage: `${PREFIX}musica <nombre del video>`,
-  handle: async ({ socket, remoteJid, sendReply, args, sendWaitReact, sendMusicReact, webMessage }) => {
+  handle: async ({
+    socket,
+    remoteJid,
+    sendReply,
+    args,
+    sendWaitReact,
+    sendMusicReact,
+    webMessage,
+  }) => {
     try {
       const videoQuery = args.join(" ");
       if (!videoQuery) {
-        await sendReply("❌ Por favor, proporciona el nombre del video que deseas buscar.");
+        await sendReply(
+          "❌ Por favor, proporciona el nombre del video que deseas buscar."
+        );
         return;
       }
 
       // Reacción inicial mientras buscamos y descargamos
       await sendWaitReact("⏳");
-      await sendReply("Estoy buscando y descargando la música, por favor espera...");
+      await sendReply(
+        "🔄 Estoy buscando y descargando la música, por favor espera...",
+        { quoted: webMessage } // Responde al mensaje del usuario
+      );
 
       // Realizamos la búsqueda en YouTube
       const searchResult = await ytSearch(videoQuery);
       const video = searchResult.videos[0];
       if (!video) {
-        await sendReply("❌ No se encontró ningún video con ese nombre.");
+        await sendReply(
+          "❌ No se encontró ningún video con ese nombre.",
+          { quoted: webMessage } // Responde al mensaje del usuario
+        );
         return;
       }
 
@@ -38,13 +54,13 @@ module.exports = {
       // Reacción para indicar que la música está lista
       await sendMusicReact("🎵");
 
-      // Enviar la música como archivo, respondiendo al mensaje original del usuario
+      // Enviar la música como archivo, respondiendo al mensaje del usuario
       await socket.sendMessage(remoteJid, {
         audio: { url: musicPath },
-        mimetype: "audio/mp4", // WhatsApp prefiere este formato
-        caption: `Aquí tienes la música 🎶 - ${video.title}`,
-        quoted: webMessage, // Responder al mensaje original
-        ptt: false, // No es nota de voz
+        mimetype: "audio/mp4",
+        caption: `🎶 Aquí tienes la música: ${video.title}`,
+        quoted: webMessage, // Responder al mensaje original del usuario
+        ptt: false, // No es un mensaje de voz
       });
 
       // Eliminar el archivo después de enviarlo
@@ -59,7 +75,10 @@ module.exports = {
       }, 1 * 60 * 1000); // Eliminar después de 1 minuto
     } catch (error) {
       console.error("Error al descargar o enviar la música:", error);
-      await sendReply("❌ Hubo un error al procesar la música.");
+      await sendReply(
+        "❌ Hubo un error al procesar la música.",
+        { quoted: webMessage } // Responder al mensaje original del usuario
+      );
     }
   },
 };
