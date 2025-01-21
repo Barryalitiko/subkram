@@ -7,18 +7,21 @@ module.exports = {
   name: 'canvas',
   description: 'Prueba de comando con Canvas',
   commands: ['canvas'],
-  usage: `${PREFIX}canvas`,
-  handle: async ({ socket, remoteJid, sendReply }) => {
+  usage: `${PREFIX}canvas <texto>`,
+  handle: async ({ socket, remoteJid, sendReply, args }) => {
     try {
+      const texto = args.join(' ');
       const canvas = new Canvas(512, 512);
       const ctx = canvas.getContext('2d');
 
       ctx.fillStyle = 'red';
       ctx.fillRect(100, 100, 300, 300);
 
-      ctx.font = '36px Arial';
+      ctx.font = '24px Arial';
       ctx.fillStyle = 'white';
-      ctx.fillText('Hola, mundo!', 150, 250);
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(texto, 250, 200);
 
       const filePath = path.join(__dirname, 'canvas-image.jpg');
       const out = fs.createWriteStream(filePath);
