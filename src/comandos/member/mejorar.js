@@ -1,29 +1,29 @@
-const sharp = require('sharp');
-const fs = require('fs');
-const path = require('path');
+const sharp = require("sharp");
+const fs = require("fs");
+const path = require("path");
 const { PREFIX } = require("../../krampus");
 
 module.exports = {
   name: "improve",
   description: "Mejorar la calidad de una imagen",
   commands: ["improve", "enhance"],
-  usage: `${PREFIX}mejorar <imagen>`,
-  handle: async ({ socket, remoteJid, sendReply, args }) => {
+  usage: `${PREFIX}improve <imagen>`,
+  handle: async ({ socket, remoteJid, sendReply, args, message }) => {
     try {
-      const imageUrl = args[0];
-      if (!imageUrl) {
-        return await sendReply("❌ Por favor, proporciona una imagen válida.");
+      // Verificar si el mensaje tiene una imagen
+      if (!message || !message.message || !message.message.imageMessage) {
+        return await sendReply("❌ Por favor, envía una imagen para mejorar.");
       }
 
-      // Descargar la imagen de la URL proporcionada
-      const response = await fetch(imageUrl);
-      const buffer = await response.buffer();
-      
+      // Obtener la imagen del mensaje
+      const imageMessage = message.message.imageMessage;
+      const imageBuffer = await socket.downloadMediaMessage(imageMessage);
+
       // Establecer el nombre del archivo de salida
-      const outputFilePath = path.join(__dirname, 'assets', 'enhanced-image.jpg');
+      const outputFilePath = path.join(__dirname, "assets", "enhanced-image.jpg");
 
       // Usar sharp para mejorar la imagen
-      await sharp(buffer)
+      await sharp(imageBuffer)
         .resize({ width: 1920, height: 1080, fit: sharp.fit.inside }) // Aumentar resolución
         .sharpen() // Aumentar la nitidez
         .normalize() // Mejorar los colores y el contraste
