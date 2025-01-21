@@ -1,3 +1,4 @@
+const fs = require("fs"); // Agregamos esta línea
 const { PREFIX } = require("../../krampus");
 const { downloadMusic } = require("../../services/ytdpl");
 const ytSearch = require('yt-search');
