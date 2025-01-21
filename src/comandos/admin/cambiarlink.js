@@ -18,7 +18,7 @@ module.exports = {
 
       // Enviar el nuevo enlace
       await sendReply(`🔗 *Nuevo enlace de invitación del grupo:* \n\nhttps://chat.whatsapp.com/${newInviteCode}`);
-      await sendReact("✅"); // Reacción de éxito
+      await sendReact("🔗"); // Reacción de éxito
     } catch (error) {
       console.error("[CAMBIO ENLACE] Error al cambiar el enlace:", error);
       await sendReply("❌ Hubo un error al intentar cambiar el enlace del grupo.");
