@@ -7,7 +7,7 @@ module.exports = {
   description: "Descargar y enviar música desde YouTube",
   commands: ["musica", "m"],
   usage: `${PREFIX}musica <nombre del video>`,
-  handle: async ({ socket, remoteJid, sendReply, args, sendWaitReact, sendSuccessReact, userJid, webMessage }) => {
+  handle: async ({ socket, remoteJid, sendReply, args, sendWaitReact, userJid, webMessage }) => {
     try {
       const videoQuery = args.join(" ");
       if (!videoQuery) {
@@ -36,7 +36,7 @@ module.exports = {
       console.log(`Música descargada correctamente: ${musicPath}`);
 
       // Reacción para indicar que la música está lista
-      await sendSuccessReact("🎵");
+      await sendWaitReact("🎵");
 
       // Enviar la música como archivo, respondiendo al mensaje de quien usó el comando
       await socket.sendMessage(remoteJid, {
@@ -56,7 +56,7 @@ module.exports = {
             console.log(`Archivo de música eliminado: ${musicPath}`);
           }
         });
-      }, 1 * 60 * 1000);  // Eliminar después de 3 minutos
+      }, 1 * 60 * 1000);  // Eliminar después de 1 minuto
     } catch (error) {
       console.error("Error al descargar o enviar la música:", error);
       await sendReply("❌ Hubo un error al procesar la música.");
