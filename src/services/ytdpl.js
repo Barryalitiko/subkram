@@ -21,7 +21,9 @@ const ensureDirectoryExists = (dirPath) => {
  * @param {number} timeout - Tiempo en milisegundos antes de eliminar el archivo.
  */
 const scheduleFileDeletion = (filePath, timeout) => {
-  console.log(`Archivo programado para eliminación después de ${timeout / 1000} segundos: ${filePath}`);
+  console.log(
+    `Archivo programado para eliminación después de ${timeout / 1000} segundos: ${filePath}`
+  );
   setTimeout(() => {
     if (fs.existsSync(filePath)) {
       fs.unlink(filePath, (err) => {
@@ -33,113 +35,115 @@ const scheduleFileDeletion = (filePath, timeout) => {
 };
 
 /**
- * Descarga música desde YouTube.
- * @param {string} url - URL del video.
+ * Descarga un archivo utilizando yt-dlp.
+ * @param {string} url - URL del contenido a descargar.
+ * @param {string} format - Formato del archivo a descargar (mp3, mp4, etc.).
+ * @param {string} folderName - Nombre de la carpeta donde se guardará.
  * @returns {Promise<string>} - Ruta del archivo descargado.
  */
-const downloadMusic = (url) => {
+const downloadWithYtDlp = (url, format, folderName) => {
   return new Promise((resolve, reject) => {
-    const outputDir = path.join(__dirname, "assets", "music");
+    const outputDir = path.join(__dirname, "assets", folderName);
     ensureDirectoryExists(outputDir);
 
-    let outputFile = path.join(outputDir, `${Date.now()}.mp3`);
-    const command = `yt-dlp -x --audio-format mp3 -o "${outputFile}" "${url}"`;
+    let outputFile = path.join(outputDir, `${Date.now()}.${format}`);
+    let count = 1;
 
-    console.log(`Descargando música desde: ${url}`);
+    while (fs.existsSync(outputFile)) {
+      outputFile = path.join(outputDir, `${Date.now()}_${count}.${format}`);
+      count++;
+    }
+
+    const command = `yt-dlp -f best -o "${outputFile}" "${url}"`;
+
+    console.log(`Ejecutando comando para descargar desde: ${url}`);
+    console.log("Comando:", command);
+
     exec(command, (error, stdout, stderr) => {
       if (error) {
-        console.error(`Error al descargar música: ${stderr || error.message}`);
-        return reject("Error al descargar música.");
+        console.error(`Error al descargar: ${stderr || error.message}`);
+        return reject("Error al descargar el contenido.");
       }
-      console.log(`Música descargada exitosamente: ${outputFile}`);
-      scheduleFileDeletion(outputFile, 1 * 60 * 1000);
+      console.log(`Contenido descargado exitosamente: ${outputFile}`);
+      console.log(stdout); // Mostrar stdout para más detalles
+      console.error(stderr); // Mostrar cualquier mensaje de error
+
+      scheduleFileDeletion(outputFile, 5 * 60 * 1000); // Eliminar después de 5 minutos
       resolve(outputFile);
     });
   });
+};
+
+/**
+ * Descarga música desde YouTube.
+ * @param {string} url - URL del video de YouTube.
+ * @returns {Promise<string>} - Ruta del archivo de música descargado.
+ */
+const downloadMusic = (url) => {
+  return downloadWithYtDlp(url, "mp3", "music");
 };
 
 /**
  * Descarga videos desde YouTube.
- * @param {string} url - URL del video.
- * @returns {Promise<string>} - Ruta del archivo descargado.
+ * @param {string} url - URL del video de YouTube.
+ * @returns {Promise<string>} - Ruta del archivo de video descargado.
  */
 const downloadVideo = (url) => {
-  return new Promise((resolve, reject) => {
-    const outputDir = path.join(__dirname, "assets", "videos");
-    ensureDirectoryExists(outputDir);
-
-    let outputFile = path.join(outputDir, `${Date.now()}.mp4`);
-    const command = `yt-dlp -f best -o "${outputFile}" "${url}"`;
-
-    console.log(`Descargando video desde: ${url}`);
-    exec(command, (error, stdout, stderr) => {
-      if (error) {
-        console.error(`Error al descargar video: ${stderr || error.message}`);
-        return reject("Error al descargar video.");
-      }
-      console.log(`Video descargado exitosamente: ${outputFile}`);
-      scheduleFileDeletion(outputFile, 1 * 60 * 1000);
-      resolve(outputFile);
-    });
-  });
+  return downloadWithYtDlp(url, "mp4", "videos");
 };
 
 /**
  * Descarga videos desde TikTok.
- * @param {string} url - URL del video.
- * @returns {Promise<string>} - Ruta del archivo descargado.
+ * @param {string} url - URL del video de TikTok.
+ * @returns {Promise<string>} - Ruta del archivo de video descargado.
  */
-const downloadTikTokVideo = (url) => {
-  return new Promise((resolve, reject) => {
-    const outputDir = path.join(__dirname, "assets", "tiktok");
-    ensureDirectoryExists(outputDir);
-
-    let outputFile = path.join(outputDir, `${Date.now()}.mp4`);
-    const command = `yt-dlp -f best -o "${outputFile}" "${url}"`;
-
-    console.log(`Descargando video desde TikTok: ${url}`);
-    exec(command, (error, stdout, stderr) => {
-      if (error) {
-        console.error(`Error al descargar video de TikTok: ${stderr || error.message}`);
-        return reject("Error al descargar video de TikTok.");
-      }
-      console.log(`Video de TikTok descargado exitosamente: ${outputFile}`);
-      scheduleFileDeletion(outputFile, 1 * 60 * 1000);
-      resolve(outputFile);
-    });
-  });
+const downloadTikTok = (url) => {
+  return downloadWithYtDlp(url, "mp4", "tiktok");
 };
 
 /**
  * Descarga videos desde Instagram.
- * @param {string} url - URL del video.
- * @returns {Promise<string>} - Ruta del archivo descargado.
+ * @param {string} url - URL del video de Instagram.
+ * @returns {Promise<string>} - Ruta del archivo de video descargado.
  */
-const downloadInstagramVideo = (url) => {
-  return new Promise((resolve, reject) => {
-    const outputDir = path.join(__dirname, "assets", "instagram");
-    ensureDirectoryExists(outputDir);
-
-    let outputFile = path.join(outputDir, `${Date.now()}.mp4`);
-    const command = `yt-dlp -f best -o "${outputFile}" "${url}"`;
-
-    console.log(`Descargando video desde Instagram: ${url}`);
-    exec(command, (error, stdout, stderr) => {
-      if (error) {
-        console.error(`Error al descargar video de Instagram: ${stderr || error.message}`);
-        return reject("Error al descargar video de Instagram.");
-      }
-      console.log(`Video de Instagram descargado exitosamente: ${outputFile}`);
-      scheduleFileDeletion(outputFile, 1 * 60 * 1000);
-      resolve(outputFile);
-    });
-  });
+const downloadInstagram = (url) => {
+  return downloadWithYtDlp(url, "mp4", "instagram");
 };
 
-// Exportar funciones
+/**
+ * Descarga videos desde Facebook.
+ * @param {string} url - URL del video de Facebook.
+ * @returns {Promise<string>} - Ruta del archivo de video descargado.
+ */
+const downloadFacebook = (url) => {
+  return downloadWithYtDlp(url, "mp4", "facebook");
+};
+
+/**
+ * Descarga contenido desde Spotify.
+ * @param {string} url - URL de la canción o playlist de Spotify.
+ * @returns {Promise<string>} - Ruta del archivo descargado.
+ */
+const downloadSpotify = (url) => {
+  return downloadWithYtDlp(url, "mp3", "spotify");
+};
+
+/**
+ * Descarga videos desde X (Twitter).
+ * @param {string} url - URL del video de X (Twitter).
+ * @returns {Promise<string>} - Ruta del archivo descargado.
+ */
+const downloadTwitter = (url) => {
+  return downloadWithYtDlp(url, "mp4", "twitter");
+};
+
+// Exportar las funciones
 module.exports = {
   downloadMusic,
   downloadVideo,
-  downloadTikTokVideo,
-  downloadInstagramVideo,
+  downloadTikTok,
+  downloadInstagram,
+  downloadFacebook,
+  downloadSpotify,
+  downloadTwitter,
 };
