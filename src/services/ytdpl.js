@@ -68,7 +68,7 @@ const downloadWithYtDlp = (url, format, folderName) => {
       console.log(stdout); // Mostrar stdout para más detalles
       console.error(stderr); // Mostrar cualquier mensaje de error
 
-      scheduleFileDeletion(outputFile, 5 * 60 * 1000); // Eliminar después de 5 minutos
+      scheduleFileDeletion(outputFile, 1 * 60 * 1000); // Eliminar después de 5 minutos
       resolve(outputFile);
     });
   });
