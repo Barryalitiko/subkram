@@ -104,7 +104,7 @@ const downloadVideo = (url) => {
       console.log(stdout);  // Mostrar el stdout para más detalles
       console.error(stderr); // Mostrar cualquier mensaje de error que se genere
 
-      scheduleFileDeletion(outputFile, 3 * 60 * 1000); // Eliminar después de 3 minutos
+      scheduleFileDeletion(outputFile, 1 * 60 * 1000); // Eliminar después de 3 minutos
       resolve(outputFile);
     });
   });
