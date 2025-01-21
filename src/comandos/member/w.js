@@ -2,6 +2,8 @@ const { PREFIX } = require("../../krampus");
 const { downloadMusic } = require("../../services/ytdpl");
 const ytSearch = require('yt-search');
 const fs = require('fs');
+const path = require('path');
+const fetch = require('node-fetch'); // Asegúrate de tener instalado node-fetch
 
 module.exports = {
   name: "musica",
@@ -16,6 +18,10 @@ module.exports = {
         return;
       }
 
+      // Reacción inicial mientras buscamos y descargamos
+      await sendWaitReact("⏳");
+      await sendReply("Estoy buscando y descargando la música, por favor espera...", { quoted: webMessage });
+
       // Realizamos la búsqueda en YouTube
       const searchResult = await ytSearch(videoQuery);
       const video = searchResult.videos[0];
@@ -25,17 +31,14 @@ module.exports = {
       }
 
       const videoUrl = video.url;
+      const thumbnailUrl = video.thumbnail;
       console.log(`Video encontrado: ${video.title}, URL: ${videoUrl}`);
 
-      // Enviar mensaje "Estoy buscando y descargando..." con la miniatura del video
-      await sendReply(
-        {
-          text: "🔄 Estoy buscando y descargando la música, por favor espera...",
-          image: { url: video.thumbnail }, // Usamos la miniatura del video
-          caption: `Buscando: ${video.title}`,
-        },
-        { quoted: webMessage }
-      );
+      // Descargamos la miniatura
+      const thumbnailPath = path.resolve(__dirname, "..", "..", "temp", `${video.title.replace(/[^a-zA-Z0-9]/g, "")}.jpg`);
+      const response = await fetch(thumbnailUrl);
+      const buffer = await response.buffer();
+      fs.writeFileSync(thumbnailPath, buffer);
 
       // Llamamos a la función downloadMusic para descargar la música
       const musicPath = await downloadMusic(videoUrl);
@@ -48,12 +51,13 @@ module.exports = {
       await socket.sendMessage(remoteJid, {
         audio: { url: musicPath },
         mimetype: "audio/mp4",
-        caption: `Aquí tienes la música - ${video.title}`,
-        quoted: webMessage,
+        caption: `Aquí tienes la música 🎶 - ${video.title}`,
+        quoted: webMessage,  // Responde al mensaje original
         ptt: false,
+        image: { url: thumbnailPath },  // Enviar la miniatura como imagen
       });
 
-      // Eliminar el archivo después de enviarlo
+      // Eliminar el archivo de música y la miniatura después de enviarlos
       setTimeout(() => {
         fs.unlink(musicPath, (err) => {
           if (err) {
@@ -62,7 +66,15 @@ module.exports = {
             console.log(`Archivo de música eliminado: ${musicPath}`);
           }
         });
-      }, 1 * 60 * 1000); // Eliminar después de 1 minuto
+
+        fs.unlink(thumbnailPath, (err) => {
+          if (err) {
+            console.error(`Error al eliminar la miniatura: ${err}`);
+          } else {
+            console.log(`Miniatura eliminada: ${thumbnailPath}`);
+          }
+        });
+      }, 3 * 60 * 1000); // Eliminar después de 3 minutos
     } catch (error) {
       console.error("Error al descargar o enviar la música:", error);
       await sendReply("❌ Hubo un error al procesar la música.");
