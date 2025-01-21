@@ -40,8 +40,7 @@ module.exports = {
       await socket.sendMessage(remoteJid, {
         video: { url: videoPath },
         caption: `> Krampus OM bot
-        * ${video.title} *
-        > Operacion Marshall`,
+        ${video.title} `,
         quoted: webMessage, // Responde al mensaje original del usuario
         ptt: false, // Enviar como video normal, no como nota
       });
