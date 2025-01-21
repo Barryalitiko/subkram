@@ -6,7 +6,7 @@ const fs = require("fs");
 module.exports = {
   name: "musica",
   description: "Descargar y enviar música desde YouTube",
-  commands: ["musica", "m"],
+  commands: ["musica", "m", "music", "play", "audio"],
   usage: `${PREFIX}musica <nombre del video>`,
   handle: async ({
     socket,
