@@ -1,5 +1,7 @@
 const { Canvas } = require('canvas');
 const { PREFIX } = require('../../krampus');
+const fs = require('fs');
+const path = require('path');
 
 module.exports = {
   name: 'canvas',
@@ -18,9 +20,14 @@ module.exports = {
       ctx.fillStyle = 'white';
       ctx.fillText('Hola, mundo!', 150, 250);
 
-      const buffer = canvas.toBuffer('image/jpeg');
-
-      await socket.sendMessage(remoteJid, { image: { buffer } });
+      const filePath = path.join(__dirname, 'canvas-image.jpg');
+      const out = fs.createWriteStream(filePath);
+      const stream = canvas.createJPEGStream();
+      stream.pipe(out);
+      out.on('finish', async () => {
+        await socket.sendMessage(remoteJid, { image: { url: filePath } });
+        fs.unlinkSync(filePath);
+      });
     } catch (error) {
       console.error('Error al crear la imagen:', error);
       await sendReply('❌ Hubo un error al procesar tu solicitud.');
