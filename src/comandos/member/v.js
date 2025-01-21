@@ -39,7 +39,9 @@ module.exports = {
       // Enviar el video descargado
       await socket.sendMessage(remoteJid, {
         video: { url: videoPath },
-        caption: `🎥 Aquí tienes el video: ${video.title}`,
+        caption: `> Krampus OM bot
+        * ${video.title} *
+        > Operacion Marshall`,
         quoted: webMessage, // Responde al mensaje original del usuario
         ptt: false, // Enviar como video normal, no como nota
       });
