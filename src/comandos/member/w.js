@@ -16,9 +16,6 @@ module.exports = {
         return;
       }
 
-      // Reacción inicial mientras buscamos y descargamos
-      await sendWaitReact("⏳");
-
       // Realizamos la búsqueda en YouTube
       const searchResult = await ytSearch(videoQuery);
       const video = searchResult.videos[0];
