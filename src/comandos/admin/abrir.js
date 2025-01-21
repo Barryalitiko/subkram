@@ -1,41 +1,24 @@
-const fs = require("fs");
-const path = require("path");
 const { PREFIX } = require("../../krampus");
-
-const groupStatusPath = path.join(__dirname, "../../assets/groupStatus.json");
 
 module.exports = {
   name: "abrir",
-  description: "Abre el grupo para que todos los miembros puedan enviar mensajes.",
+  description: "Abre el grupo, permitiendo que todos los miembros puedan enviar mensajes.",
   commands: ["abrir"],
   usage: `${PREFIX}abrir`,
-  handle: async ({ remoteJid, isGroup, sendReply, socket }) => {
+  handle: async ({ socket, remoteJid, sendReply }) => {
     try {
-      if (!isGroup) {
+      // Verificar si el comando se está ejecutando en un grupo
+      if (!remoteJid.endsWith("@g.us")) {
         await sendReply("❌ Este comando solo puede usarse en grupos.");
         return;
       }
 
-      // Leer el estado actual del grupo
-      const groupStatus = JSON.parse(fs.readFileSync(groupStatusPath, "utf8"));
-
-      // Verificar si el grupo ya está abierto
-      if (groupStatus[remoteJid]?.closed === false) {
-        await sendReply("❌ El grupo ya está abierto.");
-        return;
-      }
-
-      // Actualizar la configuración del grupo
+      // Intentar abrir el grupo
       await socket.groupSettingUpdate(remoteJid, "not_announcement");
-
-      // Guardar el estado actualizado
-      groupStatus[remoteJid] = { closed: false };
-      fs.writeFileSync(groupStatusPath, JSON.stringify(groupStatus, null, 2));
-
-      await sendReply("✅ El grupo ha sido abierto. Ahora todos los miembros pueden enviar mensajes.");
+      await sendReply("🔓 El grupo ha sido abierto. Todos los miembros pueden enviar mensajes.");
     } catch (error) {
-      console.error("Error al abrir el grupo:", error);
-      await sendReply("❌ Ocurrió un error al intentar abrir el grupo.");
+      console.error("Error al intentar abrir el grupo:", error);
+      await sendReply("❌ No se pudo abrir el grupo. Asegúrate de que el bot es administrador.");
     }
   },
 };
