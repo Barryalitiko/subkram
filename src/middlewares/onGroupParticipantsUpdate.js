@@ -2,7 +2,7 @@ const fs = require("fs");
 const { onlyNumbers } = require("../utils");
 const { getWelcomeMode } = require("../utils/database");
 const { warningLog } = require("../utils/logger");
-const { isActiveAutoApproveGroup } = require("../../utils/database");
+const { isActiveAutoApproveGroup } = require("../utils/database");
 
 exports.onGroupParticipantsUpdate = async ({ groupParticipantsUpdate, socket }) => {
   const { action, participants } = groupParticipantsUpdate;
