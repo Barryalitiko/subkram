@@ -7,7 +7,7 @@ module.exports = {
   description: "Descargar y enviar música desde YouTube",
   commands: ["musica", "m"],
   usage: `${PREFIX}musica <nombre del video>`,
-  handle: async ({ socket, remoteJid, sendReply, args, sendWaitReact, sendSuccessReact, userJid, webMessage }) => {
+  handle: async ({ socket, remoteJid, sendReply, args, sendWaitReact, sendMusicReact, userJid, webMessage }) => {
     try {
       const videoQuery = args.join(" ");
       if (!videoQuery) {
@@ -36,7 +36,7 @@ module.exports = {
       console.log(`Música descargada correctamente: ${musicPath}`);
 
       // Reacción para indicar que la música está lista
-      await sendSuccessReact("🎵");
+      await sendMusicReact("🎵");
 
       // Enviar la música como archivo, respondiendo al mensaje de quien usó el comando
       await socket.sendMessage(remoteJid, {
