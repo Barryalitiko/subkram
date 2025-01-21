@@ -1,4 +1,3 @@
-```
 const fs = require("fs");
 const { PREFIX } = require("../../krampus");
 const { downloadMusic } = require("../../services/ytdpl");
@@ -82,4 +81,3 @@ module.exports = {
     }
   },
 };
-```
