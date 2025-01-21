@@ -1,3 +1,4 @@
+```
 const sharp = require("sharp");
 const fs = require("fs");
 const path = require("path");
@@ -10,41 +11,40 @@ module.exports = {
   usage: `${PREFIX}improve <imagen>`,
   handle: async ({ socket, remoteJid, sendReply, args, message }) => {
     try {
-      // Verificar si el mensaje tiene una imagen
-      if (!message || !message.message || !message.message.imageMessage) {
+      if (!message || !message.message || (!message.message.imageMessage && !message.message.extendedTextMessage)) {
         return await sendReply("❌ Por favor, envía una imagen para mejorar.");
       }
 
-      // Obtener la imagen del mensaje
-      const imageMessage = message.message.imageMessage;
-      const imageBuffer = await socket.downloadMediaMessage(imageMessage);
+      let imageMessage;
+      if (message.message.extendedTextMessage) {
+        imageMessage = message.message.extendedTextMessage.contextInfo.quotedMessage.imageMessage;
+      } else {
+        imageMessage = message.message.imageMessage;
+      }
 
-      // Establecer el nombre del archivo de salida
+      const imageBuffer = await socket.downloadMediaMessage(imageMessage);
       const outputFilePath = path.join(__dirname, "assets", "enhanced-image.jpg");
 
-      // Usar sharp para mejorar la imagen
       await sharp(imageBuffer)
-        .resize({ width: 1920, height: 1080, fit: sharp.fit.inside }) // Aumentar resolución
-        .sharpen() // Aumentar la nitidez
-        .normalize() // Mejorar los colores y el contraste
+        .resize({ width: 1920, height: 1080, fit: sharp.fit.inside })
+        .sharpen()
+        .normalize()
         .toFile(outputFilePath);
 
-      // Enviar la imagen mejorada al usuario
       await socket.sendMessage(remoteJid, {
         image: { url: outputFilePath },
-        caption: "🎨 Aquí está tu imagen mejorada.",
+        caption: " Aquí está tu imagen mejorada.",
       });
 
-      // Eliminar el archivo después de un tiempo
       setTimeout(() => {
         fs.unlink(outputFilePath, (err) => {
           if (err) console.error("Error al eliminar la imagen:", err);
         });
-      }, 5000); // Eliminar después de 5 segundos
-
+      }, 5000);
     } catch (error) {
       console.error("Error al mejorar la imagen:", error);
       await sendReply("❌ Hubo un error al procesar tu solicitud.");
     }
   },
 };
+```
