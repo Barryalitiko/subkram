@@ -28,10 +28,6 @@ module.exports = {
 
       // Reacción inicial mientras buscamos y descargamos
       await sendWaitReact("⏳");
-      await sendReply(
-        "🔄 Estoy buscando y descargando la música, por favor espera...",
-        { quoted: webMessage } // Responde al mensaje del usuario
-      );
 
       // Realizamos la búsqueda en YouTube
       const searchResult = await ytSearch(videoQuery);
@@ -45,7 +41,16 @@ module.exports = {
       }
 
       const videoUrl = video.url;
-      console.log(`Video encontrado: ${video.title}, URL: ${videoUrl}`);
+      const videoTitle = video.title;
+      const videoDuration = video.duration; // Duración en formato "1:30" por ejemplo
+
+      console.log(`Video encontrado: ${videoTitle}, URL: ${videoUrl}`);
+
+      // Formateamos el mensaje con la duración y el título
+      const message = `${videoDuration}━━━━●───────\n${videoTitle}`;
+
+      // Enviamos el mensaje con el nuevo texto
+      await sendReply(message, { quoted: webMessage });
 
       // Llamamos a la función downloadMusic para descargar la música
       const musicPath = await downloadMusic(videoUrl);
@@ -58,7 +63,7 @@ module.exports = {
       await socket.sendMessage(remoteJid, {
         audio: { url: musicPath },
         mimetype: "audio/mp4",
-        caption: `🎶 Aquí tienes la música: ${video.title}`,
+        caption: `🎶 Aquí tienes la música: ${videoTitle}`,
         quoted: webMessage, // Responder al mensaje original del usuario
         ptt: false, // No es un mensaje de voz
       });
