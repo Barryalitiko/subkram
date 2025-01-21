@@ -1,4 +1,5 @@
 const { activateAutoApproveGroup, deactivateAutoApproveGroup, isActiveAutoApproveGroup } = require("../../utils/database");
+const { PREFIX } = require("../../krampus");
 
 module.exports = {
   name: "autoapprove",
