@@ -84,6 +84,15 @@ const downloadMusic = (url) => {
 };
 
 /**
+ * Descarga música desde YouTube Music.
+ * @param {string} url - URL de la canción de YouTube Music.
+ * @returns {Promise<string>} - Ruta del archivo de música descargado.
+ */
+const downloadYouTubeMusic = (url) => {
+  return downloadWithYtDlp(url, "mp3", "youtube-music");
+};
+
+/**
  * Descarga videos desde YouTube.
  * @param {string} url - URL del video de YouTube.
  * @returns {Promise<string>} - Ruta del archivo de video descargado.
@@ -146,4 +155,5 @@ module.exports = {
   downloadFacebook,
   downloadSpotify,
   downloadTwitter,
+  downloadYouTubeMusic,  // Nueva función añadida
 };
