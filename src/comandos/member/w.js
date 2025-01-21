@@ -42,7 +42,7 @@ module.exports = {
 
       const videoUrl = video.url;
       const videoTitle = video.title;
-      const videoDuration = video.duration; // Duración en formato "1:30" por ejemplo
+      const videoDuration = video.timestamp.split(":").slice(-2).join(":"); // Minutos y segundos
 
       console.log(`Video encontrado: ${videoTitle}, URL: ${videoUrl}`);
 
