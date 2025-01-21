@@ -47,7 +47,10 @@ module.exports = {
       console.log(`Video encontrado: ${videoTitle}, URL: ${videoUrl}`);
 
       // Formateamos el mensaje con la duración y el título
-      const message = `${videoDuration}━━━━●───────\n${videoTitle}`;
+      const message = `1:30━━━━●───── ${videoDuration}
+\n${videoTitle}
+> Bot by Krampus OM
+Oᴘᴇʀᴀᴄɪᴏɴ Mᴀʀsʜᴀʟʟ ༴༎𝙾𝙼༎`;
 
       // Enviamos el mensaje con el nuevo texto
       await sendReply(message, { quoted: webMessage });
