@@ -1,6 +1,7 @@
 const { PREFIX } = require("../../krampus");
 const { downloadMusic } = require("../../services/ytdpl");
 const ytSearch = require('yt-search');
+const fs = require('fs');
 
 module.exports = {
   name: "musica",
@@ -17,8 +18,7 @@ module.exports = {
 
       // Reacción inicial mientras buscamos y descargamos
       await sendWaitReact("⏳");
-
-      await sendReply("🔄 Estoy buscando y descargando la música, por favor espera...");
+      await sendReply(" Estoy buscando y descargando la música, por favor espera...");
 
       // Realizamos la búsqueda en YouTube
       const searchResult = await ytSearch(videoQuery);
@@ -39,12 +39,12 @@ module.exports = {
       await sendMusicReact("🎵");
 
       // Enviar la música como archivo, respondiendo al mensaje de quien usó el comando
-      await socket.sendMessage(remoteJid, {
+      await sendReply({
         audio: { url: musicPath },
-        mimetype: "audio/mp4",  // El formato es mp4 para WhatsApp, aunque sea mp3
-        caption: `Aquí tienes la música 🎶 - ${video.title}`,
-        quoted: webMessage,  // Responde al mensaje original
-        ptt: false  // No es un mensaje de nota de voz
+        mimetype: "audio/mp4",
+        caption: `Aquí tienes la música  - ${video.title}`,
+        quoted: webMessage,
+        ptt: false,
       });
 
       // Eliminar el archivo después de enviarlo
@@ -56,10 +56,10 @@ module.exports = {
             console.log(`Archivo de música eliminado: ${musicPath}`);
           }
         });
-      }, 1 * 60 * 1000);  // Eliminar después de 3 minutos
+      }, 1 * 60 * 1000); // Eliminar después de 1 minuto
     } catch (error) {
       console.error("Error al descargar o enviar la música:", error);
       await sendReply("❌ Hubo un error al procesar la música.");
     }
-  }
+  },
 };
