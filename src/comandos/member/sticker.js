@@ -1,5 +1,4 @@
-```
-const sharp = require("sharp");
+ñconst sharp = require("sharp");
 const fs = require("fs");
 const path = require("path");
 const { PREFIX } = require("../../krampus");
@@ -47,4 +46,3 @@ module.exports = {
     }
   },
 };
-```
