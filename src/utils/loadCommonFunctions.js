@@ -188,6 +188,9 @@ const sendVideoFromFile = async (filePath, caption = '') => {
   return {
     args,
     commandName,
+    downloadImage,
+    downloadSticker,
+    downloadVideo,
     fullArgs,
     fullMessage,
     isReply,
