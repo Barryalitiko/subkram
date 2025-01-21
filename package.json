@@ -24,7 +24,7 @@
     "node-cache": "^5.1.2",
     "mongodb": "^4.0.0",
     "ytdl-core": "^4.11.5",
-    "spotify-web-api-node": "^5.0.2",
+    "sharp": "^0.33.5",
     "play-dl": "^1.9.7"
   }
 }
