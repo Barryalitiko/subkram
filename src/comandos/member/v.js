@@ -7,7 +7,7 @@ const ytSearch = require("yt-search");
 module.exports = {
   name: "video",
   description: "Buscar y enviar un video",
-  commands: ["kram"],
+  commands: ["video", "v"],
   usage: `${PREFIX}video <nombre del video>`,
   handle: async ({ socket, remoteJid, sendReply, args, sendReact, webMessage }) => {
     try {
