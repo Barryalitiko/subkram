@@ -9,13 +9,16 @@ module.exports = {
   description: "Buscar y enviar un video",
   commands: ["kram"],
   usage: `${PREFIX}video <nombre del video>`,
-  handle: async ({ socket, remoteJid, sendReply, args }) => {
+  handle: async ({ socket, remoteJid, sendReply, args, sendReact, webMessage }) => {
     try {
       const videoQuery = args.join(" ");
       if (!videoQuery) {
         await sendReply("❌ Por favor, proporciona el nombre del video que deseas buscar.");
         return;
       }
+
+      // Reaccionar con ⏳ al recibir el comando
+      await sendReact("⏳", webMessage.key);
 
       const searchResult = await ytSearch(videoQuery);
       const video = searchResult.videos[0];
@@ -30,15 +33,30 @@ module.exports = {
       // Descargar el video usando yt-dlp
       const videoPath = await downloadVideo(videoUrl);
 
+      // Cambiar la reacción a 🎬 una vez que el video se descargó
+      await sendReact("🎬", webMessage.key);
+
       // Enviar el video descargado
       await socket.sendMessage(remoteJid, {
         video: { url: videoPath },
-        caption: `Aquí tienes el video: ${video.title}`,
-        ptv: false // Enviar como video normal, no video nota
+        caption: `🎥 Aquí tienes el video: ${video.title}`,
+        quoted: webMessage, // Responde al mensaje original del usuario
+        ptt: false, // Enviar como video normal, no como nota
       });
+
+      // Eliminar el archivo después de enviarlo
+      setTimeout(() => {
+        fs.unlink(videoPath, (err) => {
+          if (err) {
+            console.error(`Error al eliminar el archivo de video: ${err}`);
+          } else {
+            console.log(`Archivo de video eliminado: ${videoPath}`);
+          }
+        });
+      }, 1 * 60 * 1000); // Eliminar después de 1 minuto
     } catch (error) {
       console.error("Error al buscar o enviar el video:", error);
       await sendReply("❌ Hubo un error al procesar el video.");
     }
-  }
+  },
 };
