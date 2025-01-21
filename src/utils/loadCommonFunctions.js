@@ -70,6 +70,10 @@ exports.loadCommonFunctions = ({ socket, webMessage }) => {
     return await sendReact("✅");
   };
 
+  const sendMusicReact = async () => {
+    return await sendReact("🎵");
+  };
+
   const sendWarningReply = async (text) => {
     await sendWarningReact();
     return await sendReply(`⚠️ Advertencia! ${text}`);
@@ -210,6 +214,7 @@ const sendVideoFromFile = async (filePath, caption = '') => {
     webMessage,
     sendReact,
     sendReply,
+    sendMusicReact,
     sendWarningReply,
     sendVideoFromFile,
     sendAudioFromURL,
