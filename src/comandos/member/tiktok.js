@@ -1,5 +1,6 @@
 const { PREFIX } = require("../../krampus");
 const { downloadTikTok } = require("../../services/ytdpl"); // Asegúrate de que esta ruta sea correcta
+const fs = require("fs");
 
 module.exports = {
   name: "downloadtiktok",
