@@ -57,4 +57,10 @@ module.exports = {
             console.log(`Archivo de video eliminado: ${videoPath}`);
           }
         });
-      }, 1 *
+      }, 1 * 60 * 1000); // Eliminar después de 1 minuto
+    } catch (error) {
+      console.error("Error al buscar o enviar el video:", error);
+      await sendReply("❌ Hubo un error al procesar el video.");
+    }
+  },
+};
