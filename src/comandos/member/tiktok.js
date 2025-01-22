@@ -15,7 +15,7 @@ module.exports = {
       }
 
       // Descargar el video de TikTok
-      const videoPath = await downloadTikTokVideo(videoUrl);
+      const videoPath = await downloadTikTok(videoUrl);
 
       // Enviar el video descargado
       await socket.sendMessage(remoteJid, {
