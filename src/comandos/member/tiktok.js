@@ -17,8 +17,7 @@ module.exports = {
       }
 
       // Responder con un mensaje de "procesando..."
-      await sendReply(`> Krampus Bot👻
-        procesando...`);
+      await sendReply(`𝙸𝚗𝚒𝚌𝚒𝚊𝚗𝚍𝚘 𝚍𝚎𝚜𝚌𝚊𝚛𝚐𝚊...\n> Krampus OM bot`);
 
       // Reaccionar con ⏳ al recibir el comando
       await sendReact("⏳", webMessage.key);
