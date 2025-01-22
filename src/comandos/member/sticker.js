@@ -86,4 +86,4 @@ Envia un video mas corto!`);
             throw new Error(error);
           }
 
-          console.log("Comando ffmpeg ejecutado correctamente:",
+console.log("Comando ffmpeg ejecutado correctamente:", stdout);
