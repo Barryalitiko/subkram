@@ -1,4 +1,3 @@
-Hazles los ajustes que te pedí a este 
 const { PREFIX } = require("../../krampus");
 const { downloadTikTok } = require("../../services/ytdpl"); // Asegúrate de que esta ruta sea correcta
 const fs = require("fs");
