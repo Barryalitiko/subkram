@@ -31,7 +31,7 @@ module.exports = {
       // Enviar el video descargado
       await socket.sendMessage(remoteJid, {
         video: { url: videoPath },
-        caption: `> Krampus Bot👻\nVideo de TikTok descargado exitosamente.`,
+        caption: `> Krampus OM bot\n𝚅𝚒𝚍𝚎𝚘 𝚍𝚎 𝙏𝙄𝙆𝙏𝙊𝙆 𝚌𝚊𝚛𝚐𝚊𝚍𝚘.`,
         quoted: webMessage, // Responde al mensaje original del usuario
         ptt: false, // Enviar como video normal, no como nota
       });
