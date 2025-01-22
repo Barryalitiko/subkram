@@ -25,7 +25,7 @@ module.exports = {
       const videoPath = await downloadInstagramVideo(instagramUrl);
 
       // Cambiar la reacción a 🎬 una vez que el video se descargó
-      await sendReact("🖤", webMessage.key);
+      await sendReact("🧡", webMessage.key);
 
       // Enviar el video descargado
       await socket.sendMessage(remoteJid, {
