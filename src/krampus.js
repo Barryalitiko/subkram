@@ -10,4 +10,4 @@ exports.TIMEOUT_IN_MILLISECONDS_BY_EVENT = 700;
 
 exports.BOT_EMOJI = "༎OM༎";
 
-exports.BASE_API_URL = "http://localhost:3003"; // URL base de la API
+exports.ASSETS_DIR = path.resolve(__dirname, "..", "assets");
