@@ -17,6 +17,10 @@ module.exports = {
         return;
       }
 
+      // Responder con un mensaje de "procesando..."
+      await sendReply(`> Krampus Bot👻
+        procesando...`);
+
       // Reaccionar con ⏳ al recibir el comando
       await sendReact("⏳", webMessage.key);
 
@@ -39,8 +43,7 @@ module.exports = {
       // Enviar el video descargado
       await socket.sendMessage(remoteJid, {
         video: { url: videoPath },
-        caption: `> Krampus OM bot
-        ${video.title} `,
+        caption: `> Krampus OM bot\n${video.title}`,
         quoted: webMessage, // Responde al mensaje original del usuario
         ptt: false, // Enviar como video normal, no como nota
       });
@@ -54,10 +57,4 @@ module.exports = {
             console.log(`Archivo de video eliminado: ${videoPath}`);
           }
         });
-      }, 1 * 60 * 1000); // Eliminar después de 1 minuto
-    } catch (error) {
-      console.error("Error al buscar o enviar el video:", error);
-      await sendReply("❌ Hubo un error al procesar el video.");
-    }
-  },
-};
+      }, 1 *
