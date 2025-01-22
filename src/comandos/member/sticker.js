@@ -29,16 +29,20 @@ module.exports = {
 
     if (isImage) {
       const inputPath = await downloadImage(webMessage, "input");
+      console.log("Ruta de imagen descargada:", inputPath);
 
       exec(
         `ffmpeg -i ${inputPath} -vf scale=512:512 ${outputPath}`,
-        async (error) => {
+        async (error, stdout, stderr) => {
           if (error) {
-            console.log(error);
+            console.log("Error en ffmpeg:", error);
+            console.log("stdout:", stdout);
+            console.log("stderr:", stderr);
             fs.unlinkSync(inputPath);
             throw new Error(error);
           }
 
+          console.log("Comando ffmpeg ejecutado correctamente:", stdout);
           await sendSuccessReact();
 
           await sendStickerFromFile(outputPath);
@@ -49,6 +53,7 @@ module.exports = {
       );
     } else {
       const inputPath = await downloadVideo(webMessage, "input");
+      console.log("Ruta de video descargado:", inputPath);
 
       const sizeInSeconds = 10;
 
@@ -71,21 +76,14 @@ Envia un video mas corto!`);
 
       exec(
         `ffmpeg -i ${inputPath} -y -vcodec libwebp -fs 0.99M -filter_complex "[0:v] scale=512:512,fps=12,pad=512:512:-1:-1:color=white@0.0,split[a][b];[a]palettegen=reserve_transparent=on:transparency_color=ffffff[p];[b][p]paletteuse" -f webp ${outputPath}`,
-        async (error) => {
+        async (error, stdout, stderr) => {
           if (error) {
-            console.log(error);
+            console.log("Error en ffmpeg:", error);
+            console.log("stdout:", stdout);
+            console.log("stderr:", stderr);
             fs.unlinkSync(inputPath);
 
             throw new Error(error);
           }
 
-          await sendSuccessReact();
-          await sendStickerFromFile(outputPath);
-
-          fs.unlinkSync(inputPath);
-          fs.unlinkSync(outputPath);
-        }
-      );
-    }
-  },
-};
+          console.log("Comando ffmpeg ejecutado correctamente:",
