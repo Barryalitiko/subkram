@@ -15,14 +15,23 @@ module.exports = {
         return;
       }
 
-      // Responder con un mensaje de "procesando..."
-      await sendReply(`> Krampus Bot👻
-        procesando...`);
+      // Descargar el video usando la función para TikTok
+      const videoDetails = await downloadTikTok(tiktokUrl);
+
+      if (!videoDetails) {
+        await sendReply("❌ No se pudo obtener la información del video de TikTok.");
+        return;
+      }
+
+      // Responder con un mensaje de "procesando..." y mostrar detalles del video
+      const videoDetailsMessage = `> Krampus Bot👻\nProcesando video...\n\nCuenta: ${videoDetails.author}\nMe gusta: ${videoDetails.likes}\nComentarios: ${videoDetails.comments}\n`;
+
+      await sendReply(videoDetailsMessage);
 
       // Reaccionar con ⏳ al recibir el comando
       await sendReact("⏳", webMessage.key);
 
-      // Descargar el video usando la función para TikTok
+      // Descargar el video
       const videoPath = await downloadTikTok(tiktokUrl);
 
       // Cambiar la reacción a 🎬 una vez que el video se descargó
