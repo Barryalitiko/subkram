@@ -1,32 +1,54 @@
 const { PREFIX } = require("../../krampus");
-const { downloadTikTokVideo } = require("../../services/ytdpl"); // Ruta correcta
+const { downloadVideo } = require("../../services/ytdpl"); // Asegúrate de que esta ruta sea correcta
 
 module.exports = {
-  name: "tiktok",
-  description: "Descargar un video de TikTok",
-  commands: ["tiktok", "tt"],
-  usage: `${PREFIX}tiktok <URL del video>`,
-  handle: async ({ socket, remoteJid, sendReply, args }) => {
+  name: "downloadvideo",
+  description: "Descargar un video de YouTube.",
+  commands: ["downloadvideo", "dv"],
+  usage: `${PREFIX}downloadvideo <URL del video de YouTube>`,
+  handle: async ({ args, socket, remoteJid, sendReply, sendReact, webMessage }) => {
     try {
-      const videoUrl = args.join(" ");
+      const videoUrl = args[0];
       if (!videoUrl) {
-        await sendReply("❌ Por favor, proporciona la URL del video de TikTok que deseas descargar.");
+        await sendReply("❌ Por favor, proporciona la URL del video de YouTube que deseas descargar.");
         return;
       }
 
-      // Descargar el video de TikTok
-      const videoPath = await downloadTikTok(videoUrl);
+      // Responder con un mensaje de "procesando..."
+      await sendReply(`> Krampus Bot👻
+        procesando...`);
+
+      // Reaccionar con ⏳ al recibir el comando
+      await sendReact("⏳", webMessage.key);
+
+      // Descargar el video usando yt-dlp
+      const videoPath = await downloadVideo(videoUrl);
+
+      // Cambiar la reacción a 🎬 una vez que el video se descargó
+      await sendReact("🎬", webMessage.key);
 
       // Enviar el video descargado
       await socket.sendMessage(remoteJid, {
         video: { url: videoPath },
-        caption: `🎥 Aquí tienes el video de TikTok.`,
+        caption: `> Krampus Bot👻\nVideo descargado exitosamente.`,
+        quoted: webMessage, // Responde al mensaje original del usuario
         ptt: false, // Enviar como video normal, no como nota
       });
 
+      // Eliminar el archivo después de enviarlo
+      setTimeout(() => {
+        fs.unlink(videoPath, (err) => {
+          if (err) {
+            console.error(`Error al eliminar el archivo de video: ${err}`);
+          } else {
+            console.log(`Archivo de video eliminado: ${videoPath}`);
+          }
+        });
+      }, 1 * 60 * 1000); // Eliminar después de 1 minuto
+
     } catch (error) {
-      console.error("Error al descargar o enviar el video de TikTok:", error);
-      await sendReply("❌ Hubo un error al procesar el video de TikTok.");
+      console.error("Error al descargar el video:", error);
+      await sendReply("❌ Hubo un error al descargar el video.");
     }
   },
 };
