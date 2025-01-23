@@ -1,7 +1,7 @@
 const { PREFIX } = require("../../krampus");
 const fs = require("fs");
 const path = require("path");
-const { onlyNumbers } = require("../utils/index");
+const { onlyNumbers } = require("../utils");
 
 const statusFilePath = path.resolve(process.cwd(), "assets/status.json");
 
