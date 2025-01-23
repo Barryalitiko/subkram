@@ -2,23 +2,17 @@ const { PREFIX } = require("../../krampus");
 const fs = require("fs");
 const path = require("path");
 
-const statusFilePath = path.join(__dirname, "../assets/status.json"); // Ruta donde se guarda el estado
+const statusFilePath = path.join(__dirname, "../../../assets/status.json"); // Ruta donde se guarda el estado
 
+// Leer el estado del archivo
 const readStatus = () => {
-  try {
-    const data = fs.readFileSync(statusFilePath, "utf-8");
-    return JSON.parse(data);
-  } catch (error) {
-    return { enabled: false }; // Si no existe el archivo, lo creamos con estado deshabilitado
-  }
+  const data = fs.readFileSync(statusFilePath, "utf-8");
+  return JSON.parse(data);
 };
 
+// Escribir el nuevo estado en el archivo
 const writeStatus = (status) => {
-  try {
-    fs.writeFileSync(statusFilePath, JSON.stringify(status, null, 2));
-  } catch (error) {
-    console.error("Error al escribir el archivo de estado:", error);
-  }
+  fs.writeFileSync(statusFilePath, JSON.stringify(status, null, 2));
 };
 
 module.exports = {
@@ -30,14 +24,14 @@ module.exports = {
     try {
       const currentStatus = readStatus();
 
-      // Si no se proporciona un argumento válido, se envía un mensaje de uso.
+      // Verificar si el argumento es válido
       if (!args[0] || (args[0] !== "on" && args[0] !== "off")) {
         await sendReact("❓", webMessage.key); // Reacción para uso incorrecto
         await sendReply("❌ Uso incorrecto. Usa `on` para encender o `off` para apagar. Ejemplo: `!toggle on`");
         return;
       }
 
-      const newStatus = args[0] === "on"; // Si es "on", se enciende, si es "off", se apaga.
+      const newStatus = args[0] === "on"; // Determinar si se enciende o apaga
       writeStatus({ enabled: newStatus });
 
       if (newStatus) {
@@ -50,7 +44,7 @@ module.exports = {
     } catch (error) {
       console.error("Error al cambiar el estado del sistema:", error);
       await sendReact("🚫", webMessage.key); // Reacción para error
-      await sendReply("Solo los admins pueden ejecutar este comando");
+      await sendReply("❌ Hubo un error al cambiar el estado del sistema.");
     }
   },
 };
