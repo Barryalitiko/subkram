@@ -5,11 +5,10 @@ const { PREFIX } = require("../../krampus");
 const marriageFilePath = path.resolve(process.cwd(), "assets/marriage.json");
 const inventoryFilePath = path.resolve(process.cwd(), "assets/inventory.json");
 
-// Funciones para leer y escribir datos
+// Funciones para leer y escribir los datos JSON
 const readData = (filePath) => {
   try {
-    const data = fs.readFileSync(filePath, "utf-8");
-    return JSON.parse(data);
+    return JSON.parse(fs.readFileSync(filePath, "utf-8"));
   } catch {
     return [];
   }
@@ -21,88 +20,59 @@ const writeData = (filePath, data) => {
 
 module.exports = {
   name: "marry",
-  description: "Proponer matrimonio a alguien con un anillo de compromiso. Responde a un mensaje o etiqueta a alguien.",
+  description: "Proponer matrimonio a otro usuario.",
   commands: ["marry"],
-  usage: `${PREFIX}marry @usuario o responde a un mensaje`,
-  handle: async ({ socket, remoteJid, sendReply, isReply, replyJid, args, userJid }) => {
-    const marriageData = readData(marriageFilePath);
-    const inventoryData = readData(inventoryFilePath);
-
-    const targetJid = isReply ? replyJid : args.length > 0 ? args[0].replace("@", "") + "@s.whatsapp.net" : null;
-
+  usage: `${PREFIX}marry @usuario`,
+  handle: async ({ sendReply, userJid, args }) => {
+    const targetJid = args[0]?.replace("@", "") + "@s.whatsapp.net";
+    
     if (!targetJid) {
-      await sendReply("❌ Debes etiquetar o responder a alguien para proponer matrimonio.");
+      await sendReply("❌ Debes etiquetar a alguien para hacerle la propuesta de matrimonio.");
       return;
     }
 
-    if (targetJid === userJid) {
-      await sendReply("❌ No puedes casarte contigo mismo.");
-      return;
-    }
-
-    // Verificar si ambos están solteros
-    const proposer = marriageData.find((entry) => entry.userJid === userJid || entry.partnerJid === userJid);
-    const proposee = marriageData.find((entry) => entry.userJid === targetJid || entry.partnerJid === targetJid);
-
-    if (proposer || proposee) {
-      await sendReply("❌ Ambos deben estar solteros para casarse.");
-      return;
-    }
+    const inventoryData = readData(inventoryFilePath);
+    const userInventory = inventoryData.find((entry) => entry.userJid === userJid);
 
     // Verificar si el usuario tiene un anillo de compromiso
-    const proposerInventory = inventoryData.find((entry) => entry.userJid === userJid);
-    if (!proposerInventory || proposerInventory.rings < 1) {
-      await sendReply("❌ No tienes un anillo de compromiso. Compra uno para proponer matrimonio.");
+    if (!userInventory || userInventory.ring < 1) {
+      await sendReply("❌ Necesitas un anillo de compromiso para hacer una propuesta.");
       return;
     }
 
-    // Reducir el número de anillos en el inventario del usuario
-    proposerInventory.rings -= 1;
-    writeData(inventoryFilePath, inventoryData);
+    // Solicitar respuesta del usuario destino
+    await sendReply(
+      `💍 @${targetJid.split("@")[0]}, ¿aceptas casarte con @${userJid.split("@")[0]}? Responde con #si o #no.`
+    );
 
-    // Enviar propuesta
-    await socket.sendMessage(remoteJid, {
-      text: `💍 @${userJid.split("@")[0]} ha propuesto matrimonio a @${targetJid.split("@")[0]} con un anillo de compromiso.\nResponde con *#si* para aceptar o *#no* para rechazar.`,
-      mentions: [userJid, targetJid],
-    });
+    // Escuchar la respuesta del usuario destino
+    const listenForResponse = async (response) => {
+      const { text, from } = response;
+      if (from !== targetJid || !["#si", "#no"].includes(text.toLowerCase())) return;
 
-    // Escuchar la respuesta
-    const startTime = Date.now();
-    const interval = setInterval(async () => {
-      const elapsed = Date.now() - startTime;
-      if (elapsed >= 5 * 60 * 1000) {
-        clearInterval(interval);
-        await sendReply("⏳ Tiempo agotado. La propuesta de matrimonio ha sido cancelada.");
-        return;
+      // Si el destino responde con #si, se realiza el matrimonio
+      if (text.toLowerCase() === "#si") {
+        const marriageData = readData(marriageFilePath);
+        marriageData.push({
+          userJid,
+          partnerJid: targetJid,
+          date: new Date().toISOString(),
+          groupId: response.remoteJid, // Suponiendo que el grupo está en remoteJid
+          dailyLove: 0, // Inicia el contador de amor diario
+        });
+        writeData(marriageFilePath, marriageData);
+
+        // Reducir el anillo de compromiso
+        userInventory.ring -= 1;
+        writeData(inventoryFilePath, inventoryData);
+
+        await sendReply(`💍 ¡Felicidades! @${userJid.split("@")[0]} y @${targetJid.split("@")[0]} están ahora casados.`);
+      } else {
+        await sendReply("❌ La propuesta de matrimonio fue rechazada.");
       }
-    }, 5000);
+    };
 
-    socket.ev.on("messages.upsert", async ({ messages }) => {
-      const msg = messages[0];
-      if (!msg.key.fromMe && msg.key.remoteJid === remoteJid && msg.message?.conversation) {
-        const response = msg.message.conversation.toLowerCase();
-        if (response === "#si" && msg.key.participant === targetJid) {
-          clearInterval(interval);
-
-          // Registrar matrimonio
-          marriageData.push({
-            userJid,
-            partnerJid: targetJid,
-            group: remoteJid,
-            date: new Date().toISOString(),
-            loveStreak: 0,
-          });
-          writeData(marriageFilePath, marriageData);
-
-          await socket.sendMessage(remoteJid, {
-            text: `💖 ¡Felicidades! @${userJid.split("@")[0]} y @${targetJid.split("@")[0]} ahora están casados.`,
-            mentions: [userJid, targetJid],
-          });
-        } else if (response === "#no" && msg.key.participant === targetJid) {
-          clearInterval(interval);
-          await sendReply("💔 La propuesta de matrimonio ha sido rechazada.");
-        }
-      }
-    });
+    // Función que escucha el mensaje de respuesta
+    socket.on("message", listenForResponse);
   },
 };
