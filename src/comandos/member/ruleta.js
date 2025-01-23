@@ -74,21 +74,23 @@ module.exports = {
 
       // Actualizar las monedas del usuario
       const krData = readData(krFilePath);
-      const userKr = krData.users[userJid] || { kr: 50 }; // Iniciar con 50 monedas si no existe
+      const userKr = krData.users[userJid]; // No inicializar las monedas, solo actualizar
 
-      // Modificar las monedas según el resultado
-      userKr.kr += amount;
-      krData.users[userJid] = userKr;
-      writeData(krFilePath, krData);
+      if (userKr) {
+        userKr.kr += amount;
+        writeData(krFilePath, krData);
 
-      // Mostrar el resultado
-      if (amount > 0) {
-        await sendReply(`🎉 ¡Has ganado ${amount} monedas! 🎉`);
-      } else if (amount < 0) {
-        await sendReply(`😢 ¡Has perdido ${Math.abs(amount)} monedas! 😢`);
+        // Mostrar el resultado
+        if (amount > 0) {
+          await sendReply(`🎉 ¡Has ganado ${amount} monedas! 🎉`);
+        } else if (amount < 0) {
+          await sendReply(`😢 ¡Has perdido ${Math.abs(amount)} monedas! 😢`);
+        }
+
+        await sendReply(`💰 Tu saldo actual es: ${userKr.kr} 𝙺𝚛`);
+      } else {
+        await sendReply("❌ No se encontró tu saldo de monedas.");
       }
-
-      await sendReply(`💰 Tu saldo actual es: ${userKr.kr} 𝙺𝚛`);
     }, 4000);
   },
 };
