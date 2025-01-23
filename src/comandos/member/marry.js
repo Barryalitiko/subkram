@@ -3,27 +3,31 @@ const path = require("path");
 const { PREFIX } = require("../../krampus");
 
 const marriageFilePath = path.resolve(process.cwd(), "assets/marriage.json");
+const inventoryFilePath = path.resolve(process.cwd(), "assets/inventory.json");
 
-const readMarriageData = () => {
+// Funciones para leer y escribir datos
+const readData = (filePath) => {
   try {
-    const data = fs.readFileSync(marriageFilePath, "utf-8");
+    const data = fs.readFileSync(filePath, "utf-8");
     return JSON.parse(data);
   } catch {
     return [];
   }
 };
 
-const writeMarriageData = (data) => {
-  fs.writeFileSync(marriageFilePath, JSON.stringify(data, null, 2), "utf-8");
+const writeData = (filePath, data) => {
+  fs.writeFileSync(filePath, JSON.stringify(data, null, 2), "utf-8");
 };
 
 module.exports = {
   name: "marry",
-  description: "Proponer matrimonio a alguien. Responde a un mensaje o etiqueta a alguien.",
+  description: "Proponer matrimonio a alguien con un anillo de compromiso. Responde a un mensaje o etiqueta a alguien.",
   commands: ["marry"],
   usage: `${PREFIX}marry @usuario o responde a un mensaje`,
   handle: async ({ socket, remoteJid, sendReply, isReply, replyJid, args, userJid }) => {
-    const marriageData = readMarriageData();
+    const marriageData = readData(marriageFilePath);
+    const inventoryData = readData(inventoryFilePath);
+
     const targetJid = isReply ? replyJid : args.length > 0 ? args[0].replace("@", "") + "@s.whatsapp.net" : null;
 
     if (!targetJid) {
@@ -45,9 +49,20 @@ module.exports = {
       return;
     }
 
+    // Verificar si el usuario tiene un anillo de compromiso
+    const proposerInventory = inventoryData.find((entry) => entry.userJid === userJid);
+    if (!proposerInventory || proposerInventory.rings < 1) {
+      await sendReply("❌ No tienes un anillo de compromiso. Compra uno para proponer matrimonio.");
+      return;
+    }
+
+    // Reducir el número de anillos en el inventario del usuario
+    proposerInventory.rings -= 1;
+    writeData(inventoryFilePath, inventoryData);
+
     // Enviar propuesta
     await socket.sendMessage(remoteJid, {
-      text: `💍 @${userJid.split("@")[0]} ha propuesto matrimonio a @${targetJid.split("@")[0]}.\nResponde con *#si* para aceptar o *#no* para rechazar.`,
+      text: `💍 @${userJid.split("@")[0]} ha propuesto matrimonio a @${targetJid.split("@")[0]} con un anillo de compromiso.\nResponde con *#si* para aceptar o *#no* para rechazar.`,
       mentions: [userJid, targetJid],
     });
 
@@ -77,7 +92,7 @@ module.exports = {
             date: new Date().toISOString(),
             loveStreak: 0,
           });
-          writeMarriageData(marriageData);
+          writeData(marriageFilePath, marriageData);
 
           await socket.sendMessage(remoteJid, {
             text: `💖 ¡Felicidades! @${userJid.split("@")[0]} y @${targetJid.split("@")[0]} ahora están casados.`,
