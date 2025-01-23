@@ -1,11 +1,11 @@
 const fs = require("fs");
 const path = require("path");
-const { PREFIX } = require("../../krampus"); // Asegúrate de que esta línea esté correctamente importada
+const { PREFIX } = require("../../krampus");
+
+const commandStatusFilePath = path.resolve(process.cwd(), "assets/monedas.json");
 const usageStatsFilePath = path.resolve(process.cwd(), "assets/usageStats.json");
 const krFilePath = path.resolve(process.cwd(), "assets/kr.json");
-const monedasFilePath = path.resolve(process.cwd(), "assets/monedas.json");
 
-// Función para leer datos
 const readData = (filePath) => {
   try {
     return JSON.parse(fs.readFileSync(filePath, "utf-8"));
@@ -14,79 +14,81 @@ const readData = (filePath) => {
   }
 };
 
-// Función para escribir datos
 const writeData = (filePath, data) => {
-  fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
+  fs.writeFileSync(filePath, JSON.stringify(data, null, 2), "utf-8");
 };
 
 module.exports = {
   name: "ruleta",
-  description: "Prueba tu suerte diaria. Solo podrás jugar 3 veces al día.",
+  description: "Juega a la ruleta y gana o pierde monedas.",
   commands: ["ruleta"],
   usage: `${PREFIX}ruleta`,
   handle: async ({ sendReply, userJid }) => {
+    // Verificar si la ruleta está activada
+    const commandStatus = readData(commandStatusFilePath);
+    if (commandStatus.commandStatus !== "on") {
+      await sendReply("❌ El sistema de ruleta está desactivado.");
+      return;
+    }
+
+    // Verificar intentos del usuario
     const usageStats = readData(usageStatsFilePath);
-    const krData = readData(krFilePath);
-    const monedasData = readData(monedasFilePath);
+    const userStats = usageStats.users[userJid] || { attempts: 0 };
 
-    // Verificar si el comando de ruleta está habilitado
-    const commandStatus = monedasData.commandStatus?.enabled;
-    if (!commandStatus) {
-      await sendReply("❌ El comando está desactivado.");
+    if (userStats.attempts >= 3) {
+      await sendReply("❌ Ya has alcanzado el límite de intentos diarios en la ruleta.");
       return;
     }
 
-    // Verificar si el usuario ya jugó 3 veces hoy
-    const userStats = usageStats.users[userJid] || { todayPlays: 0, lastPlayDate: "" };
-    const currentDate = new Date().toLocaleDateString();
-    const lastPlayDate = new Date(userStats.lastPlayDate).toLocaleDateString();
-
-    if (currentDate !== lastPlayDate) {
-      userStats.todayPlays = 0; // Reseteamos las jugadas al nuevo día
-    }
-
-    if (userStats.todayPlays >= 3) {
-      await sendReply("❌ Has alcanzado el límite de jugadas diarias.");
-      return;
-    }
-
-    // Incrementar la jugada del usuario
-    userStats.todayPlays += 1;
-    userStats.lastPlayDate = new Date().toISOString();
+    // Aumentar los intentos del usuario
+    userStats.attempts += 1;
     usageStats.users[userJid] = userStats;
     writeData(usageStatsFilePath, usageStats);
 
-    // Simular el juego de ruleta
-    await sendReply("🎲 Probando tu suerte diaria...");
+    await sendReply("🎲 Probando tu suerte...");
+
+    // Animación de la ruleta
     await sendReply("🎲");
-    await new Promise(resolve => setTimeout(resolve, 2000)); // Esperar 2 segundos
-    await sendReply("💨");
-    await new Promise(resolve => setTimeout(resolve, 2000)); // Esperar 2 segundos
-    await sendReply("🎲");
+    setTimeout(async () => {
+      await sendReply("💨");
+    }, 2000);
 
-    // Determinar el resultado de la ruleta
-    const outcomes = [1, 2, 3, -2, -4]; // 1, 2, 3 monedas ganadas, -2, -4 monedas perdidas
-    const randomOutcome = outcomes[Math.floor(Math.random() * outcomes.length)];
+    setTimeout(async () => {
+      await sendReply("🎲");
 
-    // Modificar las monedas del usuario según el resultado
-    const userKr = krData.users[userJid] || { kr: 50 }; // Monedas base de 50
-    userKr.kr += randomOutcome;
+      // Resultados aleatorios: ganar 1, 2, 3 o perder 2, 4 monedas
+      const result = Math.random();
+      let amount = 0;
 
-    // Asegurarnos de que no se tengan monedas negativas
-    if (userKr.kr < 0) {
-      userKr.kr = 0;
-    }
+      if (result < 0.25) {
+        amount = 1; // Ganar 1 moneda
+      } else if (result < 0.5) {
+        amount = 2; // Ganar 2 monedas
+      } else if (result < 0.75) {
+        amount = 3; // Ganar 3 monedas
+      } else if (result < 0.875) {
+        amount = -2; // Perder 2 monedas
+      } else {
+        amount = -4; // Perder 4 monedas
+      }
 
-    krData.users[userJid] = userKr;
-    writeData(krFilePath, krData);
+      // Actualizar las monedas del usuario
+      const krData = readData(krFilePath);
+      const userKr = krData.users[userJid] || { kr: 50 }; // Iniciar con 50 monedas si no existe
 
-    // Enviar el resultado al usuario
-    if (randomOutcome > 0) {
-      await sendReply(`🎉 ¡Has ganado ${randomOutcome} monedas!`);
-    } else {
-      await sendReply(`💔 ¡Has perdido ${Math.abs(randomOutcome)} monedas!`);
-    }
+      // Modificar las monedas según el resultado
+      userKr.kr += amount;
+      krData.users[userJid] = userKr;
+      writeData(krFilePath, krData);
 
-    await sendReply(`💰 Tu saldo actual de 𝙺𝚛 es: ${userKr.kr}`);
+      // Mostrar el resultado
+      if (amount > 0) {
+        await sendReply(`🎉 ¡Has ganado ${amount} monedas! 🎉`);
+      } else if (amount < 0) {
+        await sendReply(`😢 ¡Has perdido ${Math.abs(amount)} monedas! 😢`);
+      }
+
+      await sendReply(`💰 Tu saldo actual es: ${userKr.kr} 𝙺𝚛`);
+    }, 4000);
   },
 };
