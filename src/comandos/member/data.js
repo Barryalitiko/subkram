@@ -1,16 +1,38 @@
 const fs = require("fs");
 const path = require("path");
-const { PREFIX } = require("../../krampus");
 
-const marriageFilePath = path.resolve(process.cwd(), "assets/marriage.json");
 const krFilePath = path.resolve(process.cwd(), "assets/kr.json");
 
-// Funciones para leer los datos
+// Función para leer los datos de kr.json
 const readData = (filePath) => {
   try {
     return JSON.parse(fs.readFileSync(filePath, "utf-8"));
   } catch {
     return [];
+  }
+};
+
+// Función para escribir datos en kr.json
+const writeData = (filePath, data) => {
+  fs.writeFileSync(filePath, JSON.stringify(data, null, 2), "utf-8");
+};
+
+// Función para asignar monedas a nuevos usuarios
+const assignInitialKr = (userJid) => {
+  const krData = readData(krFilePath);
+
+  // Verificar si el usuario ya tiene un registro
+  const userData = krData.find(entry => entry.userJid === userJid);
+
+  if (!userData) {
+    // Si no tiene un registro, se le asignan 50 monedas
+    krData.push({
+      userJid,
+      kr: 50
+    });
+
+    // Guardar el nuevo estado en el archivo
+    writeData(krFilePath, krData);
   }
 };
 
@@ -20,6 +42,9 @@ module.exports = {
   commands: ["data"],
   usage: `${PREFIX}data`,
   handle: async ({ sendReply, userJid }) => {
+    // Asignar monedas 𝙺𝚛 si es necesario
+    assignInitialKr(userJid);
+
     const marriageData = readData(marriageFilePath);
     const krData = readData(krFilePath);
 
