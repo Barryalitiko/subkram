@@ -1,4 +1,4 @@
-const { downloadContentFromMessage } = require("baileys");
+const { downloadContentFromMessage } = require("@whiskeysockets/baileys");
 const { PREFIX, COMMANDS_DIR, TEMP_DIR } = require("../krampus");
 const path = require("path");
 const fs = require("fs");
