@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 
 const { PREFIX } = require("../../krampus");
-const autoreactionsPath = path.resolve(__dirname, "../../assets/autoreactions.json");
+const autoreactionsPath = path.resolve(process.cwd(), "assets/autoreactions.json");
 
 module.exports = {
   name: "autoreactions",
