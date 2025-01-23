@@ -1,3 +1,5 @@
 {
-  "ruletaStatus": "on"
+  "commandStatus": {
+    "enabled": true
+  }
 }
