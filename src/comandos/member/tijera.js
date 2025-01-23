@@ -46,7 +46,7 @@ module.exports = {
       // Enviar el beso
       await sendReact("✂", remoteJid);
       await socket.sendMessage(remoteJid, {
-        video: fs.readFileSync("assets/sx/tijera.gif"),
+        video: fs.readFileSync("assets/sx/tijera.mp4"),
         caption: `> 𝑫𝑰𝑨 𝑫𝑬 𝑪𝑶𝑳𝑶𝑹𝑬𝑺?\n@${userJid.split("@")[0]} 𝒚 @${targetJid.split("@")[0]}\n𝒆𝒔𝒕𝒂𝒏 𝒉𝒂𝒄𝒊𝒆𝒏𝒅𝒐 𝒕𝒊𝒋𝒆𝒓𝒂𝒔 😋.`,
         gifPlayback: true,
         mentions: [userJid, targetJid]
