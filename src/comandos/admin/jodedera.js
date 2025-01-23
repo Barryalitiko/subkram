@@ -24,14 +24,15 @@ const writeStatus = (status) => {
 module.exports = {
   name: "toggle",
   description: "Encender o apagar el sistema de comandos.",
-  commands: ["toggle"],
+  commands: ["sx"],
   usage: `${PREFIX}toggle <on/off>`,
-  handle: async ({ socket, remoteJid, sendReply, args }) => {
+  handle: async ({ socket, remoteJid, sendReply, args, sendReact, webMessage }) => {
     try {
       const currentStatus = readStatus();
 
       // Si no se proporciona un argumento válido, se envía un mensaje de uso.
       if (!args[0] || (args[0] !== "on" && args[0] !== "off")) {
+        await sendReact("❓", webMessage.key); // Reacción para uso incorrecto
         await sendReply("❌ Uso incorrecto. Usa `on` para encender o `off` para apagar. Ejemplo: `!toggle on`");
         return;
       }
@@ -40,13 +41,16 @@ module.exports = {
       writeStatus({ enabled: newStatus });
 
       if (newStatus) {
+        await sendReact("🔞", webMessage.key); // Reacción para encendido
         await sendReply("✅ El sistema de comandos ha sido **encendido**. Ahora puedes usar los comandos.");
       } else {
+        await sendReact("😞", webMessage.key); // Reacción para apagado
         await sendReply("❌ El sistema de comandos ha sido **apagado**. Los comandos no funcionarán hasta que se encienda.");
       }
     } catch (error) {
       console.error("Error al cambiar el estado del sistema:", error);
-      await sendReply("❌ Hubo un error al cambiar el estado del sistema.");
+      await sendReact("🚫", webMessage.key); // Reacción para error
+      await sendReply("Solo los admins pueden ejecutar este comando");
     }
   },
 };
