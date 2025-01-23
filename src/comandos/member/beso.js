@@ -1,7 +1,6 @@
 const { PREFIX } = require("../../krampus");
 const fs = require("fs");
 const path = require("path");
-const { onlyNumbers } = require("../utils");
 
 const statusFilePath = path.resolve(process.cwd(), "assets/status.json");
 
@@ -29,13 +28,14 @@ module.exports = {
 
       // Si hay una respuesta o etiqueta
       if (args.length > 0) {
-        const taggedUser = args[0].replace(/[^0-9]/g, ""); // Limpiamos para obtener solo números
+        const taggedUser = args[0].replace(/[^\d@]/g, "").replace("@s.whatsapp.net", "");
         if (taggedUser) {
           await sendReact("💋", remoteJid);
           await socket.sendMessage(remoteJid, {
-            video: fs.readFileSync('assets/sx/beso.mp4'),
-            caption: `@${onlyNumbers(taggedUser)} ha recibido un beso de @${onlyNumbers(remoteJid)}`,
-            gifPlayback: true
+            video: fs.readFileSync("assets/sx/beso.mp4"),
+            caption: `@${taggedUser} ha recibido un beso de @${remoteJid.split("@")[0]}`,
+            gifPlayback: true,
+            mentions: [`${taggedUser}@s.whatsapp.net`, remoteJid]
           });
         }
       } else {
@@ -43,9 +43,10 @@ module.exports = {
         const randomUser = participants[Math.floor(Math.random() * participants.length)];
         await sendReact("💋", remoteJid);
         await socket.sendMessage(remoteJid, {
-          video: fs.readFileSync('assets/sx/beso.mp4'),
-          caption: `@${onlyNumbers(remoteJid)} ha enviado un beso a @${onlyNumbers(randomUser.id)}`,
-          gifPlayback: true
+          video: fs.readFileSync("assets/sx/beso.mp4"),
+          caption: `@${remoteJid.split("@")[0]} ha enviado un beso a @${randomUser.id.split("@")[0]}`,
+          gifPlayback: true,
+          mentions: [remoteJid, randomUser.id]
         });
       }
 
