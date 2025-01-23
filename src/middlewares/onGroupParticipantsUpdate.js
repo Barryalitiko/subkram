@@ -1,5 +1,4 @@
 const fs = require("fs");
-const { onlyNumbers } = require("../utils");
 const { getWelcomeMode } = require("../utils/database");
 const { warningLog } = require("../utils/logger");
 const { isActiveAutoApproveGroup } = require("../utils/database");
@@ -13,7 +12,7 @@ exports.onGroupParticipantsUpdate = async ({ groupParticipantsUpdate, socket }) 
     // Aprobamos automáticamente a los nuevos miembros
     for (let userJid of participants) {
       await socket.sendMessage(groupId, {
-        text: `✅ Se ha aprobado automáticamente a @${userJid}`,
+        text: `✅ Se ha aprobado automáticamente a @${userJid.split("@")[0]}`,
         mentions: [userJid],
       });
     }
@@ -48,7 +47,7 @@ exports.onGroupParticipantsUpdate = async ({ groupParticipantsUpdate, socket }) 
 
       // Crear el mensaje de bienvenida
       const welcomeMessage = ` ¡𝗕𝗶𝗲𝗻𝘃𝗲𝗻𝗶𝗱@ 𝗮𝗹 𝗴𝗿𝘂𝗽𝗼!
-@${onlyNumbers(participants[0])}
+@${participants[0].split("@")[0]}
 𝘗𝘳𝘦𝘴𝘦𝘯𝘵𝘢𝘵𝘦 ᶜᵒⁿ 𝐟𝐨𝐭𝐨 y 𝐧𝐨𝐦𝐛𝐫𝐞 
 
 > Bot by Krampus OM
