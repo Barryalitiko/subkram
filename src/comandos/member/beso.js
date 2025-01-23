@@ -28,28 +28,26 @@ module.exports = {
 
       // Si hay una respuesta o etiqueta
       if (args.length > 0) {
-        const taggedUser = args[0].replace(/[^\d@]/g, "").replace("@s.whatsapp.net", "");
-        if (taggedUser) {
-          await sendReact("💋", remoteJid);
-          await socket.sendMessage(remoteJid, {
-            video: fs.readFileSync("assets/sx/beso.mp4"),
-            caption: `@${taggedUser} ha recibido un beso de @${remoteJid.split("@")[0]}`,
-            gifPlayback: true,
-            mentions: [`${taggedUser}@s.whatsapp.net`, remoteJid]
-          });
-        }
-      } else {
-        // Si no hay etiqueta, elegimos un usuario al azar
-        const randomUser = participants[Math.floor(Math.random() * participants.length)];
+        const taggedUser = args[0].replace("@", "") + "@s.whatsapp.net";
         await sendReact("💋", remoteJid);
         await socket.sendMessage(remoteJid, {
           video: fs.readFileSync("assets/sx/beso.mp4"),
-          caption: `@${remoteJid.split("@")[0]} ha enviado un beso a @${randomUser.id.split("@")[0]}`,
+          caption: `@${taggedUser.split("@")[0]} ha recibido un beso de @${remoteJid.split("@")[0]}`,
           gifPlayback: true,
-          mentions: [remoteJid, randomUser.id]
+          mentions: [taggedUser, remoteJid]
+        });
+      } else {
+        // Si no hay etiqueta, elegimos un usuario al azar
+        const randomUser = participants[Math.floor(Math.random() * participants.length)];
+        const randomUserJid = randomUser.id;
+        await sendReact("💋", remoteJid);
+        await socket.sendMessage(remoteJid, {
+          video: fs.readFileSync("assets/sx/beso.mp4"),
+          caption: `@${remoteJid.split("@")[0]} ha enviado un beso a @${randomUserJid.split("@")[0]}`,
+          gifPlayback: true,
+          mentions: [remoteJid, randomUserJid]
         });
       }
-
     } catch (error) {
       console.error("Error en el comando kiss:", error);
       await sendReply("❌ Ocurrió un error al procesar el comando.");
