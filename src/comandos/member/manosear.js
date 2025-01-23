@@ -46,7 +46,7 @@ module.exports = {
       // Enviar el beso
       await sendReact("🥵", remoteJid);
       await socket.sendMessage(remoteJid, {
-        video: fs.readFileSync("assets/sx/beso.mp4"),
+        video: fs.readFileSync("assets/sx/manosear.mp4"),
         caption: `🤭\n> 𝙌𝙪𝙚 𝙚𝙨𝙩𝙖 𝙥𝙖𝙨𝙖𝙣𝙙𝙤 𝙖𝙦𝙪𝙞́?\n@${userJid.split("@")[0]} ha manoseado a @${targetJid.split("@")[0]}`,
         gifPlayback: true,
         mentions: [userJid, targetJid]
