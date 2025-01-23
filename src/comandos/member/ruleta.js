@@ -1,7 +1,9 @@
 const fs = require("fs");
 const path = require("path");
+const { PREFIX } = require("../../krampus"); // Asegúrate de tener el archivo de configuración correctamente importado
 
 const krFilePath = path.resolve(process.cwd(), "assets/kr.json");
+const usageStatsFilePath = path.resolve(process.cwd(), "assets/usageStats.json");
 
 // Función para leer los datos del archivo JSON
 const readData = (filePath) => {
@@ -37,7 +39,8 @@ module.exports = {
 
     // Lógica de ruleta (la que ya tienes)
     const maxUses = 3;
-    const userStats = usageStatsData.users[userJid] || { uses: 0 };
+    const usageStatsData = readData(usageStatsFilePath);
+    const userStats = usageStatsData.find(user => user.userJid === userJid) || { uses: 0 };
 
     if (userStats.uses >= maxUses) {
       await sendReply("❌ Ya has alcanzado el límite de usos para hoy.");
@@ -56,6 +59,10 @@ module.exports = {
     if (userKr.kr < 0) userKr.kr = 0;
 
     // Actualizar estadísticas de uso
+    if (!userStats.userJid) {
+      userStats.userJid = userJid;
+      usageStatsData.push(userStats);
+    }
     userStats.uses++;
     writeData(usageStatsFilePath, usageStatsData);
 
