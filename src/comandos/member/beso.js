@@ -18,7 +18,7 @@ module.exports = {
   description: "Enviar un beso a alguien. Debes etiquetar o responder a un usuario.",
   commands: ["kiss"],
   usage: `${PREFIX}kiss @usuario o responde a un mensaje`,
-  handle: async ({ socket, remoteJid, sendReply, sendReact, args, isReply, replyJid }) => {
+  handle: async ({ socket, remoteJid, sendReply, sendReact, args, isReply, replyJid, userJid }) => {
     try {
       const currentStatus = readStatus();
       if (!currentStatus.enabled) {
@@ -47,9 +47,9 @@ module.exports = {
       await sendReact("💋", remoteJid);
       await socket.sendMessage(remoteJid, {
         video: fs.readFileSync("assets/sx/beso.mp4"),
-        caption: `@${targetJid.split("@")[0]} ha recibido un beso de @${remoteJid.split("@")[0]}`,
+        caption: `@${userJid.split("@")[0]} ha enviado un beso a @${targetJid.split("@")[0]}`,
         gifPlayback: true,
-        mentions: [targetJid, remoteJid]
+        mentions: [userJid, targetJid]
       });
     } catch (error) {
       console.error("Error en el comando kiss:", error);
