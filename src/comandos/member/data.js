@@ -28,11 +28,15 @@ module.exports = {
       (entry) => entry.userJid === userJid || entry.partnerJid === userJid
     );
 
-    // Buscar la cantidad de 𝙺𝚛 del usuario
-    const userKr = krData.find((entry) => entry.userJid === userJid);
+    const userKr = krData.find(entry => entry.userJid === userJid);
+    const userKrBalance = userKr ? userKr.kr : 0;
 
     if (!marriage) {
-      await sendReply("❌ No estás casado.");
+      const noMarriageInfo = `
+        ❌ **No estás casado.**
+        💸 **Tus monedas 𝙺𝚛:** ${userKrBalance}
+      `;
+      await sendReply(noMarriageInfo);
       return;
     }
 
@@ -42,9 +46,6 @@ module.exports = {
     const currentDate = new Date();
     const daysMarried = Math.floor((currentDate - marriageDate) / (1000 * 60 * 60 * 24));
 
-    // Verificar si el usuario tiene 𝙺𝚛
-    const krAmount = userKr ? userKr.kr : 50; // Si no tiene entrada en kr.json, empieza con 50
-
     const marriageInfo = `
       💍 **Estado Matrimonial: Casado**
       👰 **Pareja:** @${partnerName}
@@ -52,8 +53,7 @@ module.exports = {
       🗓️ **Días Casados:** ${daysMarried} días
       🏠 **Grupo:** ${groupId}
       💖 **Amor Diario:** ${dailyLove} mensajes diarios
-
-      💰 **Monedas 𝙺𝚛:** ${krAmount} 𝙺𝚛
+      💸 **Tus monedas 𝙺𝚛:** ${userKrBalance}
     `;
 
     await sendReply(marriageInfo);
