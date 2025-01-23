@@ -3,7 +3,7 @@ const path = require("path");
 const { PREFIX } = require("../../krampus");
 
 const marriageFilePath = path.resolve(process.cwd(), "assets/marriage.json");
-const krFilePath = path.resolve(process.cwd(), "assets/kr.json"); // Ruta para el archivo de monedas
+const krFilePath = path.resolve(process.cwd(), "assets/kr.json");
 
 // Funciones para leer los datos
 const readData = (filePath) => {
@@ -21,15 +21,15 @@ module.exports = {
   usage: `${PREFIX}data`,
   handle: async ({ sendReply, userJid }) => {
     const marriageData = readData(marriageFilePath);
-    const krData = readData(krFilePath); // Leemos el archivo de monedas
+    const krData = readData(krFilePath);
 
     // Buscar si el usuario está casado
     const marriage = marriageData.find(
       (entry) => entry.userJid === userJid || entry.partnerJid === userJid
     );
 
-    // Buscar el saldo de monedas del usuario
-    const krUser = krData.find((entry) => entry.userJid === userJid);
+    // Buscar la cantidad de 𝙺𝚛 del usuario
+    const userKr = krData.find((entry) => entry.userJid === userJid);
 
     if (!marriage) {
       await sendReply("❌ No estás casado.");
@@ -42,8 +42,8 @@ module.exports = {
     const currentDate = new Date();
     const daysMarried = Math.floor((currentDate - marriageDate) / (1000 * 60 * 60 * 24));
 
-    // Obtener el saldo de monedas (si no tiene, será 0)
-    const userKr = krUser ? krUser.kr : 0;
+    // Verificar si el usuario tiene 𝙺𝚛
+    const krAmount = userKr ? userKr.kr : 50; // Si no tiene entrada en kr.json, empieza con 50
 
     const marriageInfo = `
       💍 **Estado Matrimonial: Casado**
@@ -52,7 +52,8 @@ module.exports = {
       🗓️ **Días Casados:** ${daysMarried} días
       🏠 **Grupo:** ${groupId}
       💖 **Amor Diario:** ${dailyLove} mensajes diarios
-      💰 **Saldo de Monedas:** ${userKr} 𝙆𝚛
+
+      💰 **Monedas 𝙺𝚛:** ${krAmount} 𝙺𝚛
     `;
 
     await sendReply(marriageInfo);
