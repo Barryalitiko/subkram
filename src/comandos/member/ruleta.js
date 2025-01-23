@@ -1,8 +1,11 @@
 const fs = require("fs");
 const path = require("path");
-const { PREFIX } = require("../../krampus");
+const { PREFIX } = require("../../krampus"); // Asegúrate de que esta línea esté correctamente importada
+const usageStatsFilePath = path.resolve(process.cwd(), "assets/usageStats.json");
+const krFilePath = path.resolve(process.cwd(), "assets/kr.json");
+const monedasFilePath = path.resolve(process.cwd(), "assets/monedas.json");
 
-// Funciones para leer y escribir los datos
+// Función para leer datos
 const readData = (filePath) => {
   try {
     return JSON.parse(fs.readFileSync(filePath, "utf-8"));
@@ -11,12 +14,10 @@ const readData = (filePath) => {
   }
 };
 
+// Función para escribir datos
 const writeData = (filePath, data) => {
-  fs.writeFileSync(filePath, JSON.stringify(data, null, 2), "utf-8");
+  fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
 };
-
-const usageStatsFilePath = path.resolve(process.cwd(), "assets/usageStats.json");
-const krFilePath = path.resolve(process.cwd(), "assets/kr.json");
 
 module.exports = {
   name: "ruleta",
@@ -26,9 +27,10 @@ module.exports = {
   handle: async ({ sendReply, userJid }) => {
     const usageStats = readData(usageStatsFilePath);
     const krData = readData(krFilePath);
+    const monedasData = readData(monedasFilePath);
 
-    // Verificar si commandStatus está activado
-    const commandStatus = usageStats.commandStatus?.enabled;
+    // Verificar si el comando de ruleta está habilitado
+    const commandStatus = monedasData.commandStatus?.enabled;
     if (!commandStatus) {
       await sendReply("❌ El comando está desactivado.");
       return;
@@ -36,7 +38,6 @@ module.exports = {
 
     // Verificar si el usuario ya jugó 3 veces hoy
     const userStats = usageStats.users[userJid] || { todayPlays: 0, lastPlayDate: "" };
-
     const currentDate = new Date().toLocaleDateString();
     const lastPlayDate = new Date(userStats.lastPlayDate).toLocaleDateString();
 
