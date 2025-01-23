@@ -2,7 +2,7 @@ const { PREFIX } = require("../../krampus");
 const fs = require("fs");
 const path = require("path");
 
-const statusFilePath = path.join(__dirname, "../../assets/status.json"); // Ruta donde se guarda el estado
+const statusFilePath = path.join(__dirname, "../assets/status.json"); // Ruta donde se guarda el estado
 
 const readStatus = () => {
   try {
