@@ -1,6 +1,8 @@
 const fs = require("fs");
 const path = require("path");
+const { PREFIX } = require("../../krampus");  // Asegúrate de que PREFIX esté correctamente importado
 
+const marriageFilePath = path.resolve(process.cwd(), "assets/marriage.json");
 const krFilePath = path.resolve(process.cwd(), "assets/kr.json");
 
 // Función para leer los datos de kr.json
