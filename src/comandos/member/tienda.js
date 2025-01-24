@@ -1,3 +1,4 @@
+```
 const fs = require("fs");
 const path = require("path");
 const { PREFIX } = require("../../krampus");
@@ -24,20 +25,17 @@ module.exports = {
   commands: ["tienda"],
   usage: `${PREFIX}tienda <objeto>`,
   handle: async ({ sendReply, args, userJid }) => {
-    // Verificar si el sistema de monedas está activado
     const commandStatus = readData(commandStatusFilePath);
     if (commandStatus.commandStatus !== "on") {
       await sendReply("❌ El sistema de tienda está desactivado.");
       return;
     }
 
-    // Lista de precios
     const precios = {
       "💍": 6,
       "📜": 7,
     };
 
-    // Si no se especifica un objeto, mostrar la lista de precios
     const objeto = args[0]?.toLowerCase();
     if (!objeto) {
       let listaPrecios = "🛒 *Lista de precios de la tienda*:\n";
@@ -49,41 +47,42 @@ module.exports = {
       return;
     }
 
-    // Validar que el objeto sea válido
     if (!precios[objeto]) {
       await sendReply("❌ Objeto inválido. Usa el comando sin argumentos para ver la lista de precios.");
       return;
     }
 
-    // Leer datos de monedas y objetos del usuario
-    const krData = readData(krFilePath);
-    const userKr = krData.users[userJid]?.kr || 0; // Monedas actuales del usuario
+    let krData = readData(krFilePath);
+    if (!krData.find(entry => entry.userJid === userJid)) {
+      krData.push({ userJid, kr: 0 });
+    }
+    const userKr = krData.find(entry => entry.userJid === userJid).kr;
 
     if (userKr < precios[objeto]) {
       await sendReply(`❌ No tienes suficientes monedas. Necesitas ${precios[objeto]} monedas para comprar ${objeto}.`);
       return;
     }
 
-    // Leer datos de objetos
-    const userItems = readData(userItemsFilePath);
-    if (!userItems.users[userJid]) {
-      userItems.users[userJid] = { anillos: 0, papeles: 0 };
+    let userItems = readData(userItemsFilePath);
+    if (!userItems.find(entry => entry.userJid === userJid)) {
+      userItems.push({ userJid, items: { anillos: 0, papeles: 0 } });
     }
+    const userItem = userItems.find(entry => entry.userJid === userJid);
 
-    // Actualizar el inventario del usuario
     if (objeto === "💍") {
-      userItems.users[userJid].anillos += 1;
+      userItem.items.anillos += 1;
     } else if (objeto === "📜") {
-      userItems.users[userJid].papeles += 1;
+      userItem.items.papeles += 1;
     }
 
-    // Descontar monedas al usuario
-    krData.users[userJid].kr -= precios[objeto];
+    const userKrBalance = userKr - precios[objeto];
+    krData = krData.map(entry => entry.userJid === userJid ? { userJid, kr: userKrBalance } : entry);
+    userItems = userItems.map(entry => entry.userJid === userJid ? userItem : entry);
 
-    // Escribir cambios en los archivos
     writeData(userItemsFilePath, userItems);
     writeData(krFilePath, krData);
 
-    await sendReply(`✅ ¡Has comprado ${objeto}! Ahora tienes ${krData.users[userJid].kr} monedas y:\n- 💍: ${userItems.users[userJid].anillos}\n- 📜: ${userItems.users[userJid].papeles}`);
+    await sendReply(`✅ ¡Has comprado ${objeto}! Ahora tienes ${userKrBalance} monedas y:\n- 💍: ${userItem.items.anillos}\n- 📜: ${userItem.items.papeles}`);
   },
 };
+```
