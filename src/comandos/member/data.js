@@ -4,6 +4,7 @@ const { PREFIX } = require("../../krampus");
 
 const marriageFilePath = path.resolve(process.cwd(), "assets/marriage.json");
 const krFilePath = path.resolve(process.cwd(), "assets/kr.json");
+const userItemsFilePath = path.resolve(process.cwd(), "assets/userItems.json");
 
 const readData = (filePath) => {
   try {
@@ -38,15 +39,23 @@ module.exports = {
     assignInitialKr(userJid);
     const marriageData = readData(marriageFilePath);
     const krData = readData(krFilePath);
+    const userItems = readData(userItemsFilePath);
 
     if (krData && krData.length > 0) {
       const userKr = krData.find(entry => entry.userJid === userJid);
       const userKrBalance = userKr ? userKr.kr : 0;
-
       const marriage = marriageData.find(entry => entry.userJid === userJid || entry.partnerJid === userJid);
+
       if (!marriage) {
         const noMarriageInfo = ` ❌ **No estás casado.** 💸 **Tus monedas 𝙺𝚛:** ${userKrBalance} `;
-        await sendReply(noMarriageInfo);
+        const userItem = userItems.find(entry => entry.userJid === userJid);
+        if (!userItem) {
+          await sendReply(`${noMarriageInfo} ❌ **No tienes objetos acumulados.**`);
+          return;
+        }
+        const anillos = userItem.items.anillos;
+        const papeles = userItem.items.papeles;
+        await sendReply(`${noMarriageInfo} 🎁 **Tienes acumulados:** ${anillos} 💍 y ${papeles} 📜`);
         return;
       }
 
@@ -55,9 +64,16 @@ module.exports = {
       const marriageDate = new Date(date);
       const currentDate = new Date();
       const daysMarried = Math.floor((currentDate - marriageDate) / (1000 * 60 * 60 * 24));
-
       const marriageInfo = ` 💍 **Estado Matrimonial: Casado** 👰 **Pareja:** @${partnerName} 📅 **Fecha de Casamiento:** ${marriageDate.toLocaleDateString()} 🗓️ **Días Casados:** ${daysMarried} días 🏠 **Grupo:** ${groupId} 💖 **Amor Diario:** ${dailyLove} mensajes diarios 💸 **Tus monedas 𝙺𝚛:** ${userKrBalance} `;
-      await sendReply(marriageInfo);
+
+      const userItem = userItems.find(entry => entry.userJid === userJid);
+      if (!userItem) {
+        await sendReply(`${marriageInfo} ❌ **No tienes objetos acumulados.**`);
+        return;
+      }
+      const anillos = userItem.items.anillos;
+      const papeles = userItem.items.papeles;
+      await sendReply(`${marriageInfo} 🎁 **Tienes acumulados:** ${anillos} 💍 y ${papeles} 📜`);
     }
   },
 };
