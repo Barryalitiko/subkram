@@ -32,7 +32,7 @@ module.exports = {
     }
 
     const cantidad = parseInt(args[0]);
-    const usuario = args[1];
+    const usuario = args.slice(1).join(" ");
 
     if (isNaN(cantidad) || cantidad <= 0) {
       await sendReply(`❌ Error: la cantidad debe ser un número entero positivo.`);
