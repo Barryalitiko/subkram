@@ -2,7 +2,8 @@ const fs = require("fs");
 const path = require("path");
 const { PREFIX } = require("../../krampus");
 
-const marriageFilePath = path.resolve(process.cwd(), "assets/marriage.json");
+const commandStatusFilePath = path.resolve(process.cwd(), "assets/monedas.json");
+const usageStatsFilePath = path.resolve(process.cwd(), "assets/usageStats.json");
 const krFilePath = path.resolve(process.cwd(), "assets/kr.json");
 
 const readData = (filePath) => {
@@ -21,43 +22,75 @@ const writeData = (filePath, data) => {
   }
 };
 
-const assignInitialKr = (userJid) => {
-  const krData = readData(krFilePath);
-  if (!krData.find(entry => entry.userJid === userJid)) {
-    krData.push({ userJid, kr: 50 });
-    writeData(krFilePath, krData);
-  }
-};
-
 module.exports = {
-  name: "data",
-  description: "Ver tu información matrimonial y estado actual.",
-  commands: ["data"],
-  usage: `${PREFIX}data`,
+  name: "ruleta",
+  description: "Juega a la ruleta y gana o pierde monedas.",
+  commands: ["ruleta"],
+  usage: `${PREFIX}ruleta`,
   handle: async ({ sendReply, userJid }) => {
-    assignInitialKr(userJid);
-    const marriageData = readData(marriageFilePath);
-    const krData = readData(krFilePath);
-
-    if (krData && krData.length > 0) {
-      const userKr = krData.find(entry => entry.userJid === userJid);
-      const userKrBalance = userKr ? userKr.kr : 0;
-
-      const marriage = marriageData.find(entry => entry.userJid === userJid || entry.partnerJid === userJid);
-      if (!marriage) {
-        const noMarriageInfo = ` ❌ **No estás casado.** 💸 **Tus monedas 𝙺𝚛:** ${userKrBalance} `;
-        await sendReply(noMarriageInfo);
-        return;
-      }
-
-      const { partnerJid, date, groupId, dailyLove } = marriage;
-      const partnerName = partnerJid.split("@")[0];
-      const marriageDate = new Date(date);
-      const currentDate = new Date();
-      const daysMarried = Math.floor((currentDate - marriageDate) / (1000 * 60 * 60 * 24));
-
-      const marriageInfo = ` 💍 **Estado Matrimonial: Casado** 👰 **Pareja:** @${partnerName} 📅 **Fecha de Casamiento:** ${marriageDate.toLocaleDateString()} 🗓️ **Días Casados:** ${daysMarried} días 🏠 **Grupo:** ${groupId} 💖 **Amor Diario:** ${dailyLove} mensajes diarios 💸 **Tus monedas 𝙺𝚛:** ${userKrBalance} `;
-      await sendReply(marriageInfo);
+    // Verificar si la ruleta está activada
+    const commandStatus = readData(commandStatusFilePath);
+    if (commandStatus.commandStatus !== "on") {
+      await sendReply("❌ El sistema de ruleta está desactivado.");
+      return;
     }
+
+    // Verificar intentos del usuario
+    const usageStats = readData(usageStatsFilePath);
+    const userStats = usageStats.users[userJid] || { attempts: 0 };
+    if (userStats.attempts >= 3) {
+      await sendReply("❌ Ya has alcanzado el límite de intentos diarios en la ruleta.");
+      return;
+    }
+
+    // Aumentar los intentos del usuario
+    userStats.attempts += 1;
+    usageStats.users[userJid] = userStats;
+    writeData(usageStatsFilePath, usageStats);
+
+    await sendReply("🎲 Probando tu suerte...");
+    await sendReply("🎲");
+
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    await sendReply("💨");
+
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    await sendReply("🎲");
+
+    // Resultados aleatorios: ganar 1, 2, 3 o perder 2, 4 monedas
+    const result = Math.random();
+    let amount = 0;
+    if (result < 0.25) {
+      amount = 1; // Ganar 1 moneda
+    } else if (result < 0.5) {
+      amount = 2; // Ganar 2 monedas
+    } else if (result < 0.75) {
+      amount = 3; // Ganar 3 monedas
+    } else if (result < 0.875) {
+      amount = -2; // Perder 2 monedas
+    } else {
+      amount = -4; // Perder 4 monedas
+    }
+
+    // Actualizar las monedas del usuario
+    const krData = readData(krFilePath);
+    const userKr = krData.find(entry => entry.userJid === userJid);
+    if (!userKr) {
+      krData.push({ userJid, kr: 0 });
+      writeData(krFilePath, krData);
+      userKr = krData.find(entry => entry.userJid === userJid);
+    }
+
+    userKr.kr += amount;
+    krData = krData.map(entry => entry.userJid === userJid ? userKr : entry);
+    writeData(krFilePath, krData);
+
+    // Mostrar el resultado
+    if (amount > 0) {
+      await sendReply(`🎉 ¡Has ganado ${amount} monedas! 🎉`);
+    } else if (amount < 0) {
+      await sendReply(`😢 ¡Has perdido ${Math.abs(amount)} monedas! 😢`);
+    }
+    await sendReply(`💰 Tu saldo actual es: ${userKr.kr} 𝙺𝚛`);
   },
 };
