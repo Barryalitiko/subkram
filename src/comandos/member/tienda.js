@@ -1,4 +1,3 @@
-```
 const fs = require("fs");
 const path = require("path");
 const { PREFIX } = require("../../krampus");
@@ -85,4 +84,3 @@ module.exports = {
     await sendReply(`✅ ¡Has comprado ${objeto}! Ahora tienes ${userKrBalance} monedas y:\n- 💍: ${userItem.items.anillos}\n- 📜: ${userItem.items.papeles}`);
   },
 };
-```
