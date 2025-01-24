@@ -63,6 +63,9 @@ module.exports = {
     }
 
     let userItems = readData(userItemsFilePath);
+    if (typeof userItems !== 'object' || !Array.isArray(userItems)) {
+      userItems = [];
+    }
     if (!userItems.find(entry => entry.userJid === userJid)) {
       userItems.push({ userJid, items: { anillos: 0, papeles: 0 } });
     }
