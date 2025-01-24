@@ -10,12 +10,16 @@ const readData = (filePath) => {
   try {
     return JSON.parse(fs.readFileSync(filePath, "utf-8"));
   } catch {
-    return {};
+    return [];
   }
 };
 
 const writeData = (filePath, data) => {
-  fs.writeFileSync(filePath, JSON.stringify(data, null, 2), "utf-8");
+  try {
+    fs.writeFileSync(filePath, JSON.stringify(data, null, 2), "utf-8");
+  } catch (error) {
+    console.error(`Error al escribir en el archivo ${filePath}: ${error.message}`);
+  }
 };
 
 module.exports = {
@@ -24,14 +28,12 @@ module.exports = {
   commands: ["ruleta"],
   usage: `${PREFIX}ruleta`,
   handle: async ({ sendReply, userJid }) => {
-    // Verificar si la ruleta está activada
     const commandStatus = readData(commandStatusFilePath);
     if (commandStatus.commandStatus !== "on") {
       await sendReply("❌ El sistema de ruleta está desactivado.");
       return;
     }
 
-    // Verificar intentos del usuario
     const usageStats = readData(usageStatsFilePath);
     const userStats = usageStats.users[userJid] || { attempts: 0 };
     if (userStats.attempts >= 3) {
@@ -39,7 +41,6 @@ module.exports = {
       return;
     }
 
-    // Aumentar los intentos del usuario
     userStats.attempts += 1;
     usageStats.users[userJid] = userStats;
     writeData(usageStatsFilePath, usageStats);
@@ -53,35 +54,33 @@ module.exports = {
     await new Promise(resolve => setTimeout(resolve, 2000));
     await sendReply("🎲");
 
-    // Resultados aleatorios: ganar 1, 2, 3 o perder 2, 4 monedas
     const result = Math.random();
     let amount = 0;
     if (result < 0.25) {
-      amount = 1; // Ganar 1 moneda
+      amount = 1;
     } else if (result < 0.5) {
-      amount = 2; // Ganar 2 monedas
+      amount = 2;
     } else if (result < 0.75) {
-      amount = 3; // Ganar 3 monedas
+      amount = 3;
     } else if (result < 0.875) {
-      amount = -2; // Perder 2 monedas
+      amount = -2;
     } else {
-      amount = -4; // Perder 4 monedas
+      amount = -4;
     }
 
-    // Actualizar las monedas del usuario
-    const krData = readData(krFilePath);
-    const userKr = krData.users[userJid];
+    let krData = readData(krFilePath);
+    const userKr = krData.find(entry => entry.userJid === userJid);
     if (!userKr) {
-      // Si el usuario no tiene un registro, crear uno con un saldo inicial de 0
-      krData.users[userJid] = { kr: 0 };
+      krData.push({ userJid, kr: 0 });
       writeData(krFilePath, krData);
-      userKr = krData.users[userJid];
+      krData = readData(krFilePath);
+      userKr = krData.find(entry => entry.userJid === userJid);
     }
 
     userKr.kr += amount;
+    krData = krData.map(entry => entry.userJid === userJid ? userKr : entry);
     writeData(krFilePath, krData);
 
-    // Mostrar el resultado
     if (amount > 0) {
       await sendReply(`🎉 ¡Has ganado ${amount} monedas! 🎉`);
     } else if (amount < 0) {
