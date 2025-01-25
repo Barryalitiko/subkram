@@ -3,6 +3,8 @@ const { downloadMusic } = require("../../services/ytdpl");
 const ytSearch = require("yt-search");
 const fs = require("fs");
 
+const cooldowns = new Map(); // Mapa para almacenar el tiempo del último uso por usuario
+
 module.exports = {
   name: "musica",
   description: "Descargar y enviar música desde YouTube",
@@ -19,6 +21,23 @@ module.exports = {
     webMessage,
   }) => {
     try {
+      const userId = remoteJid; // Usamos remoteJid para identificar al usuario
+      const now = Date.now();
+      const cooldownTime = 20 * 1000; // 20 segundos de cooldown
+
+      // Verificamos si el usuario está en cooldown
+      if (cooldowns.has(userId)) {
+        const lastUsed = cooldowns.get(userId);
+        if (now - lastUsed < cooldownTime) {
+          const remainingTime = Math.ceil((cooldownTime - (now - lastUsed)) / 1000);
+          await sendReply(`❌ Estás en cooldown. Espera ${remainingTime} segundos para usar el comando nuevamente.`);
+          return;
+        }
+      }
+
+      // Actualizamos el tiempo de la última ejecución
+      cooldowns.set(userId, now);
+
       const videoQuery = args.join(" ");
       if (!videoQuery) {
         await sendReply(
