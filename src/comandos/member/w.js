@@ -2,6 +2,7 @@ const { PREFIX } = require("../../krampus");
 const { downloadMusic } = require("../../services/ytdpl");
 const ytSearch = require("yt-search");
 const fs = require("fs");
+const cooldowns = new Map();
 
 module.exports = {
   name: "musica",
@@ -20,11 +21,24 @@ module.exports = {
     sendMessage,
   }) => {
     try {
+      const userId = remoteJid;
+      const now = Date.now();
+      const cooldownTime = 20 * 1000;
+
+      if (cooldowns.has(userId)) {
+        const lastUsed = cooldowns.get(userId);
+        if (now - lastUsed < cooldownTime) {
+          const remainingTime = Math.ceil((cooldownTime - (now - lastUsed)) / 1000);
+          await sendReply(`❌ Estás en cooldown. Espera ${remainingTime} segundos para usar el comando nuevamente.`);
+          return;
+        }
+      }
+
+      cooldowns.set(userId, now);
+
       const videoQuery = args.join(" ");
       if (!videoQuery) {
-        await sendReply(
-          "❌ Por favor, proporciona el nombre del video que deseas buscar."
-        );
+        await sendReply("❌ Por favor, proporciona el nombre del video que deseas buscar.");
         return;
       }
 
@@ -33,10 +47,7 @@ module.exports = {
       const searchResult = await ytSearch(videoQuery);
       const video = searchResult.videos[0];
       if (!video) {
-        await sendReply(
-          "❌ No se encontró ningún video con ese nombre.",
-          { quoted: webMessage }
-        );
+        await sendReply("❌ No se encontró ningún video con ese nombre.", { quoted: webMessage });
         return;
       }
 
@@ -72,10 +83,7 @@ module.exports = {
       }, 1 * 60 * 1000);
     } catch (error) {
       console.error("Error al descargar o enviar la música:", error);
-      await sendReply(
-        "❌ Hubo un error al procesar la música.",
-        { quoted: webMessage }
-      );
+      await sendReply("❌ Hubo un error al procesar la música.", { quoted: webMessage });
     }
   },
 };
