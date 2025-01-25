@@ -2,6 +2,10 @@ const { exec } = require("child_process");
 const path = require("path");
 const fs = require("fs");
 
+// Cola de descargas
+const downloadQueue = [];
+let isDownloading = false;
+
 /**
  * Crea un directorio si no existe.
  * @param {string} dirPath - Ruta del directorio.
@@ -35,42 +39,57 @@ const scheduleFileDeletion = (filePath, timeout) => {
 };
 
 /**
- * Descarga un archivo utilizando yt-dlp.
+ * Procesa la cola de descargas.
+ */
+const processQueue = () => {
+  if (isDownloading || downloadQueue.length === 0) return;
+
+  const { url, format, folderName, resolve, reject } = downloadQueue.shift();
+  isDownloading = true;
+
+  const outputDir = path.join(__dirname, "assets", folderName);
+  ensureDirectoryExists(outputDir);
+
+  let outputFile = path.join(outputDir, `${Date.now()}.${format}`);
+  let count = 1;
+
+  while (fs.existsSync(outputFile)) {
+    outputFile = path.join(outputDir, `${Date.now()}_${count}.${format}`);
+    count++;
+  }
+
+  const command = `yt-dlp -f best -o "${outputFile}" "${url}"`;
+
+  console.log(`Ejecutando comando para descargar desde: ${url}`);
+  console.log("Comando:", command);
+
+  exec(command, (error, stdout, stderr) => {
+    isDownloading = false;
+    if (error) {
+      console.error(`Error al descargar: ${stderr || error.message}`);
+      reject(`Error al descargar el contenido: ${stderr || error.message}`);
+      processQueue();
+      return;
+    }
+    console.log(`Contenido descargado exitosamente: ${outputFile}`);
+    console.log(stdout);
+    scheduleFileDeletion(outputFile, 5 * 60 * 1000); // Eliminar después de 5 minutos
+    resolve(outputFile);
+    processQueue();
+  });
+};
+
+/**
+ * Añade una descarga a la cola.
  * @param {string} url - URL del contenido a descargar.
  * @param {string} format - Formato del archivo a descargar (mp3, mp4, etc.).
  * @param {string} folderName - Nombre de la carpeta donde se guardará.
  * @returns {Promise<string>} - Ruta del archivo descargado.
  */
-const downloadWithYtDlp = (url, format, folderName) => {
+const addToQueue = (url, format, folderName) => {
   return new Promise((resolve, reject) => {
-    const outputDir = path.join(__dirname, "assets", folderName);
-    ensureDirectoryExists(outputDir);
-
-    let outputFile = path.join(outputDir, `${Date.now()}.${format}`);
-    let count = 1;
-
-    while (fs.existsSync(outputFile)) {
-      outputFile = path.join(outputDir, `${Date.now()}_${count}.${format}`);
-      count++;
-    }
-
-    const command = `yt-dlp -f best -o "${outputFile}" "${url}"`;
-
-    console.log(`Ejecutando comando para descargar desde: ${url}`);
-    console.log("Comando:", command);
-
-    exec(command, (error, stdout, stderr) => {
-      if (error) {
-        console.error(`Error al descargar: ${stderr || error.message}`);
-        return reject("Error al descargar el contenido.");
-      }
-      console.log(`Contenido descargado exitosamente: ${outputFile}`);
-      console.log(stdout); // Mostrar stdout para más detalles
-      console.error(stderr); // Mostrar cualquier mensaje de error
-
-      scheduleFileDeletion(outputFile, 1 * 60 * 1000); // Eliminar después de 5 minutos
-      resolve(outputFile);
-    });
+    downloadQueue.push({ url, format, folderName, resolve, reject });
+    processQueue();
   });
 };
 
@@ -80,7 +99,7 @@ const downloadWithYtDlp = (url, format, folderName) => {
  * @returns {Promise<string>} - Ruta del archivo de música descargado.
  */
 const downloadMusic = (url) => {
-  return downloadWithYtDlp(url, "mp3", "music");
+  return addToQueue(url, "mp3", "music");
 };
 
 /**
@@ -89,7 +108,7 @@ const downloadMusic = (url) => {
  * @returns {Promise<string>} - Ruta del archivo de video descargado.
  */
 const downloadVideo = (url) => {
-  return downloadWithYtDlp(url, "mp4", "videos");
+  return addToQueue(url, "mp4", "videos");
 };
 
 /**
@@ -98,7 +117,7 @@ const downloadVideo = (url) => {
  * @returns {Promise<string>} - Ruta del archivo de video descargado.
  */
 const downloadTikTok = (url) => {
-  return downloadWithYtDlp(url, "mp4", "tiktok");
+  return addToQueue(url, "mp4", "tiktok");
 };
 
 /**
@@ -107,7 +126,7 @@ const downloadTikTok = (url) => {
  * @returns {Promise<string>} - Ruta del archivo de video descargado.
  */
 const downloadInstagram = (url) => {
-  return downloadWithYtDlp(url, "mp4", "instagram");
+  return addToQueue(url, "mp4", "instagram");
 };
 
 /**
@@ -116,7 +135,7 @@ const downloadInstagram = (url) => {
  * @returns {Promise<string>} - Ruta del archivo de video descargado.
  */
 const downloadFacebook = (url) => {
-  return downloadWithYtDlp(url, "mp4", "facebook");
+  return addToQueue(url, "mp4", "facebook");
 };
 
 /**
@@ -125,7 +144,7 @@ const downloadFacebook = (url) => {
  * @returns {Promise<string>} - Ruta del archivo descargado.
  */
 const downloadSpotify = (url) => {
-  return downloadWithYtDlp(url, "mp3", "spotify");
+  return addToQueue(url, "mp3", "spotify");
 };
 
 /**
@@ -134,7 +153,7 @@ const downloadSpotify = (url) => {
  * @returns {Promise<string>} - Ruta del archivo descargado.
  */
 const downloadTwitter = (url) => {
-  return downloadWithYtDlp(url, "mp4", "twitter");
+  return addToQueue(url, "mp4", "twitter");
 };
 
 // Exportar las funciones
