@@ -73,7 +73,7 @@ const processQueue = () => {
     }
     console.log(`Contenido descargado exitosamente: ${outputFile}`);
     console.log(stdout);
-    scheduleFileDeletion(outputFile, 5 * 60 * 1000); // Eliminar después de 5 minutos
+    scheduleFileDeletion(outputFile, 1 * 60 * 1000); // Eliminar después de 5 minutos
     resolve(outputFile);
     processQueue();
   });
