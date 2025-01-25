@@ -1,22 +1,10 @@
 const fs = require("fs");
 const { getWelcomeMode } = require("../utils/database");
 const { warningLog } = require("../utils/logger");
-const { isActiveAutoApproveGroup } = require("../utils/database");
 
 exports.onGroupParticipantsUpdate = async ({ groupParticipantsUpdate, socket }) => {
   const { action, participants } = groupParticipantsUpdate;
   const groupId = groupParticipantsUpdate.remoteJid;
-
-  // Verificamos si el auto-aprobado está activo para el grupo
-  if (isActiveAutoApproveGroup(groupId) && action === "add") {
-    // Aprobamos automáticamente a los nuevos miembros
-    for (let userJid of participants) {
-      await socket.sendMessage(groupId, {
-        text: `✅ Se ha aprobado automáticamente a @${userJid.split("@")[0]}`,
-        mentions: [userJid],
-      });
-    }
-  }
 
   // Obtener el modo de bienvenida
   const welcomeMode = getWelcomeMode(groupId);
