@@ -7,7 +7,7 @@ module.exports = {
   description: "Descargar un video de Instagram.",
   commands: ["instagram", "insta"],
   usage: `${PREFIX}downloadinstagram <URL del video de Instagram>`,
-  handle: async ({ args, socket, remoteJid, sendReply, sendReact, webMessage }) => {
+  handle: async ({ args, socket, remoteJid, sendReply, sendMessage, sendReact, webMessage }) => {
     try {
       const instagramUrl = args[0];
       if (!instagramUrl) {
@@ -28,7 +28,7 @@ module.exports = {
       await sendReact("🧡", webMessage.key);
 
       // Enviar el video descargado
-      await socket.sendMessage(remoteJid, {
+      await sendMessage(remoteJid, {
         video: { url: videoPath },
         caption: `> Krampus OM bot\n𝚅𝚒𝚍𝚎𝚘 𝚍𝚎 𝙸𝚗𝚜𝚝𝚊𝚐𝚛𝚊𝚖 𝚌𝚊𝚛𝚐𝚊𝚍𝚘.`,
         quoted: webMessage, // Responde al mensaje original del usuario
