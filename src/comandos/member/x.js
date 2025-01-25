@@ -1,5 +1,5 @@
 const { PREFIX } = require("../../krampus");
-const { downloadXVideo } = require("../../services/ytdpl");
+const { downloadTwitter } = require("../../services/ytdpl");
 const fs = require("fs");
 
 const cooldowns = new Map(); // Mapa para almacenar el tiempo del último uso por usuario
@@ -41,7 +41,7 @@ module.exports = {
       await sendReact("⏳", webMessage.key);
 
       // Descargar el video usando la función para X (Twitter)
-      const videoPath = await downloadXVideo(twitterUrl);
+      const videoPath = await downloadTwitter(twitterUrl);
 
       // Cambiar la reacción a 🎬 una vez que el video se descargó
       await sendReact("🪽", webMessage.key);
