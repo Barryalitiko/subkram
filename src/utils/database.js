@@ -6,7 +6,7 @@ const databasePath = path.resolve(__dirname, "..", "..", "database");
 const INACTIVE_GROUPS_FILE = "inactive-groups";
 const ANTI_LINK_GROUPS_FILE = "anti-link-groups";
 const WELCOME_MODE_GROUPS_FILE = "welcome-mode-groups";
-const AUTO_APPROVE_GROUPS_FILE = "auto-approve-groups"; // Nuevo archivo para los grupos con aprobación automática
+
 
 function createIfNotExists(fullPath) {
   if (!fs.existsSync(fullPath)) {
@@ -84,28 +84,4 @@ exports.deactivateAntiLinkGroup = (groupId) => {
 exports.isActiveAntiLinkGroup = (groupId) => {
   const antiLinkGroups = readJSON(ANTI_LINK_GROUPS_FILE);
   return antiLinkGroups.includes(groupId);
-};
-
-// Manejo de grupos con aprobación automática
-exports.activateAutoApproveGroup = (groupId) => {
-  const autoApproveGroups = readJSON(AUTO_APPROVE_GROUPS_FILE);
-  if (!autoApproveGroups.includes(groupId)) {
-    autoApproveGroups.push(groupId);
-    writeJSON(AUTO_APPROVE_GROUPS_FILE, autoApproveGroups);
-  }
-};
-
-exports.deactivateAutoApproveGroup = (groupId) => {
-  const autoApproveGroups = readJSON(AUTO_APPROVE_GROUPS_FILE);
-  const index = autoApproveGroups.indexOf(groupId);
-
-  if (index !== -1) {
-    autoApproveGroups.splice(index, 1);
-    writeJSON(AUTO_APPROVE_GROUPS_FILE, autoApproveGroups);
-  }
-};
-
-exports.isActiveAutoApproveGroup = (groupId) => {
-  const autoApproveGroups = readJSON(AUTO_APPROVE_GROUPS_FILE);
-  return autoApproveGroups.includes(groupId);
 };
