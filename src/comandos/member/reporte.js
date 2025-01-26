@@ -6,8 +6,8 @@ const cooldowns = {};
 module.exports = {
   name: "tagadmins",
   description: "Etiqueta a todos los administradores del grupo.",
-  commands: ["tagadmins"],
-  usage: `${PREFIX}tagadmins`,
+  commands: ["reporte", "r"],
+  usage: `${PREFIX}reporte`,
   handle: async ({ remoteJid, sendReply, socket }) => {
     if (!remoteJid.endsWith("@g.us")) {
       await sendReply("Este comando solo puede usarse en grupos.");
