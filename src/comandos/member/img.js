@@ -15,7 +15,7 @@ module.exports = {
   }) => {
     if (!fullArgs.length) {
       throw new WarningError(
-        "👻 𝙺𝚛𝚊𝚖𝚙𝚞𝚜.𝚋𝚘𝚝 👻 añade una descripcion para generar la imagen"
+        "Vaya...\nañade una descripcion para generar la imagen\n> Krampus OM bot"
       );
     }
 
