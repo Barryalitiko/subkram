@@ -1,225 +1,72 @@
-const { BOT_EMOJI } = require("../krampus");
-const { extractDataFromMessage, baileysIs, download } = require(".");
-const { waitMessage } = require("./messages");
+const { PREFIX } = require("../../krampus");
+const { Sticker, createSticker } = require("wa-sticker-formatter");
 const fs = require("fs");
 
-exports.loadCommonFunctions = ({ socket, webMessage }) => {
-  const {
-    args,
-    commandName,
-    fullArgs,
-    fullMessage,
-    isReply,
-    prefix,
-    remoteJid,
-    replyJid,
-    userJid,
-  } = extractDataFromMessage(webMessage);
+module.exports = {
+  name: "sticker",
+  description: "Convierte una imagen o video en un sticker conservando la proporción original.",
+  commands: ["sticker", "s"],
+  usage: `${PREFIX}sticker`,
 
-  if (!remoteJid) {
-    return null;
-  }
-
-  const isImage = baileysIs(webMessage, "image");
-  const isVideo = baileysIs(webMessage, "video");
-  const isSticker = baileysIs(webMessage, "sticker");
-
-  const downloadImage = async (webMessage, fileName) => {
-    return await download(webMessage, fileName, "image", "png");
-  };
-
-  const downloadSticker = async (webMessage, fileName) => {
-    return await download(webMessage, fileName, "sticker", "webp");
-  };
-
-  const downloadVideo = async (webMessage, fileName) => {
-    return await download(webMessage, fileName, "video", "mp4");
-  };
-
-  const sendText = async (text, mentions) => {
-    let optionalParams = {};
-
-    if (mentions?.length) {
-      optionalParams = { mentions };
-    }
-
-    return await socket.sendMessage(remoteJid, {
-      text: `${BOT_EMOJI} ${text}`,
-      ...optionalParams,
-    });
-  };
-  
-  const sendReply = async (text) => {
-    return await socket.sendMessage(
-      remoteJid,
-      { text: `${BOT_EMOJI} ${text}` },
-      { quoted: webMessage }
-    );
-  };
-
-  const sendReact = async (emoji) => {
-    return await socket.sendMessage(remoteJid, {
-      react: {
-        text: emoji,
-        key: webMessage.key,
-      },
-    });
-  };
-
-  const sendSuccessReact = async () => {
-    return await sendReact("✅");
-  };
-
-  const sendMusicReact = async () => {
-    return await sendReact("🎵");
-  };
-
-  const sendWarningReply = async (text) => {
-    await sendWarningReact();
-    return await sendReply(`⚠️ Advertencia! ${text}`);
-  };
-
-  const sendWarningReact = async () => {
-    return await sendReact("⚠️");
-  };
-  
-  const sendWaitReact = async () => {
-    return await sendReact("⏳");
-  };
-
-  const sendErrorReact = async () => {
-    return await sendReact("❌");
-  };
-
-  const sendSuccessReply = async (text) => {
-    await sendSuccessReact();
-    return await sendReply(`👻 ${text}`);
-  };
-
-  const sendWaitReply = async (text) => {
-    await sendWaitReact();
-    return await sendReply(`⏳ Espera! ${text || waitMessage}`);
-  };
-
-  const sendErrorReply = async (text) => {
-    await sendErrorReact();
-    return await sendReply(`☠ Error! ${text}`);
-  };
-
-  const sendAudioFromURL = async (url) => {
-  try {
-    console.log(`Enviando audio desde URL: ${url}`);
-    return await socket.sendMessage(
-      remoteJid,
-      {
-        audio: { url },
-        mimetype: "audio/mpeg",
-      },
-      { quoted: webMessage }
-    );
-  } catch (error) {
-    console.error("Error al enviar el audio:", error);
-    throw new Error("No se pudo enviar el audio.");
-  }
-};
-
-    const sendVideoFromURL = async (url) => {
-  console.log(`Enviando video desde URL: ${url}`); // Registro del URL
-  return await socket.sendMessage(
-    remoteJid,
-    {
-      video: { url },
-    },
-    { quoted: webMessage }
-  );
-};
-
-  const sendStickerFromFile = async (file) => {
-    return await socket.sendMessage(
-      remoteJid,
-      {
-        sticker: fs.readFileSync(file),
-      },
-      { quoted: webMessage }
-    );
-  };
-
-  const sendStickerFromURL = async (url) => {
-    return await socket.sendMessage(
-      remoteJid,
-      {
-        sticker: { url },
-      },
-      { url, quoted: webMessage }
-    );
-  };
-  
-  const sendMessage = async ({ messageType, caption = '', mimetype = '', url = '' }) => {
-  try {
-    let messageContent = {};
-    
-    if (messageType === 'audio') {
-      messageContent = { audio: { url }, mimetype };
-    } else if (messageType === 'video') {
-      messageContent = { video: { url }, caption, mimetype };
-    } else if (messageType === 'image') {
-      messageContent = { image: { url }, caption, mimetype };
-    }
-
-    await socket.sendMessage(remoteJid, messageContent, { quoted: webMessage });
-    console.log(`${messageType} enviado con éxito.`);
-  } catch (error) {
-    console.error(`Error al enviar el mensaje de tipo ${messageType}:`, error);
-  }
-};
-
-const sendVideoFromFile = async (filePath, caption = '') => {
-  console.log(`Enviando video desde archivo: ${filePath}`); // Registro de la ruta local
-  return await socket.sendMessage(
-    remoteJid,
-    {
-      video: fs.readFileSync(filePath), // Le pasas el archivo leído desde el sistema local
-      caption: caption, // Añadir un pie de foto, si lo deseas
-    },
-    { quoted: webMessage }
-  );
-};
-  
-  return {
-    args,
-    commandName,
-    downloadImage,
-    downloadSticker,
-    downloadVideo,
-    fullArgs,
-    fullMessage,
-    isReply,
-    isSticker,
+  handle: async ({
+    isImage,
     isVideo,
-    prefix,
-    remoteJid,
-    replyJid,
-    sendAudioFromURL,
-    sendErrorReply,
-    sendErrorReact,
-    sendStickerFromFile,
-    sendStickerFromURL,
-    sendSuccessReact,
-    sendSuccessReply,
-    sendText,
-    sendVideoFromURL,
-    sendWarningReact,
-    sendWaitReact,
-    sendWaitReply,
-    sendMessage,
-    socket,
-    userJid,
+    downloadImage,
+    downloadVideo,
     webMessage,
-    sendReact,
     sendReply,
-    sendMusicReact,
-    sendWarningReply,
-    sendVideoFromFile,
-    sendAudioFromURL,
-  };
+    sendReact,
+    sendMessage,
+    isReply,
+    quoted,
+  }) => {
+    try {
+      if (!isReply || !quoted) {
+        await sendReply("❌ Responde a una imagen o video con el comando para convertirlo en un sticker.");
+        return;
+      }
+
+      if (!isImage && !isVideo) {
+        await sendReply("❌ Responde a una imagen o video con el comando para convertirlo en un sticker.");
+        return;
+      }
+
+      await sendReact("🤔", webMessage.key);
+
+      let buffer;
+
+      // Si es una imagen
+      if (isImage) {
+        buffer = await downloadImage(webMessage, "input");
+      } 
+      // Si es un video
+      else if (isVideo) {
+        buffer = await downloadVideo(webMessage, "input");
+      }
+
+      if (!buffer) {
+        await sendReply("❌ No se pudo descargar el archivo. Intenta nuevamente.");
+        return;
+      }
+
+      // Crear el sticker
+      const sticker = await createSticker(buffer, {
+        type: "full",
+        pack: "Operacion Marshall",
+        author: "Krampus OM Bot",
+        quality: 70,
+      });
+
+      // Enviar el sticker
+      await sendMessage(webMessage.key.remoteJid, {
+        sticker: sticker,
+        quoted: webMessage,
+      });
+
+      await sendReact("🧩", webMessage.key);
+    } catch (error) {
+      console.error("Error al crear el sticker:", error);
+      await sendReply("❌ Ocurrió un error al crear el sticker. Por favor, inténtalo de nuevo.");
+    }
+  },
 };
