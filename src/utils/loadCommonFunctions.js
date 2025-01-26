@@ -22,8 +22,8 @@ exports.loadCommonFunctions = ({ socket, webMessage }) => {
 
   // Función isImage para detectar imágenes
   const isImage = (message) => {
-    const mimeType = message?.message?.imageMessage?.mimetype || message?.message?.videoMessage?.mimetype;
-    return mimeType?.startsWith("image/");
+  const mimeType = message?.message?.imageMessage?.mimetype;
+  return mimeType?.startsWith("image/");
   };
 
   // Función isVideo para detectar videos
