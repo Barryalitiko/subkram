@@ -14,7 +14,7 @@ module.exports = {
       const description = metadata.desc || "Este grupo no tiene descripción.";
 
       // Enviar la descripción como respuesta
-      await sendReply(`📄 *Descripción del grupo:*\n\n${description}`);
+      await sendReply(`📄 *REGLAS DEL GRUPO:*\n> Krampus OM bot\n${description}`);
     } catch (error) {
       console.error("Error al obtener la descripción del grupo:", error);
       await sendReply("Ocurrió un error al intentar obtener la descripción del grupo.");
