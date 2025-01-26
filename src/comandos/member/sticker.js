@@ -20,6 +20,9 @@ module.exports = {
     baileysIs,
   }) => {
     try {
+      // Verificar si handle se ejecuta correctamente
+      console.log('Comando "sticker" ejecutado.');
+
       // Verificar si el mensaje es una respuesta y si se adjunta una imagen o video
       if (!isReply || !quoted) {
         await sendReply("❌ Responde a una imagen o video con el comando para convertirlo en un sticker.");
