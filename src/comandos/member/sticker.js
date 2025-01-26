@@ -1,91 +1,49 @@
-const { PREFIX, TEMP_DIR } = require("../../krampus");
-const { InvalidParameterError } = require("../../errors/InvalidParameterError");
-const path = require("path");
+const { PREFIX } = require("../../krampus");
+const { Sticker, createSticker } = require("wa-sticker-formatter");
 const fs = require("fs");
-const { exec } = require("child_process");
 
 module.exports = {
   name: "sticker",
-  description: "Crear stickers a partir de imágenes o videos.",
-  commands: ["sticker", "stickerimage"],
-  usage: `${PREFIX}sticker <imagen/gif/video> o responde a un mensaje con imagen/gif/video`,
-  handle: async ({
-    isImage,
-    isVideo,
-    downloadImage,
-    downloadVideo,
-    webMessage,
-    sendErrorReply,
-    sendSuccessReact,
-    sendStickerFromFile,
-  }) => {
+  description: "Convierte una imagen o video en un sticker conservando la proporción original.",
+  commands: ["sticker", "s"],
+  usage: `${PREFIX}sticker`,
+  handle: async ({ webMessage, sendReply, sendReact, sendMessage, args, isReply, quoted }) => {
     try {
-      // Verificar si es una imagen o video
-      if (!isImage && !isVideo) {
-        throw new InvalidParameterError(
-          "👻 Krampus 👻 Debes proporcionar una imagen, gif o video o responder a una imagen/gif/video."
-        );
+      // Verificar si el comando fue enviado respondiendo a un mensaje con imagen o video
+      if (!isReply || !quoted || (quoted.mtype !== "imageMessage" && quoted.mtype !== "videoMessage")) {
+        await sendReply("❌ Responde a una imagen o video con el comando para convertirlo en un sticker.");
+        return;
       }
 
-      const outputPath = path.resolve(TEMP_DIR, "output.webp");
+      // Reaccionar con ⏳ para indicar que el proceso ha comenzado
+      await sendReact("🤔", webMessage.key);
 
-      if (isImage) {
-        const inputPath = await downloadImage(webMessage, "input");
-
-        exec(
-          `ffmpeg -i ${inputPath} -vf scale=512:512 ${outputPath}`,
-          async (error) => {
-            if (error) {
-              console.log(error);
-              fs.unlinkSync(inputPath);
-              throw new Error("Error al crear el sticker.");
-            }
-
-            await sendSuccessReact();
-            await sendStickerFromFile(outputPath);
-            fs.unlinkSync(inputPath);
-            fs.unlinkSync(outputPath);
-          }
-        );
-      } else if (isVideo) {
-        const inputPath = await downloadVideo(webMessage, "input");
-
-        const sizeInSeconds = 10; // Limite de duración para el video
-
-        const seconds =
-          webMessage.message?.videoMessage?.seconds ||
-          webMessage.message?.extendedTextMessage?.contextInfo?.quotedMessage
-            ?.videoMessage?.seconds;
-
-        const haveSecondsRule = seconds <= sizeInSeconds;
-
-        if (!haveSecondsRule) {
-          fs.unlinkSync(inputPath);
-          await sendErrorReply(
-            `👻 Krampus 👻 El video tiene más de ${sizeInSeconds} segundos. ¡Envía un video más corto!`
-          );
-          return;
-        }
-
-        exec(
-          `ffmpeg -i ${inputPath} -y -vcodec libwebp -fs 0.99M -filter_complex "[0:v] scale=512:512,fps=12,pad=512:512:-1:-1:color=white@0.0,split[a][b];[a]palettegen=reserve_transparent=on:transparency_color=ffffff[p];[b][p]paletteuse" -f webp ${outputPath}`,
-          async (error) => {
-            if (error) {
-              console.log(error);
-              fs.unlinkSync(inputPath);
-              throw new Error("Error al crear el sticker.");
-            }
-
-            await sendSuccessReact();
-            await sendStickerFromFile(outputPath);
-            fs.unlinkSync(inputPath);
-            fs.unlinkSync(outputPath);
-          }
-        );
+      // Descargar el archivo multimedia
+      const buffer = await quoted.download();
+      if (!buffer) {
+        await sendReply("❌ No se pudo descargar el archivo. Intenta nuevamente.");
+        return;
       }
+
+      // Crear el sticker conservando la proporción original
+      const sticker = await createSticker(buffer, {
+        type: "full", // Conserva la proporción original
+        pack: "Operacion Marshall",
+        author: "Krampus OM Bot",
+        quality: 70, // Calidad del sticker
+      });
+
+      // Enviar el sticker al chat
+      await sendMessage(webMessage.key.remoteJid, {
+        sticker: sticker,
+        quoted: webMessage, // Responde al mensaje original del usuario
+      });
+
+      // Reaccionar con ✅ para indicar que el proceso se completó
+      await sendReact("🧩", webMessage.key);
     } catch (error) {
-      console.error("Error en el comando de sticker:", error);
-      await sendErrorReply(`❌ Error: ${error.message}`);
+      console.error("Error al crear el sticker:", error);
+      await sendReply("❌ Ocurrió un error al crear el sticker. Por favor, inténtalo de nuevo.");
     }
   },
 };
