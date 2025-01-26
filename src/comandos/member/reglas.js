@@ -11,7 +11,7 @@ module.exports = {
       const metadata = await socket.groupMetadata(remoteJid);
 
       // Verificar si el grupo tiene descripción
-      const description = metadata.desc || "Este grupo no tiene descripción.";
+      const description = metadata.desc || "Este grupo no tiene reglas...";
 
       // Enviar la descripción como respuesta
       await sendReply(`📄 *REGLAS DEL GRUPO:*\n> Krampus OM bot\n${description}`);
