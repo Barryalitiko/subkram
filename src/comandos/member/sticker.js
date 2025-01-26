@@ -21,6 +21,7 @@ module.exports = {
     quoted,
   }) => {
     try {
+      // Verificar si es una respuesta y si se adjunta una imagen o video
       if (!isReply || !quoted) {
         await sendReply("❌ Responde a una imagen o video con el comando para convertirlo en un sticker.");
         return;
@@ -31,6 +32,7 @@ module.exports = {
         return;
       }
 
+      // Enviar la reacción de espera
       await sendReact("🤔", webMessage.key);
 
       let buffer;
@@ -58,11 +60,13 @@ module.exports = {
       });
 
       // Enviar el sticker
-      await sendMessage(webMessage.key.remoteJid, {
-        sticker: sticker,
-        quoted: webMessage,
+      await sendMessage({
+        messageType: "sticker",
+        url: sticker,
+        caption: "Sticker creado exitosamente.",
       });
 
+      // Enviar la reacción de éxito
       await sendReact("🧩", webMessage.key);
     } catch (error) {
       console.error("Error al crear el sticker:", error);
