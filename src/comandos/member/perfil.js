@@ -23,10 +23,26 @@ module.exports = {
       // Obtener la foto de perfil del usuario
       const profilePicUrl = await socket.profilePictureUrl(userJid, "image");
 
+      // Obtener el nombre del usuario
+      const userName = (await socket.getContact(userJid))?.name || 'Sin nombre';
+      
+      // Obtener la descripción del usuario, si está disponible
+      const userDescription = (await socket.getContact(userJid))?.about || 'Sin descripción';
+      
+      // Obtener el número de la persona
+      const userNumber = userJid.split('@')[0];
+
       if (profilePicUrl) {
         await sendReply(`umm...\n> Krampus Bot👻`);
         await sendReact("📸");
-        await socket.sendMessage(remoteJid, { image: { url: profilePicUrl }, caption: `Foto de perfil cargada...` });
+        await socket.sendMessage(remoteJid, { 
+          image: { url: profilePicUrl }, 
+          caption: `Foto de perfil de @${userNumber}:
+          
+**Nombre:** ${userName}
+**Descripción:** ${userDescription}
+**Número:** ${userNumber}`,
+        });
       } else {
         await sendReply(`No se pudo obtener la foto de perfil de @${args[0] || userJid.split('@')[0]}.`);
       }
