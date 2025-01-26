@@ -1,6 +1,6 @@
 const { dynamicCommand } = require("../utils/dynamicCommand");
 const { loadCommonFunctions } = require("../utils/loadCommonFunctions");
-const { autoReactions } = require("../utils/autoReactions");
+const { getContentType } = require("@whiskeysockets/baileys");
 
 exports.onMessagesUpsert = async ({ socket, messages }) => {
   // Verificamos si hay mensajes
@@ -17,26 +17,20 @@ exports.onMessagesUpsert = async ({ socket, messages }) => {
       continue;
     }
 
+    // Identificamos el tipo de mensaje (texto, imagen, video, etc.)
+    const messageType = getContentType(webMessage.message);
+
+    if (messageType === "conversation" || messageType === "extendedTextMessage") {
+      console.log("📜 Mensaje de texto recibido:", webMessage.message?.conversation || webMessage.message?.extendedTextMessage?.text);
+    } else if (messageType === "imageMessage") {
+      console.log("🖼️ Mensaje de imagen recibido.");
+    } else if (messageType === "videoMessage") {
+      console.log("🎥 Mensaje de video recibido.");
+    } else {
+      console.log(`📦 Otro tipo de mensaje recibido: ${messageType}`);
+    }
+
     // Procesamos el comando dinámico usando las funciones comunes
     await dynamicCommand(commonFunctions);
-
-    // Extraemos el texto del mensaje
-    const messageText = webMessage.message?.conversation;
-
-    if (messageText) {
-      // Verificamos las palabras clave para las reacciones automáticas
-      for (const [keyword, emoji] of Object.entries(autoReactions)) {
-        if (messageText.toLowerCase().includes(keyword)) {
-          // Reaccionamos con el emoji correspondiente
-          await socket.sendMessage(webMessage.key.remoteJid, {
-            react: {
-              text: emoji,
-              key: webMessage.key,
-            },
-          });
-          break;
-        }
-      }
-    }
   }
 };
