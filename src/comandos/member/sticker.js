@@ -24,60 +24,107 @@ module.exports = {
     let inputPath;
     const outputPath = path.resolve(TEMP_DIR, "output.webp");
 
-    if (messageType === "imageMessage") {
-      // Descargar la imagen
+    // Si el mensaje tiene un mensaje citado (respuesta)
+    const quotedMessage = webMessage.message?.extendedTextMessage?.contextInfo?.quotedMessage;
+    const quotedMessageType = quotedMessage ? getContentType(quotedMessage) : null;
+
+    // Si es una imagen o video, lo procesamos
+    if (messageType === "imageMessage" || messageType === "videoMessage") {
       const stream = await downloadMediaMessage(webMessage, "stream");
-      inputPath = path.join(TEMP_DIR, "input.jpg");
+      inputPath = path.join(TEMP_DIR, messageType === "imageMessage" ? "input.jpg" : "input.mp4");
+
       const writeStream = fs.createWriteStream(inputPath);
       stream.pipe(writeStream);
 
       writeStream.on('finish', async () => {
-        // Convertir a sticker
-        exec(`ffmpeg -i ${inputPath} -vf scale=512:512 ${outputPath}`, async (error) => {
-          if (error) {
-            console.log(error);
+        if (messageType === "imageMessage") {
+          // Convertir a sticker
+          exec(`ffmpeg -i ${inputPath} -vf scale=512:512 ${outputPath}`, async (error) => {
+            if (error) {
+              console.log(error);
+              fs.unlinkSync(inputPath);
+              throw new Error(error);
+            }
+
+            await sendSuccessReact();
+            await sendStickerFromFile(outputPath);
+
             fs.unlinkSync(inputPath);
-            throw new Error(error);
+            fs.unlinkSync(outputPath);
+          });
+        } else if (messageType === "videoMessage") {
+          const sizeInSeconds = 10;
+          const seconds = webMessage.message?.videoMessage?.seconds || 0;
+
+          if (seconds > sizeInSeconds) {
+            fs.unlinkSync(inputPath);
+            await sendErrorReply(`👻 Krampus 👻 Este video tiene más de ${sizeInSeconds} segundos. ¡Envía un video más corto!`);
+            return;
           }
 
-          await sendSuccessReact();
-          await sendStickerFromFile(outputPath);
+          exec(`ffmpeg -i ${inputPath} -y -vcodec libwebp -fs 0.99M -filter_complex "[0:v] scale=512:512,fps=12,pad=512:512:-1:-1:color=white@0.0,split[a][b];[a]palettegen=reserve_transparent=on:transparency_color=ffffff[p];[b][p]paletteuse" -f webp ${outputPath}`, async (error) => {
+            if (error) {
+              console.log(error);
+              fs.unlinkSync(inputPath);
+              throw new Error(error);
+            }
 
-          fs.unlinkSync(inputPath);
-          fs.unlinkSync(outputPath);
-        });
-      });
+            await sendSuccessReact();
+            await sendStickerFromFile(outputPath);
 
-    } else if (messageType === "videoMessage") {
-      // Descargar el video
-      const stream = await downloadMediaMessage(webMessage, "stream");
-      inputPath = path.join(TEMP_DIR, "input.mp4");
-      const writeStream = fs.createWriteStream(inputPath);
-      stream.pipe(writeStream);
-
-      writeStream.on('finish', async () => {
-        const sizeInSeconds = 10;
-        const seconds = webMessage.message?.videoMessage?.seconds || 0;
-
-        if (seconds > sizeInSeconds) {
-          fs.unlinkSync(inputPath);
-          await sendErrorReply(`👻 Krampus 👻 Este video tiene más de ${sizeInSeconds} segundos. ¡Envía un video más corto!`);
-          return;
+            fs.unlinkSync(inputPath);
+            fs.unlinkSync(outputPath);
+          });
         }
+      });
+    } else if (quotedMessage && (quotedMessageType === "imageMessage" || quotedMessageType === "videoMessage")) {
+      // Si se está respondiendo a una imagen o video, proceder con la conversión a sticker
+      const quotedStream = await downloadMediaMessage(quotedMessage, "stream");
+      inputPath = path.join(TEMP_DIR, quotedMessageType === "imageMessage" ? "input.jpg" : "input.mp4");
 
-        exec(`ffmpeg -i ${inputPath} -y -vcodec libwebp -fs 0.99M -filter_complex "[0:v] scale=512:512,fps=12,pad=512:512:-1:-1:color=white@0.0,split[a][b];[a]palettegen=reserve_transparent=on:transparency_color=ffffff[p];[b][p]paletteuse" -f webp ${outputPath}`, async (error) => {
-          if (error) {
-            console.log(error);
+      const writeStream = fs.createWriteStream(inputPath);
+      quotedStream.pipe(writeStream);
+
+      writeStream.on('finish', async () => {
+        if (quotedMessageType === "imageMessage") {
+          // Convertir a sticker
+          exec(`ffmpeg -i ${inputPath} -vf scale=512:512 ${outputPath}`, async (error) => {
+            if (error) {
+              console.log(error);
+              fs.unlinkSync(inputPath);
+              throw new Error(error);
+            }
+
+            await sendSuccessReact();
+            await sendStickerFromFile(outputPath);
+
             fs.unlinkSync(inputPath);
-            throw new Error(error);
+            fs.unlinkSync(outputPath);
+          });
+        } else if (quotedMessageType === "videoMessage") {
+          const sizeInSeconds = 10;
+          const seconds = quotedMessage.message?.videoMessage?.seconds || 0;
+
+          if (seconds > sizeInSeconds) {
+            fs.unlinkSync(inputPath);
+            await sendErrorReply(`👻 Krampus 👻 Este video tiene más de ${sizeInSeconds} segundos. ¡Envía un video más corto!`);
+            return;
           }
 
-          await sendSuccessReact();
-          await sendStickerFromFile(outputPath);
+          exec(`ffmpeg -i ${inputPath} -y -vcodec libwebp -fs 0.99M -filter_complex "[0:v] scale=512:512,fps=12,pad=512:512:-1:-1:color=white@0.0,split[a][b];[a]palettegen=reserve_transparent=on:transparency_color=ffffff[p];[b][p]paletteuse" -f webp ${outputPath}`, async (error) => {
+            if (error) {
+              console.log(error);
+              fs.unlinkSync(inputPath);
+              throw new Error(error);
+            }
 
-          fs.unlinkSync(inputPath);
-          fs.unlinkSync(outputPath);
-        });
+            await sendSuccessReact();
+            await sendStickerFromFile(outputPath);
+
+            fs.unlinkSync(inputPath);
+            fs.unlinkSync(outputPath);
+          });
+        }
       });
     } else {
       throw new InvalidParameterError("👻 Krampus 👻 Debes marcar imagen/gif/vídeo o responder a una imagen/gif/vídeo");
