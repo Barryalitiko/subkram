@@ -26,9 +26,16 @@ module.exports = {
         return;
       }
 
+      // Depuración: Verificar el contenido de webMessage
+      console.log('Contenido del mensaje:', webMessage);
+
       // Verificar si el mensaje es una imagen o un video usando baileysIs
       const isImage = baileysIs(webMessage, "image");
       const isVideo = baileysIs(webMessage, "video");
+
+      // Depuración: Verificar si el mensaje es imagen o video
+      console.log(`Es imagen: ${isImage}`);
+      console.log(`Es video: ${isVideo}`);
 
       if (!isImage && !isVideo) {
         await sendReply("❌ El mensaje respondido no contiene una imagen o video. Intenta nuevamente.");
