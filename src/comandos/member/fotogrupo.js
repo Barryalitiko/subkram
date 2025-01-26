@@ -3,7 +3,7 @@ const { PREFIX } = require("../../krampus");
 module.exports = {
   name: "groupProfilePic",
   description: "Envía la foto de perfil del grupo.",
-  commands: ["grupofoto", "gpfp"],
+  commands: ["grupoperfil", "gpfp"],
   usage: `${PREFIX}grupofoto`,
   handle: async ({ socket, remoteJid, sendReply }) => {
     try {
