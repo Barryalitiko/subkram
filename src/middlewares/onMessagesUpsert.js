@@ -17,8 +17,13 @@ exports.onMessagesUpsert = async ({ socket, messages }) => {
       continue;
     }
 
+    // Depuración: Revisamos la estructura completa del mensaje
+    console.log("Mensaje recibido:", JSON.stringify(webMessage, null, 2));
+
     // Identificamos el tipo de mensaje (texto, imagen, video, etc.)
     const messageType = getContentType(webMessage.message);
+
+    console.log("Tipo de mensaje detectado:", messageType);
 
     if (messageType === "conversation" || messageType === "extendedTextMessage") {
       console.log("📜 Mensaje de texto recibido:", webMessage.message?.conversation || webMessage.message?.extendedTextMessage?.text);
