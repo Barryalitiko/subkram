@@ -16,7 +16,7 @@ const readStatus = () => {
 module.exports = {
   name: "kiss",
   description: "Enviar un beso a alguien. Debes etiquetar o responder a un usuario.",
-  commands: ["kiss"],
+  commands: ["kiss", "beso"],
   usage: `${PREFIX}kiss @usuario o responde a un mensaje`,
   handle: async ({ socket, remoteJid, sendReply, sendReact, args, isReply, replyJid, userJid }) => {
     try {
