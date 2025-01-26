@@ -1,5 +1,5 @@
 const { BOT_EMOJI } = require("../krampus");
-const { extractDataFromMessage, download } = require(".");
+const { extractDataFromMessage, baileysIs, download } = require(".");
 const { waitMessage } = require("./messages");
 const fs = require("fs");
 
@@ -20,23 +20,9 @@ exports.loadCommonFunctions = ({ socket, webMessage }) => {
     return null;
   }
 
-  // Función isImage para detectar imágenes
-  const isImage = (message) => {
-  const mimeType = message?.message?.imageMessage?.mimetype;
-  return mimeType?.startsWith("image/");
-  };
-
-  // Función isVideo para detectar videos
-  const isVideo = (message) => {
-    const mimeType = message?.message?.imageMessage?.mimetype || message?.message?.videoMessage?.mimetype;
-    return mimeType?.startsWith("video/");
-  };
-
-  // Función isSticker para detectar stickers
-  const isSticker = (message) => {
-    const mimeType = message?.message?.stickerMessage?.mimetype;
-    return mimeType === "image/webp"; // Los stickers en WhatsApp generalmente tienen el MIME tipo "image/webp"
-  };
+  const isImage = baileysIs(webMessage, "image");
+  const isVideo = baileysIs(webMessage, "video");
+  const isSticker = baileysIs(webMessage, "sticker");
 
   const downloadImage = async (webMessage, fileName) => {
     return await download(webMessage, fileName, "image", "png");
@@ -121,32 +107,32 @@ exports.loadCommonFunctions = ({ socket, webMessage }) => {
   };
 
   const sendAudioFromURL = async (url) => {
-    try {
-      console.log(`Enviando audio desde URL: ${url}`);
-      return await socket.sendMessage(
-        remoteJid,
-        {
-          audio: { url },
-          mimetype: "audio/mpeg",
-        },
-        { quoted: webMessage }
-      );
-    } catch (error) {
-      console.error("Error al enviar el audio:", error);
-      throw new Error("No se pudo enviar el audio.");
-    }
-  };
-
-  const sendVideoFromURL = async (url) => {
-    console.log(`Enviando video desde URL: ${url}`); // Registro del URL
+  try {
+    console.log(`Enviando audio desde URL: ${url}`);
     return await socket.sendMessage(
       remoteJid,
       {
-        video: { url },
+        audio: { url },
+        mimetype: "audio/mpeg",
       },
       { quoted: webMessage }
     );
-  };
+  } catch (error) {
+    console.error("Error al enviar el audio:", error);
+    throw new Error("No se pudo enviar el audio.");
+  }
+};
+
+    const sendVideoFromURL = async (url) => {
+  console.log(`Enviando video desde URL: ${url}`); // Registro del URL
+  return await socket.sendMessage(
+    remoteJid,
+    {
+      video: { url },
+    },
+    { quoted: webMessage }
+  );
+};
 
   const sendStickerFromFile = async (file) => {
     return await socket.sendMessage(
@@ -167,37 +153,37 @@ exports.loadCommonFunctions = ({ socket, webMessage }) => {
       { url, quoted: webMessage }
     );
   };
-
+  
   const sendMessage = async ({ messageType, caption = '', mimetype = '', url = '' }) => {
-    try {
-      let messageContent = {};
-      
-      if (messageType === 'audio') {
-        messageContent = { audio: { url }, mimetype };
-      } else if (messageType === 'video') {
-        messageContent = { video: { url }, caption, mimetype };
-      } else if (messageType === 'image') {
-        messageContent = { image: { url }, caption, mimetype };
-      }
-
-      await socket.sendMessage(remoteJid, messageContent, { quoted: webMessage });
-      console.log(`${messageType} enviado con éxito.`);
-    } catch (error) {
-      console.error(`Error al enviar el mensaje de tipo ${messageType}:`, error);
+  try {
+    let messageContent = {};
+    
+    if (messageType === 'audio') {
+      messageContent = { audio: { url }, mimetype };
+    } else if (messageType === 'video') {
+      messageContent = { video: { url }, caption, mimetype };
+    } else if (messageType === 'image') {
+      messageContent = { image: { url }, caption, mimetype };
     }
-  };
 
-  const sendVideoFromFile = async (filePath, caption = '') => {
-    console.log(`Enviando video desde archivo: ${filePath}`); // Registro de la ruta local
-    return await socket.sendMessage(
-      remoteJid,
-      {
-        video: fs.readFileSync(filePath), // Le pasas el archivo leído desde el sistema local
-        caption: caption, // Añadir un pie de foto, si lo deseas
-      },
-      { quoted: webMessage }
-    );
-  };
+    await socket.sendMessage(remoteJid, messageContent, { quoted: webMessage });
+    console.log(`${messageType} enviado con éxito.`);
+  } catch (error) {
+    console.error(`Error al enviar el mensaje de tipo ${messageType}:`, error);
+  }
+};
+
+const sendVideoFromFile = async (filePath, caption = '') => {
+  console.log(`Enviando video desde archivo: ${filePath}`); // Registro de la ruta local
+  return await socket.sendMessage(
+    remoteJid,
+    {
+      video: fs.readFileSync(filePath), // Le pasas el archivo leído desde el sistema local
+      caption: caption, // Añadir un pie de foto, si lo deseas
+    },
+    { quoted: webMessage }
+  );
+};
   
   return {
     args,
@@ -210,7 +196,6 @@ exports.loadCommonFunctions = ({ socket, webMessage }) => {
     isReply,
     isSticker,
     isVideo,
-    isImage,
     prefix,
     remoteJid,
     replyJid,
