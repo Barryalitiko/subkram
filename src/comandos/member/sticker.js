@@ -1,6 +1,9 @@
 const { PREFIX } = require("../../krampus");
 const { Sticker, createSticker } = require("wa-sticker-formatter");
 const fs = require("fs");
+const path = require("path");
+
+const TEMP_FOLDER = path.join(__dirname, "../../temp");
 
 module.exports = {
   name: "sticker",
@@ -9,54 +12,44 @@ module.exports = {
   usage: `${PREFIX}sticker`,
 
   handle: async ({
-    isReply,
-    quoted,
+    isImage,
+    isVideo,
     downloadImage,
     downloadVideo,
+    webMessage,
     sendReply,
     sendReact,
     sendMessage,
-    webMessage,
-    baileysIs,
+    isReply,
+    quoted,
   }) => {
     try {
-      // Verificar si handle se ejecuta correctamente
-      console.log('Comando "sticker" ejecutado.');
-
-      // Verificar si el mensaje es una respuesta y si se adjunta una imagen o video
       if (!isReply || !quoted) {
         await sendReply("❌ Responde a una imagen o video con el comando para convertirlo en un sticker.");
         return;
       }
 
-      // Depuración: Verificar el contenido de webMessage
-      console.log('Contenido del mensaje:', webMessage);
-
-      // Verificar si el mensaje es una imagen o un video usando baileysIs
-      const isImage = baileysIs(webMessage, "image");
-      const isVideo = baileysIs(webMessage, "video");
-
-      // Depuración: Verificar si el mensaje es imagen o video
-      console.log(`Es imagen: ${isImage}`);
-      console.log(`Es video: ${isVideo}`);
-
       if (!isImage && !isVideo) {
-        await sendReply("❌ El mensaje respondido no contiene una imagen o video. Intenta nuevamente.");
+        await sendReply("❌ Responde a una imagen o video con el comando para convertirlo en un sticker.");
         return;
       }
 
-      // Enviar la reacción de espera
       await sendReact("🤔", webMessage.key);
 
       let buffer;
+      let filePath;
 
       // Si es una imagen
       if (isImage) {
         buffer = await downloadImage(webMessage, "input");
+        filePath = path.join(TEMP_FOLDER, "image.png"); // Guardar en carpeta temporal
+        fs.writeFileSync(filePath, buffer); // Escribir el archivo en la carpeta temporal
       } 
       // Si es un video
       else if (isVideo) {
         buffer = await downloadVideo(webMessage, "input");
+        filePath = path.join(TEMP_FOLDER, "video.mp4"); // Guardar en carpeta temporal
+        fs.writeFileSync(filePath, buffer); // Escribir el archivo en la carpeta temporal
       }
 
       if (!buffer) {
@@ -65,7 +58,7 @@ module.exports = {
       }
 
       // Crear el sticker
-      const sticker = await createSticker(buffer, {
+      const sticker = await createSticker(filePath, {
         type: "full",
         pack: "Operacion Marshall",
         author: "Krampus OM Bot",
@@ -73,14 +66,15 @@ module.exports = {
       });
 
       // Enviar el sticker
-      await sendMessage({
-        messageType: "sticker",
-        url: sticker,
-        caption: "Sticker creado exitosamente.",
+      await sendMessage(webMessage.key.remoteJid, {
+        sticker: sticker,
+        quoted: webMessage,
       });
 
-      // Enviar la reacción de éxito
       await sendReact("🧩", webMessage.key);
+
+      // Eliminar el archivo temporal después de enviarlo
+      fs.unlinkSync(filePath);
     } catch (error) {
       console.error("Error al crear el sticker:", error);
       await sendReply("❌ Ocurrió un error al crear el sticker. Por favor, inténtalo de nuevo.");
