@@ -16,6 +16,8 @@ module.exports = {
     args,
     isReply,
     quoted,
+    isImage,
+    isVideo
   }) => {
     try {
       if (!isReply || !quoted) {
@@ -23,7 +25,8 @@ module.exports = {
         return;
       }
 
-      if (!quoted.msg.imageMessage && !quoted.msg.videoMessage) {
+      // Detectamos si el mensaje es una imagen o un video usando las funciones isImage e isVideo
+      if (!isImage(quoted) && !isVideo(quoted)) {
         await sendReply("❌ Responde a una imagen o video con el comando para convertirlo en un sticker.");
         return;
       }
