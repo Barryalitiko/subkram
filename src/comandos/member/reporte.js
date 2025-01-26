@@ -38,7 +38,7 @@ module.exports = {
 
       // Crear una lista con los administradores etiquetados
       const mentions = admins.map((admin) => admin.id);
-      const message = "👮 Lista de Administradores:\n" + mentions.map((id) => `@${id.split("@")[0]}`).join("\n");
+      const message = "REPORTE ENVIADO A LOS ADMINISTRADORES!\n> Krampus OM bot\n" + mentions.map((id) => `@${id.split("@")[0]}`).join("\n");
 
       // Enviar el mensaje con menciones
       await socket.sendMessage(remoteJid, { text: message, mentions });
