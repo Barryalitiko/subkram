@@ -13,7 +13,6 @@ module.exports = {
     sendReply,
     sendReact,
     sendMessage,
-    args,
     isReply,
     quoted,
     isImage,
@@ -27,39 +26,60 @@ module.exports = {
         return;
       }
 
-      // Verificar si es una imagen o un video
-      const isImageMessage = isImage(quoted);
-      const isVideoMessage = isVideo(quoted);
+      // Verificar si el mensaje es una imagen o un video usando las funciones isImage y isVideo
+      const message = quoted.msg;
 
-      if (!isImageMessage && !isVideoMessage) {
-        await sendReply("❌ Responde a una imagen o video con el comando para convertirlo en un sticker.");
-        return;
+      if (isImage(message)) {
+        await sendReact("🤔", webMessage.key);
+        const buffer = await downloadImage(quoted);
+        if (!buffer) {
+          await sendReply("❌ No se pudo descargar la imagen. Intenta nuevamente.");
+          return;
+        }
+
+        // Crear el sticker con la imagen
+        const sticker = await createSticker(buffer, {
+          type: "full",
+          pack: "Operacion Marshall",
+          author: "Krampus OM Bot",
+          quality: 70,
+        });
+
+        // Enviar el sticker
+        await sendMessage(webMessage.key.remoteJid, {
+          sticker: sticker,
+          quoted: webMessage,
+        });
+
+        await sendReact("🧩", webMessage.key);
+
+      } else if (isVideo(message)) {
+        await sendReact("🤔", webMessage.key);
+        const buffer = await downloadVideo(quoted);
+        if (!buffer) {
+          await sendReply("❌ No se pudo descargar el video. Intenta nuevamente.");
+          return;
+        }
+
+        // Crear el sticker con el video
+        const sticker = await createSticker(buffer, {
+          type: "full",
+          pack: "Operacion Marshall",
+          author: "Krampus OM Bot",
+          quality: 70,
+        });
+
+        // Enviar el sticker
+        await sendMessage(webMessage.key.remoteJid, {
+          sticker: sticker,
+          quoted: webMessage,
+        });
+
+        await sendReact("🧩", webMessage.key);
+
+      } else {
+        await sendReply("❌ Este mensaje no contiene una imagen ni un video.");
       }
-
-      await sendReact("🤔", webMessage.key);
-
-      // Descargar el archivo dependiendo de si es imagen o video
-      const buffer = isImageMessage ? await downloadImage(quoted) : await downloadVideo(quoted);
-      if (!buffer) {
-        await sendReply("❌ No se pudo descargar el archivo. Intenta nuevamente.");
-        return;
-      }
-
-      // Crear el sticker con la imagen o video
-      const sticker = await createSticker(buffer, {
-        type: isVideoMessage ? "full" : "image", // Ajuste para diferenciar video e imagen
-        pack: "Operacion Marshall",
-        author: "Krampus OM Bot",
-        quality: 70,
-      });
-
-      // Enviar el sticker
-      await sendMessage(webMessage.key.remoteJid, {
-        sticker: sticker,
-        quoted: webMessage,
-      });
-
-      await sendReact("🧩", webMessage.key);
     } catch (error) {
       console.error("Error al crear el sticker:", error);
       await sendReply("❌ Ocurrió un error al crear el sticker. Por favor, inténtalo de nuevo.");
