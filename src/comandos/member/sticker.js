@@ -9,26 +9,28 @@ module.exports = {
   usage: `${PREFIX}sticker`,
 
   handle: async ({
-    isImage,
-    isVideo,
+    isReply,
+    quoted,
     downloadImage,
     downloadVideo,
-    webMessage,
     sendReply,
     sendReact,
     sendMessage,
-    isReply,
-    quoted,
+    webMessage,
   }) => {
     try {
-      // Verificar si es una respuesta y si se adjunta una imagen o video
+      // Verificar si el mensaje es una respuesta y si se adjunta una imagen o video
       if (!isReply || !quoted) {
         await sendReply("❌ Responde a una imagen o video con el comando para convertirlo en un sticker.");
         return;
       }
 
+      // Verificar si el mensaje contiene una imagen o un video
+      const isImage = webMessage.mtype === "imageMessage"; // Verifica si el mensaje es una imagen
+      const isVideo = webMessage.mtype === "videoMessage"; // Verifica si el mensaje es un video
+
       if (!isImage && !isVideo) {
-        await sendReply("❌ Responde a una imagen o video con el comando para convertirlo en un sticker.");
+        await sendReply("❌ El mensaje respondido no contiene una imagen o video. Intenta nuevamente.");
         return;
       }
 
