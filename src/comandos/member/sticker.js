@@ -18,6 +18,10 @@ module.exports = {
     sendSuccessReact,
     sendStickerFromFile,
   }) => {
+    if (!webMessage || !webMessage.message) {
+      return sendErrorReply("👻 Krampus 👻 No se recibió un mensaje válido.");
+    }
+
     const messageType = getContentType(webMessage); // Detecta el tipo de mensaje (texto, imagen, video...)
 
     let buffer;
@@ -127,7 +131,7 @@ module.exports = {
         }
       });
     } else {
-      throw new InvalidParameterError("👻 Krampus 👻 Debes marcar imagen/gif/vídeo o responder a una imagen/gif/vídeo");
+      return sendErrorReply("👻 Krampus 👻 Debes marcar imagen/gif/vídeo o responder a una imagen/gif/vídeo.");
     }
   },
 };
