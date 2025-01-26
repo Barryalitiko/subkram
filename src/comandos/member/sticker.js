@@ -17,7 +17,9 @@ module.exports = {
     isReply,
     quoted,
     isImage,
-    isVideo
+    isVideo,
+    downloadImage,
+    downloadVideo,
   }) => {
     try {
       if (!isReply || !quoted) {
@@ -25,27 +27,33 @@ module.exports = {
         return;
       }
 
-      // Detectamos si el mensaje es una imagen o un video usando las funciones isImage e isVideo
-      if (!isImage(quoted) && !isVideo(quoted)) {
+      // Verificar si es una imagen o un video
+      const isImageMessage = isImage(quoted);
+      const isVideoMessage = isVideo(quoted);
+
+      if (!isImageMessage && !isVideoMessage) {
         await sendReply("❌ Responde a una imagen o video con el comando para convertirlo en un sticker.");
         return;
       }
 
       await sendReact("🤔", webMessage.key);
 
-      const buffer = await quoted.download();
+      // Descargar el archivo dependiendo de si es imagen o video
+      const buffer = isImageMessage ? await downloadImage(quoted) : await downloadVideo(quoted);
       if (!buffer) {
         await sendReply("❌ No se pudo descargar el archivo. Intenta nuevamente.");
         return;
       }
 
+      // Crear el sticker con la imagen o video
       const sticker = await createSticker(buffer, {
-        type: "full",
+        type: isVideoMessage ? "full" : "image", // Ajuste para diferenciar video e imagen
         pack: "Operacion Marshall",
         author: "Krampus OM Bot",
         quality: 70,
       });
 
+      // Enviar el sticker
       await sendMessage(webMessage.key.remoteJid, {
         sticker: sticker,
         quoted: webMessage,
