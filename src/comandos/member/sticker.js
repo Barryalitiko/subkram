@@ -17,6 +17,7 @@ module.exports = {
     sendReact,
     sendMessage,
     webMessage,
+    baileysIs,
   }) => {
     try {
       // Verificar si el mensaje es una respuesta y si se adjunta una imagen o video
@@ -25,9 +26,9 @@ module.exports = {
         return;
       }
 
-      // Verificar si el mensaje contiene una imagen o un video
-      const isImage = webMessage.mtype === "imageMessage"; // Verifica si el mensaje es una imagen
-      const isVideo = webMessage.mtype === "videoMessage"; // Verifica si el mensaje es un video
+      // Verificar si el mensaje es una imagen o un video usando baileysIs
+      const isImage = baileysIs(webMessage, "image");
+      const isVideo = baileysIs(webMessage, "video");
 
       if (!isImage && !isVideo) {
         await sendReply("❌ El mensaje respondido no contiene una imagen o video. Intenta nuevamente.");
