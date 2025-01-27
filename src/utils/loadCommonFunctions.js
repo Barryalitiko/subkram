@@ -3,10 +3,9 @@ const { extractDataFromMessage, baileysIs, download } = require(".");
 const { waitMessage } = require("./messages");
 const fs = require("fs");
 
-exports.loadCommonFunctions = ({ socket, webMessage }) => {
+exports.loadCommonFunctions = ({ socket, webMessage, commandName }) => {
   const {
     args,
-    commandName,
     fullArgs,
     fullMessage,
     isReply,
@@ -53,27 +52,33 @@ exports.loadCommonFunctions = ({ socket, webMessage }) => {
     await socket.sendMessage(remoteJid, messageContent, { quoted: webMessage });
   };
 
-  // Función para manejar y enviar los mensajes según el tipo de contenido
+  // Función para manejar los mensajes de medios
   const handleMediaMessage = async () => {
-    if (isImage) {
-      console.log("Imagen detectada. Enviando imagen...");
-      const imageUrl = await downloadImage(webMessage, 'image');  // Cambia el nombre del archivo si es necesario
-      await sendMediaMessage(imageUrl, 'image');
-    } else if (isVideo) {
-      console.log("Video detectado. Enviando video...");
-      const videoUrl = await downloadVideo(webMessage, 'video');  // Cambia el nombre del archivo si es necesario
-      await sendMediaMessage(videoUrl, 'video');
-    } else if (isSticker) {
-      console.log("Sticker detectado. Enviando sticker...");
-      const stickerUrl = await downloadSticker(webMessage, 'sticker');  // Cambia el nombre del archivo si es necesario
-      await sendMediaMessage(stickerUrl, 'sticker');
+    if (commandName === "sticker") {
+      if (isImage) {
+        console.log("Imagen detectada. Enviando imagen como sticker...");
+        const imageUrl = await downloadImage(webMessage, 'image');
+        await sendMediaMessage(imageUrl, 'image');
+      } else if (isVideo) {
+        console.log("Video detectado. Enviando video como sticker...");
+        const videoUrl = await downloadVideo(webMessage, 'video');
+        await sendMediaMessage(videoUrl, 'video');
+      } else if (isSticker) {
+        console.log("Sticker detectado. Enviando sticker...");
+        const stickerUrl = await downloadSticker(webMessage, 'sticker');
+        await sendMediaMessage(stickerUrl, 'sticker');
+      } else {
+        console.log("No se detectó imagen, video ni sticker.");
+      }
     } else {
-      console.log("No se detectó imagen, video ni sticker.");
+      console.log("El comando no requiere procesamiento de medios.");
     }
   };
 
-  // Llamamos a la función que maneja los medios recibidos
-  handleMediaMessage();
+  // Llamamos a la función de manejo de medios solo si es necesario
+  if (commandName === "sticker") {
+    handleMediaMessage();
+  }
 
   // Funciones para enviar textos y respuestas
   const sendText = async (text, mentions) => {
@@ -98,7 +103,7 @@ exports.loadCommonFunctions = ({ socket, webMessage }) => {
     );
   };
 
-  // Función para enviar reacciones
+  // Funciones para reacciones comunes
   const sendReact = async (emoji) => {
     return await socket.sendMessage(remoteJid, {
       react: {
@@ -108,7 +113,6 @@ exports.loadCommonFunctions = ({ socket, webMessage }) => {
     });
   };
 
-  // Funciones para reacciones comunes
   const sendSuccessReact = async () => {
     return await sendReact("✅");
   };
@@ -167,7 +171,7 @@ exports.loadCommonFunctions = ({ socket, webMessage }) => {
   };
 
   const sendVideoFromURL = async (url) => {
-    console.log(`Enviando video desde URL: ${url}`); // Registro del URL
+    console.log(`Enviando video desde URL: ${url}`);
     return await socket.sendMessage(
       remoteJid,
       {
@@ -217,12 +221,12 @@ exports.loadCommonFunctions = ({ socket, webMessage }) => {
   };
 
   const sendVideoFromFile = async (filePath, caption = '') => {
-    console.log(`Enviando video desde archivo: ${filePath}`); // Registro de la ruta local
+    console.log(`Enviando video desde archivo: ${filePath}`);
     return await socket.sendMessage(
       remoteJid,
       {
-        video: fs.readFileSync(filePath), // Le pasas el archivo leído desde el sistema local
-        caption: caption, // Añadir un pie de foto, si lo deseas
+        video: fs.readFileSync(filePath),
+        caption: caption,
       },
       { quoted: webMessage }
     );
@@ -230,10 +234,6 @@ exports.loadCommonFunctions = ({ socket, webMessage }) => {
 
   return {
     args,
-    commandName,
-    downloadImage,
-    downloadSticker,
-    downloadVideo,
     fullArgs,
     fullMessage,
     isReply,
@@ -249,5 +249,20 @@ exports.loadCommonFunctions = ({ socket, webMessage }) => {
     userJid,
     webMessage,
     sendReact,
+    sendSuccessReact,
+    sendMusicReact,
+    sendWarningReply,
+    sendWarningReact,
+    sendWaitReact,
+    sendErrorReact,
+    sendSuccessReply,
+    sendWaitReply,
+    sendErrorReply,
+    sendAudioFromURL,
+    sendVideoFromURL,
+    sendStickerFromFile,
+    sendStickerFromURL,
+    sendMessage,
+    sendVideoFromFile,
   };
 };
