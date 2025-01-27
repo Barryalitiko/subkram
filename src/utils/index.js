@@ -58,10 +58,12 @@ exports.extractDataFromMessage = (webMessage) => {
     ""
   );
 
-  const [command, ...args] = fullMessage.split(" ");
-  const prefix = command.charAt(0);
+  const [command, ...args] = fullMessage ? fullMessage.split(" ") : [];
+  const prefix = command ? command.charAt(0) : null;
 
-  const commandWithoutPrefix = command.replace(new RegExp(`^[${PREFIX}]+`), "");
+  const commandWithoutPrefix = command
+    ? command.replace(new RegExp(`^[${PREFIX}]+`), "")
+    : "";
 
   return {
     args: this.splitByCharacters(args.join(" "), ["\\", "|", "/"]),
@@ -147,9 +149,7 @@ exports.findCommandImport = (commandName) => {
     }
 
     const targetCommand = commands.find((cmd) =>
-      cmd.commands
-        .map((command) => this.formatCommand(command))
-        .includes(commandName)
+      cmd.commands.map((cmd) => this.formatCommand(cmd)).includes(commandName)
     );
 
     if (targetCommand) {
