@@ -107,7 +107,7 @@ exports.extractDataFromMessage = (webMessage) => {
     replyJid,
     userJid,
   };
-};
+}
 
 exports.splitByCharacters = (str, characters) => {
   characters = characters.map((char) => (char === "\\" ? "\\\\" : char));
