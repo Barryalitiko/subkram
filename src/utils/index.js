@@ -30,7 +30,7 @@ exports.extractDataFromMessage = (webMessage) => {
     imageTextMessage ||
     videoTextMessage;
 
-  if (!fullMessage && !imageMessage && !videoMessage) { 
+  if (!fullMessage && !imageMessage && !videoMessage) {
     // Si no hay texto, imagen o video, retorna vacío
     return {
       args: [],
@@ -76,38 +76,7 @@ exports.extractDataFromMessage = (webMessage) => {
     hasImage: !!imageMessage, // Indica si el mensaje contiene una imagen
     hasVideo: !!videoMessage, // Indica si el mensaje contiene un video
   };
-  }
-
-  const isReply =
-    !!extendedTextMessage && !!extendedTextMessage.contextInfo?.quotedMessage;
-
-  const replyJid =
-    !!extendedTextMessage && !!extendedTextMessage.contextInfo?.participant
-      ? extendedTextMessage.contextInfo.participant
-      : null;
-
-  const userJid = webMessage?.key?.participant?.replace(
-    /:[0-9][0-9]|:[0-9]/g,
-    ""
-  );
-
-  const [command, ...args] = fullMessage.split(" ");
-  const prefix = command.charAt(0);
-
-  const commandWithoutPrefix = command.replace(new RegExp(`^[${PREFIX}]+`), "");
-
-  return {
-    args: this.splitByCharacters(args.join(" "), ["\\", "|", "/"]),
-    commandName: this.formatCommand(commandWithoutPrefix),
-    fullArgs: args.join(" "),
-    fullMessage,
-    isReply,
-    prefix,
-    remoteJid: webMessage?.key?.remoteJid,
-    replyJid,
-    userJid,
-  };
-}
+};
 
 exports.splitByCharacters = (str, characters) => {
   characters = characters.map((char) => (char === "\\" ? "\\\\" : char));
