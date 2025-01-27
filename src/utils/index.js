@@ -30,7 +30,7 @@ exports.extractDataFromMessage = (webMessage) => {
     imageTextMessage ||
     videoTextMessage;
 
-  if (!fullMessage && !imageMessage && !videoMessage) {
+  if (!fullMessage && !imageMessage && !videoMessage) { 
     // Si no hay texto, imagen o video, retorna vacío
     return {
       args: [],
@@ -58,18 +58,14 @@ exports.extractDataFromMessage = (webMessage) => {
     ""
   );
 
-  const [command, ...args] = fullMessage ? fullMessage.split(" ") : [];
-  const prefix = command?.charAt(0) || null;
+  const [command, ...args] = fullMessage.split(" ");
+  const prefix = command.charAt(0);
 
-  const commandWithoutPrefix = command
-    ? command.replace(new RegExp(`^[${PREFIX}]+`), "")
-    : null;
+  const commandWithoutPrefix = command.replace(new RegExp(`^[${PREFIX}]+`), "");
 
   return {
     args: this.splitByCharacters(args.join(" "), ["\\", "|", "/"]),
-    commandName: commandWithoutPrefix
-      ? this.formatCommand(commandWithoutPrefix)
-      : null,
+    commandName: this.formatCommand(commandWithoutPrefix),
     fullArgs: args.join(" "),
     fullMessage,
     isReply,
@@ -77,8 +73,6 @@ exports.extractDataFromMessage = (webMessage) => {
     remoteJid: webMessage?.key?.remoteJid,
     replyJid,
     userJid,
-    hasImage: !!imageMessage, // Indica si el mensaje contiene una imagen
-    hasVideo: !!videoMessage, // Indica si el mensaje contiene un video
   };
 };
 
@@ -93,20 +87,18 @@ exports.splitByCharacters = (str, characters) => {
 };
 
 exports.formatCommand = (text) => {
-  if (!text || typeof text !== "string") return ""; // Validación para text
-
   return this.onlyLettersAndNumbers(
     this.removeAccentsAndSpecialCharacters(text.toLocaleLowerCase().trim())
   );
 };
 
 exports.onlyLettersAndNumbers = (text) => {
-  if (!text || typeof text !== "string") return ""; // Validación para text
   return text.replace(/[^a-zA-Z0-9]/g, "");
 };
 
 exports.removeAccentsAndSpecialCharacters = (text) => {
-  if (!text || typeof text !== "string") return ""; // Validación para text
+  if (!text) return "";
+
   return text.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 };
 
@@ -117,9 +109,7 @@ exports.baileysIs = (webMessage, context) => {
 exports.getContent = (webMessage, context) => {
   return (
     webMessage.message?.[`${context}Message`] ||
-    webMessage.message?.extendedTextMessage?.contextInfo?.quotedMessage?.[
-      `${context}Message`
-    ]
+    webMessage.message?.extendedTextMessage?.contextInfo?.quotedMessage?.[`${context}Message`]
   );
 };
 
@@ -157,4 +147,88 @@ exports.findCommandImport = (commandName) => {
     }
 
     const targetCommand = commands.find((cmd) =>
-      cmd.commands.map((cmd) => this.format
+      cmd.commands
+        .map((command) => this.formatCommand(command))
+        .includes(commandName)
+    );
+
+    if (targetCommand) {
+      typeReturn = type;
+      targetCommandReturn = targetCommand;
+      break;
+    }
+  }
+
+  return {
+    type: typeReturn,
+    command: targetCommandReturn,
+  };
+};
+
+exports.readCommandImports = () => {
+  const subdirectories = fs
+    .readdirSync(COMMANDS_DIR, { withFileTypes: true })
+    .filter((directory) => directory.isDirectory())
+    .map((directory) => directory.name);
+
+  const commandImports = {};
+
+  for (const subdir of subdirectories) {
+    const subdirectoryPath = path.join(COMMANDS_DIR, subdir);
+    const files = fs
+      .readdirSync(subdirectoryPath)
+      .filter(
+        (file) =>
+          !file.startsWith("_") &&
+          (file.endsWith(".js") || file.endsWith(".ts"))
+      )
+      .map((file) => require(path.join(subdirectoryPath, file)));
+
+    commandImports[subdir] = files;
+  }
+
+  return commandImports;
+};
+
+const onlyNumbers = (text) => text.replace(/[^0-9]/g, "");
+
+exports.onlyNumbers = onlyNumbers;
+
+exports.toUserJid = (number) => `${onlyNumbers(number)}@s.whatsapp.net`;
+
+exports.getBuffer = (url, options) => {
+  return new Promise((resolve, reject) => {
+    axios({
+      method: "get",
+      url,
+      headers: {
+        DNT: 1,
+        "Upgrade-Insecure-Request": 1,
+        range: "bytes=0-",
+      },
+      ...options,
+      responseType: "arraybuffer",
+      proxy: options?.proxy || false,
+    })
+      .then((res) => {
+        resolve(res.data);
+      })
+      .catch(reject);
+  });
+};
+
+function getRandomNumber(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+exports.getRandomNumber = getRandomNumber;
+
+exports.getRandomName = (extension) => {
+  const fileName = getRandomNumber(0, 999999);
+
+  if (!extension) {
+    return fileName.toString();
+  }
+
+  return `${fileName}.${extension}`;
+};
