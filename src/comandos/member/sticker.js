@@ -26,21 +26,25 @@ module.exports = {
         return;
       }
 
+      // Detectamos si es una imagen o un video
       if (!isImage && !isVideo) {
         await sendReply("❌ Responde a una imagen o video con el comando para convertirlo en un sticker.");
         return;
       }
 
-      await sendReact("🤔", webMessage.key);
+      // Evitar que se envíe la imagen de vuelta
+      await sendReact("🤔", webMessage.key); // Reaccionamos al mensaje
 
       let buffer;
 
       // Si es una imagen
       if (isImage) {
+        console.log("Imagen detectada");
         buffer = await downloadImage(webMessage, "input");
       } 
       // Si es un video
       else if (isVideo) {
+        console.log("Video detectado");
         buffer = await downloadVideo(webMessage, "input");
       }
 
@@ -63,7 +67,7 @@ module.exports = {
         quoted: webMessage,
       });
 
-      await sendReact("🧩", webMessage.key);
+      await sendReact("🧩", webMessage.key); // Reacción después de crear el sticker
     } catch (error) {
       console.error("Error al crear el sticker:", error);
       await sendReply("❌ Ocurrió un error al crear el sticker. Por favor, inténtalo de nuevo.");
