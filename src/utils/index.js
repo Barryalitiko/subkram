@@ -76,7 +76,7 @@ exports.extractDataFromMessage = (webMessage) => {
     hasImage: !!imageMessage, // Indica si el mensaje contiene una imagen
     hasVideo: !!videoMessage, // Indica si el mensaje contiene un video
   };
-}
+  }
 
   const isReply =
     !!extendedTextMessage && !!extendedTextMessage.contextInfo?.quotedMessage;
