@@ -5,7 +5,9 @@ const path = require("path");
 const { downloadMediaMessage } = require("@whiskeysockets/baileys");
 
 const isMediaMessage = (args) => {
-  // Revisamos el tipo de mensaje de una forma más completa
+  console.log("Estructura del mensaje:", args.message);  // Añadimos esta línea para depuración
+
+  // Revisa si el mensaje contiene una imagen o un video
   return args.message?.imageMessage || args.message?.videoMessage || args.message?.documentMessage;
 };
 
