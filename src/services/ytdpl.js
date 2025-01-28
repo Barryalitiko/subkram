@@ -20,25 +20,6 @@ const ensureDirectoryExists = (dirPath) => {
 };
 
 /**
- * Elimina un archivo después de un tiempo especificado.
- * @param {string} filePath - Ruta del archivo.
- * @param {number} timeout - Tiempo en milisegundos antes de eliminar el archivo.
- */
-const scheduleFileDeletion = (filePath, timeout) => {
-  console.log(
-    `Archivo programado para eliminación después de ${timeout / 1000} segundos: ${filePath}`
-  );
-  setTimeout(() => {
-    if (fs.existsSync(filePath)) {
-      fs.unlink(filePath, (err) => {
-        if (err) console.error(`Error eliminando archivo: ${filePath}`, err);
-        else console.log(`Archivo eliminado: ${filePath}`);
-      });
-    }
-  }, timeout);
-};
-
-/**
  * Procesa la cola de descargas.
  */
 const processQueue = () => {
@@ -58,7 +39,7 @@ const processQueue = () => {
     count++;
   }
 
-  const command = `yt-dlp -f best -o "${outputFile}" "${url}"`;
+  const command = `yt-dlp -f bestvideo+bestaudio --merge-output-format ${format} -o "${outputFile}" "${url}"`;
 
   console.log(`Ejecutando comando para descargar desde: ${url}`);
   console.log("Comando:", command);
@@ -73,7 +54,6 @@ const processQueue = () => {
     }
     console.log(`Contenido descargado exitosamente: ${outputFile}`);
     console.log(stdout);
-    scheduleFileDeletion(outputFile, 1 * 60 * 1000); // Eliminar después de 5 minutos
     resolve(outputFile);
     processQueue();
   });
@@ -94,8 +74,8 @@ const addToQueue = (url, format, folderName) => {
 };
 
 /**
- * Descarga música desde YouTube.
- * @param {string} url - URL del video de YouTube.
+ * Descarga música desde YouTube o cualquier sitio compatible.
+ * @param {string} url - URL del contenido.
  * @returns {Promise<string>} - Ruta del archivo de música descargado.
  */
 const downloadMusic = (url) => {
@@ -103,8 +83,8 @@ const downloadMusic = (url) => {
 };
 
 /**
- * Descarga videos desde YouTube.
- * @param {string} url - URL del video de YouTube.
+ * Descarga videos desde cualquier plataforma compatible con yt-dlp.
+ * @param {string} url - URL del video.
  * @returns {Promise<string>} - Ruta del archivo de video descargado.
  */
 const downloadVideo = (url) => {
@@ -148,8 +128,8 @@ const downloadSpotify = (url) => {
 };
 
 /**
- * Descarga videos desde X (Twitter).
- * @param {string} url - URL del video de X (Twitter).
+ * Descarga videos desde Twitter.
+ * @param {string} url - URL del video de Twitter.
  * @returns {Promise<string>} - Ruta del archivo descargado.
  */
 const downloadTwitter = (url) => {
