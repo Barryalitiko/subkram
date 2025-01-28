@@ -1,6 +1,5 @@
 const { PREFIX } = require("../../krampus");
-const { Sticker, createSticker } = require("wa-sticker-formatter");
-const fs = require("fs");
+const { createSticker } = require("wa-sticker-formatter");
 
 module.exports = {
   name: "sticker",
@@ -11,63 +10,40 @@ module.exports = {
   handle: async ({
     isImage,
     isVideo,
-    downloadImage,
-    downloadVideo,
-    webMessage,
+    handleMediaMessage, // Función para procesar los medios
     sendReply,
     sendReact,
-    sendMessage,
-    isReply,
-    quoted,
-    commandName, // Asegúrate de recibir commandName aquí
+    sendStickerFromFile,
   }) => {
     try {
-      if (!isReply || !quoted) {
-        await sendReply("❌ Responde a una imagen o video con el comando para convertirlo en un sticker.");
-        return;
-      }
-
+      // Validar si el mensaje contiene imagen o video
       if (!isImage && !isVideo) {
         await sendReply("❌ Responde a una imagen o video con el comando para convertirlo en un sticker.");
         return;
       }
 
-      await sendReact("🤔", webMessage.key);
+      await sendReact("🤔"); // Reacción mientras procesa
 
-      // Llamar a handleMediaMessage solo si el comando es "sticker"
-      await handleMediaMessage(commandName); // Esto procesará la imagen/video solo si es necesario
+      // Procesar la imagen o video con handleMediaMessage
+      const media = await handleMediaMessage(true); // Procesa solo si se activa
 
-      let buffer;
-
-      // Si es una imagen
-      if (isImage) {
-        buffer = await downloadImage(webMessage, "input");
-      } 
-      // Si es un video
-      else if (isVideo) {
-        buffer = await downloadVideo(webMessage, "input");
-      }
-
-      if (!buffer) {
-        await sendReply("❌ No se pudo descargar el archivo. Intenta nuevamente.");
+      if (!media || !media.path) {
+        await sendReply("❌ No se pudo procesar la imagen o video. Intenta nuevamente.");
         return;
       }
 
-      // Crear el sticker
-      const sticker = await createSticker(buffer, {
+      // Crear el sticker con los datos descargados
+      const sticker = await createSticker(media.path, {
         type: "full",
         pack: "Operacion Marshall",
         author: "Krampus OM Bot",
         quality: 70,
       });
 
-      // Enviar el sticker
-      await sendMessage(webMessage.key.remoteJid, {
-        sticker: sticker,
-        quoted: webMessage,
-      });
+      // Enviar el sticker generado
+      await sendStickerFromFile(sticker);
 
-      await sendReact("🧩", webMessage.key);
+      await sendReact("🧩"); // Reacción de éxito
     } catch (error) {
       console.error("Error al crear el sticker:", error);
       await sendReply("❌ Ocurrió un error al crear el sticker. Por favor, inténtalo de nuevo.");
