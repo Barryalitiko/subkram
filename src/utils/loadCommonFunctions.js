@@ -1,5 +1,5 @@
 const { BOT_EMOJI } = require("../krampus");
-const { extractDataFromMessage, baileysIs, download } = require("../utils/baileysutils");
+const { extractDataFromMessage, baileysIs, download } = require(".");
 const { waitMessage } = require("./messages");
 const fs = require("fs");
 
