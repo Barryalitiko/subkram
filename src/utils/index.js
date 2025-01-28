@@ -16,30 +16,17 @@ exports.question = (message) => {
 };
 
 exports.extractDataFromMessage = (webMessage) => {
-  if (!webMessage.message) {
-    return {
-      args: [],
-      commandName: null,
-      fullArgs: null,
-      fullMessage: null,
-      isReply: false,
-      prefix: null,
-      remoteJid: null,
-      replyJid: null,
-      userJid: null,
-    };
-  }
+  const textMessage = webMessage.message?.conversation;
+  const extendedTextMessage = webMessage.message?.extendedTextMessage;
+  const extendedTextMessageText = extendedTextMessage?.text;
+  const imageTextMessage = webMessage.message?.imageMessage?.caption;
+  const videoTextMessage = webMessage.message?.videoMessage?.caption;
 
-  // Determinar el tipo de contenido
-  const contentType = Object.keys(webMessage.message)[0];
-  const messageContent = webMessage.message[contentType];
-
-  // Capturar el texto del mensaje según el tipo
   const fullMessage =
-    messageContent?.caption || // Imagen o video con subtítulo
-    messageContent?.text || // Mensajes extendidos
-    webMessage.message?.conversation || // Mensaje simple
-    null;
+    textMessage ||
+    extendedTextMessageText ||
+    imageTextMessage ||
+    videoTextMessage;
 
   if (!fullMessage) {
     return {
@@ -55,21 +42,22 @@ exports.extractDataFromMessage = (webMessage) => {
     };
   }
 
-  // Detectar si el mensaje es una respuesta
   const isReply =
-    !!messageContent?.contextInfo &&
-    !!messageContent.contextInfo.quotedMessage;
+    !!extendedTextMessage && !!extendedTextMessage.contextInfo?.quotedMessage;
 
-  const replyJid = isReply
-    ? messageContent.contextInfo.participant
-    : null;
+  const replyJid =
+    !!extendedTextMessage && !!extendedTextMessage.contextInfo?.participant
+      ? extendedTextMessage.contextInfo.participant
+      : null;
 
-  // Extraer el usuario que envió el mensaje
-  const userJid = webMessage.key.participant?.replace(/:[0-9]+/g, "");
+  const userJid = webMessage?.key?.participant?.replace(
+    /:[0-9][0-9]|:[0-9]/g,
+    ""
+  );
 
-  // Separar comando y argumentos
   const [command, ...args] = fullMessage.split(" ");
   const prefix = command.charAt(0);
+
   const commandWithoutPrefix = command.replace(new RegExp(`^[${PREFIX}]+`), "");
 
   return {
@@ -79,7 +67,7 @@ exports.extractDataFromMessage = (webMessage) => {
     fullMessage,
     isReply,
     prefix,
-    remoteJid: webMessage.key.remoteJid,
+    remoteJid: webMessage?.key?.remoteJid,
     replyJid,
     userJid,
   };
@@ -125,27 +113,22 @@ exports.getContent = (webMessage, context) => {
 };
 
 exports.download = async (webMessage, fileName, context, extension) => {
-  // Usar `getContentType` para determinar el tipo de contenido
-  const contentType = webMessage.message
-    ? Object.keys(webMessage.message)[0]
-    : null;
+  const content = this.getContent(webMessage, context);
 
-  if (!contentType || contentType !== `${context}Message`) {
+  if (!content) {
     return null;
   }
 
-  // Descargar contenido directamente del mensaje
-  const stream = await downloadContentFromMessage(
-    webMessage.message[contentType],
-    context
-  );
+  const stream = await downloadContentFromMessage(content, context);
 
   let buffer = Buffer.from([]);
+
   for await (const chunk of stream) {
     buffer = Buffer.concat([buffer, chunk]);
   }
 
   const filePath = path.resolve(TEMP_DIR, `${fileName}.${extension}`);
+
   await writeFile(filePath, buffer);
 
   return filePath;
