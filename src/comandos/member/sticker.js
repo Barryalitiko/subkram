@@ -4,8 +4,8 @@ const fs = require("fs");
 const path = require("path");
 const { downloadMediaMessage } = require("@whiskeysockets/baileys");
 
-const isMediaMessage = (message) => {
-  return message.message?.imageMessage || message.message?.videoMessage;
+const isMediaMessage = (args) => {
+  return args.message?.message?.imageMessage || args.message?.message?.videoMessage;
 };
 
 module.exports = {
@@ -13,14 +13,14 @@ module.exports = {
   description: "Convierte una imagen o video en un sticker conservando la proporción original.",
   commands: ["sticker", "s"],
   usage: `${PREFIX}sticker`,
-  handle: async ({ message, sendReply, sendReact, sendStickerFromFile }) => {
+  handle: async (args) => {
     try {
-      if (!isMediaMessage(message)) {
-        await sendReply(" Responde a una imagen o video con el comando para convertirlo en un sticker.");
+      if (!isMediaMessage(args)) {
+        await args.sendReply(" Responde a una imagen o video con el comando para convertirlo en un sticker.");
         return;
       }
-      await sendReact("");
-      const media = await downloadMediaMessage(message, "buffer");
+      await args.sendReact("");
+      const media = await downloadMediaMessage(args.message, "buffer");
       const filePath = path.join(__dirname, "sticker.webp");
       fs.writeFileSync(filePath, media);
       const sticker = await createSticker(filePath, {
@@ -29,12 +29,12 @@ module.exports = {
         author: "Krampus OM Bot",
         quality: 70,
       });
-      await sendStickerFromFile(sticker);
-      await sendReact("");
+      await args.sendStickerFromFile(sticker);
+      await args.sendReact("");
       fs.unlinkSync(filePath);
     } catch (error) {
       console.error("Error al crear el sticker:", error);
-      await sendReply(" Ocurrió un error al crear el sticker. Por favor, inténtalo de nuevo.");
+      await args.sendReply(" Ocurrió un error al crear el sticker. Por favor, inténtalo de nuevo.");
     }
   },
 };
