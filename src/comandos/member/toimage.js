@@ -22,7 +22,7 @@ module.exports = {
     const inputPath = await downloadSticker(webMessage, "input");
     const outputPath = path.resolve(TEMP_DIR, "output.png");
 
-    exec(`ffmpeg -i ${inputPath} ${outputPath}`, async (error) => {
+    exec(`ffmpeg -i "${inputPath}" "${outputPath}"`, async (error) => {
       if (error) {
         console.log(error);
         throw new Error(error);
