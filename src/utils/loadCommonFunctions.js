@@ -211,6 +211,7 @@ exports.loadCommonFunctions = ({ socket, webMessage, commandName }) => {
 
   return {
     args,
+    commandName,
     fullArgs,
     fullMessage,
     handleMediaMessage,
