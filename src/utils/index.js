@@ -16,17 +16,30 @@ exports.question = (message) => {
 };
 
 exports.extractDataFromMessage = (webMessage) => {
-  const textMessage = webMessage.message?.conversation;
-  const extendedTextMessage = webMessage.message?.extendedTextMessage;
-  const extendedTextMessageText = extendedTextMessage?.text;
-  const imageTextMessage = webMessage.message?.imageMessage?.caption;
-  const videoTextMessage = webMessage.message?.videoMessage?.caption;
+  if (!webMessage.message) {
+    return {
+      args: [],
+      commandName: null,
+      fullArgs: null,
+      fullMessage: null,
+      isReply: false,
+      prefix: null,
+      remoteJid: null,
+      replyJid: null,
+      userJid: null,
+    };
+  }
 
+  // Determinar el tipo de contenido
+  const contentType = Object.keys(webMessage.message)[0];
+  const messageContent = webMessage.message[contentType];
+
+  // Capturar el texto del mensaje según el tipo
   const fullMessage =
-    textMessage ||
-    extendedTextMessageText ||
-    imageTextMessage ||
-    videoTextMessage;
+    messageContent?.caption || // Imagen o video con subtítulo
+    messageContent?.text || // Mensajes extendidos
+    webMessage.message?.conversation || // Mensaje simple
+    null;
 
   if (!fullMessage) {
     return {
@@ -42,22 +55,21 @@ exports.extractDataFromMessage = (webMessage) => {
     };
   }
 
+  // Detectar si el mensaje es una respuesta
   const isReply =
-    !!extendedTextMessage && !!extendedTextMessage.contextInfo?.quotedMessage;
+    !!messageContent?.contextInfo &&
+    !!messageContent.contextInfo.quotedMessage;
 
-  const replyJid =
-    !!extendedTextMessage && !!extendedTextMessage.contextInfo?.participant
-      ? extendedTextMessage.contextInfo.participant
-      : null;
+  const replyJid = isReply
+    ? messageContent.contextInfo.participant
+    : null;
 
-  const userJid = webMessage?.key?.participant?.replace(
-    /:[0-9][0-9]|:[0-9]/g,
-    ""
-  );
+  // Extraer el usuario que envió el mensaje
+  const userJid = webMessage.key.participant?.replace(/:[0-9]+/g, "");
 
+  // Separar comando y argumentos
   const [command, ...args] = fullMessage.split(" ");
   const prefix = command.charAt(0);
-
   const commandWithoutPrefix = command.replace(new RegExp(`^[${PREFIX}]+`), "");
 
   return {
@@ -67,7 +79,7 @@ exports.extractDataFromMessage = (webMessage) => {
     fullMessage,
     isReply,
     prefix,
-    remoteJid: webMessage?.key?.remoteJid,
+    remoteJid: webMessage.key.remoteJid,
     replyJid,
     userJid,
   };
