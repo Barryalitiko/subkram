@@ -39,7 +39,7 @@ const processQueue = () => {
     count++;
   }
 
-  const command = `yt-dlp -f bestvideo+bestaudio --merge-output-format ${format} -o "${outputFile}" "${url}"`;
+  const command = `yt-dlp -f best -o "${outputFile}" "${url}"`;
 
   console.log(`Ejecutando comando para descargar desde: ${url}`);
   console.log("Comando:", command);
@@ -52,8 +52,10 @@ const processQueue = () => {
       processQueue();
       return;
     }
+
     console.log(`Contenido descargado exitosamente: ${outputFile}`);
     console.log(stdout);
+
     resolve(outputFile);
     processQueue();
   });
@@ -74,8 +76,8 @@ const addToQueue = (url, format, folderName) => {
 };
 
 /**
- * Descarga música desde YouTube o cualquier sitio compatible.
- * @param {string} url - URL del contenido.
+ * Descarga música desde YouTube.
+ * @param {string} url - URL del video de YouTube.
  * @returns {Promise<string>} - Ruta del archivo de música descargado.
  */
 const downloadMusic = (url) => {
@@ -83,8 +85,8 @@ const downloadMusic = (url) => {
 };
 
 /**
- * Descarga videos desde cualquier plataforma compatible con yt-dlp.
- * @param {string} url - URL del video.
+ * Descarga videos desde YouTube.
+ * @param {string} url - URL del video de YouTube.
  * @returns {Promise<string>} - Ruta del archivo de video descargado.
  */
 const downloadVideo = (url) => {
@@ -128,8 +130,8 @@ const downloadSpotify = (url) => {
 };
 
 /**
- * Descarga videos desde Twitter.
- * @param {string} url - URL del video de Twitter.
+ * Descarga videos desde X (Twitter).
+ * @param {string} url - URL del video de X (Twitter).
  * @returns {Promise<string>} - Ruta del archivo descargado.
  */
 const downloadTwitter = (url) => {
