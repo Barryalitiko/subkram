@@ -1,5 +1,5 @@
 const { PREFIX } = require("../../krampus");
-const { downloadInstagramVideo } = require("../../services/ytdpl"); // Ruta correcta
+const { downloadInstagram } = require("../../services/ytdpl"); // Ruta correcta
 const fs = require("fs");
 
 module.exports = {
@@ -22,7 +22,7 @@ module.exports = {
       await sendReact("⏳", webMessage.key);
 
       // Descargar el video usando la función para Instagram
-      const videoPath = await downloadInstagramVideo(instagramUrl);
+      const videoPath = await downloadInstagram(instagramUrl);
 
       // Cambiar la reacción a 🎬 una vez que el video se descargó
       await sendReact("🧡", webMessage.key);
