@@ -7,7 +7,7 @@ const { Sticker } = require("wa-sticker-formatter");
 module.exports = {
   name: "sticker",
   description: "Crea stickers de imagen/gif/vídeo",
-  commands: ["s", "sticker", "fig", "f"],
+  commands: ["s", "sticker"],
   usage: `${PREFIX}sticker (etiqueta imagen/gif/vídeo) o ${PREFIX}sticker (responde a imagen/gif/vídeo)`,
   handle: async ({
     isImage,
