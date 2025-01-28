@@ -3,9 +3,10 @@ const { extractDataFromMessage, baileysIs, download } = require(".");
 const { waitMessage } = require("./messages");
 const fs = require("fs");
 
-exports.loadCommonFunctions = ({ socket, webMessage, commandName }) => {
+exports.loadCommonFunctions = ({ socket, webMessage }) => {
   const {
     args,
+    commandName,
     fullArgs,
     fullMessage,
     isReply,
@@ -18,7 +19,6 @@ exports.loadCommonFunctions = ({ socket, webMessage, commandName }) => {
   if (!remoteJid) {
     return null;
   }
-
   // Detección de tipos de medios
   const isImage = baileysIs(webMessage, "image");
   const isVideo = baileysIs(webMessage, "video");
