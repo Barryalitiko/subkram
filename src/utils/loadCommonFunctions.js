@@ -222,7 +222,6 @@ exports.loadCommonFunctions = ({ socket, webMessage, commandName }) => {
     replyJid,
     sendText,
     sendReply,
-    sendMediaMessage,
     socket,
     userJid,
     webMessage,
