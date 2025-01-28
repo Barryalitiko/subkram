@@ -17,7 +17,7 @@ module.exports = {
     webMessage,
     sendErrorReply,
     sendSuccessReact,
-    sendStickerFromBuffer,
+    sendStickerFromFile,
   }) => {
     if (!isImage && !isVideo) {
       throw new InvalidParameterError(
@@ -25,22 +25,26 @@ module.exports = {
       );
     }
 
+    const outputPath = path.resolve(TEMP_DIR, "output.webp");
+
     if (isImage) {
       const inputPath = await downloadImage(webMessage, "input");
       const imageBuffer = fs.readFileSync(inputPath);
 
+      // Crear sticker desde imagen
       const sticker = new Sticker(imageBuffer, {
         type: "full",
         pack: "Krampus Stickers", // Nombre del pack
-        author: "Krampus", // Autor
-        categories: ["👻"], // Emoji o categoría opcional
+        author: "Krampus", // Autor del sticker
       });
 
-      const stickerBuffer = await sticker.toBuffer();
+      await sticker.toFile(outputPath);
+
       await sendSuccessReact();
-      await sendStickerFromBuffer(stickerBuffer);
+      await sendStickerFromFile(outputPath);
 
       fs.unlinkSync(inputPath);
+      fs.unlinkSync(outputPath);
     } else {
       const inputPath = await downloadVideo(webMessage, "input");
 
@@ -64,18 +68,20 @@ Envía un video más corto.`);
 
       const videoBuffer = fs.readFileSync(inputPath);
 
+      // Crear sticker desde video
       const sticker = new Sticker(videoBuffer, {
         type: "full",
         pack: "Krampus Stickers",
         author: "Krampus",
-        categories: ["👻"],
       });
 
-      const stickerBuffer = await sticker.toBuffer();
+      await sticker.toFile(outputPath);
+
       await sendSuccessReact();
-      await sendStickerFromBuffer(stickerBuffer);
+      await sendStickerFromFile(outputPath);
 
       fs.unlinkSync(inputPath);
+      fs.unlinkSync(outputPath);
     }
   },
 };
