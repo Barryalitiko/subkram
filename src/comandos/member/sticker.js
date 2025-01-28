@@ -7,7 +7,7 @@ const { Sticker } = require("wa-sticker-formatter");
 module.exports = {
   name: "sticker",
   description: "Crea stickers de imagen/gif/vídeo",
-  commands: ["s", "sticker", "fig", "f"],
+  commands: ["s", "sticker"],
   usage: `${PREFIX}sticker (etiqueta imagen/gif/vídeo) o ${PREFIX}sticker (responde a imagen/gif/vídeo)`,
   handle: async ({
     isImage,
@@ -20,7 +20,7 @@ module.exports = {
   }) => {
     if (!isImage && !isVideo) {
       throw new InvalidParameterError(
-        "👻 Krampus 👻 Debes marcar imagen/gif/vídeo o responder a una imagen/gif/vídeo"
+        "umm... debes indicarme lo que quieras que te convierta a sticker\> Krampus OM bot"
       );
     }
 
@@ -33,8 +33,8 @@ module.exports = {
       // Crear sticker desde imagen
       const sticker = new Sticker(imageBuffer, {
         type: "full",
-        pack: "Krampus Stickers", // Nombre del pack
-        author: "Krampus", // Autor del sticker
+        pack: "Operacion Marshall", // Nombre del pack
+        author: "Krampus OM bot", // Autor del sticker
       });
 
       await sticker.toFile(outputPath);
@@ -61,9 +61,7 @@ module.exports = {
       if (!haveSecondsRule) {
         fs.unlinkSync(inputPath);
 
-        await sendErrorReply(`👻 Krampus 👻 Este video tiene más de ${sizeInSeconds} segundos.
-
-Envía un video más corto.`);
+        await sendErrorReply(`Umm... Este video tiene más de ${sizeInSeconds} segundos.\nEnvía un video más corto.`);
         return;
       }
 
@@ -72,7 +70,7 @@ Envía un video más corto.`);
       // Crear sticker desde video
       const sticker = new Sticker(videoBuffer, {
         type: "full",
-        pack: "Krampus Stickers",
+        pack: "Operacion Marshall",
         author: "Krampus",
       });
 
