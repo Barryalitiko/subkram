@@ -113,22 +113,27 @@ exports.getContent = (webMessage, context) => {
 };
 
 exports.download = async (webMessage, fileName, context, extension) => {
-  const content = this.getContent(webMessage, context);
+  // Usar `getContentType` para determinar el tipo de contenido
+  const contentType = webMessage.message
+    ? Object.keys(webMessage.message)[0]
+    : null;
 
-  if (!content) {
+  if (!contentType || contentType !== `${context}Message`) {
     return null;
   }
 
-  const stream = await downloadContentFromMessage(content, context);
+  // Descargar contenido directamente del mensaje
+  const stream = await downloadContentFromMessage(
+    webMessage.message[contentType],
+    context
+  );
 
   let buffer = Buffer.from([]);
-
   for await (const chunk of stream) {
     buffer = Buffer.concat([buffer, chunk]);
   }
 
   const filePath = path.resolve(TEMP_DIR, `${fileName}.${extension}`);
-
   await writeFile(filePath, buffer);
 
   return filePath;
