@@ -19,10 +19,8 @@ exports.extractDataFromMessage = (webMessage) => {
   const textMessage = webMessage.message?.conversation;
   const extendedTextMessage = webMessage.message?.extendedTextMessage;
   const extendedTextMessageText = extendedTextMessage?.text;
-  const imageTextMessage = webMessage.message?.imageMessage?.caption; // Texto adjunto a imagen
-  const videoTextMessage = webMessage.message?.videoMessage?.caption; // Texto adjunto a video
-  const imageMessage = webMessage.message?.imageMessage; // Detecta la imagen sin importar si tiene texto
-  const videoMessage = webMessage.message?.videoMessage; // Detecta el video sin importar si tiene texto
+  const imageTextMessage = webMessage.message?.imageMessage?.caption;
+  const videoTextMessage = webMessage.message?.videoMessage?.caption;
 
   const fullMessage =
     textMessage ||
@@ -30,8 +28,7 @@ exports.extractDataFromMessage = (webMessage) => {
     imageTextMessage ||
     videoTextMessage;
 
-  if (!fullMessage && !imageMessage && !videoMessage) { 
-    // Si no hay texto, imagen o video, retorna vacío
+  if (!fullMessage) {
     return {
       args: [],
       commandName: null,
@@ -58,15 +55,13 @@ exports.extractDataFromMessage = (webMessage) => {
     ""
   );
 
-  const [command, ...args] = fullMessage ? fullMessage.split(" ") : [];
-  const prefix = command ? command.charAt(0) : null;
+  const [command, ...args] = fullMessage.split(" ");
+  const prefix = command.charAt(0);
 
-  const commandWithoutPrefix = command
-    ? command.replace(new RegExp(`^[${PREFIX}]+`), "")
-    : "";
+  const commandWithoutPrefix = command.replace(new RegExp(`^[${PREFIX}]+`), "");
 
   return {
-    args: this.splitByCharacters(args.join(" "), ["\\", "|", "/"]),
+    args: this.splitByCharacters(args.join(" "), ["\\", "|"]),
     commandName: this.formatCommand(commandWithoutPrefix),
     fullArgs: args.join(" "),
     fullMessage,
@@ -111,7 +106,9 @@ exports.baileysIs = (webMessage, context) => {
 exports.getContent = (webMessage, context) => {
   return (
     webMessage.message?.[`${context}Message`] ||
-    webMessage.message?.extendedTextMessage?.contextInfo?.quotedMessage?.[`${context}Message`]
+    webMessage.message?.extendedTextMessage?.contextInfo?.quotedMessage?.[
+      `${context}Message`
+    ]
   );
 };
 
