@@ -16,7 +16,6 @@ module.exports = {
     downloadVideo,
     webMessage,
     sendErrorReply,
-    sendSuccessReact,
     sendStickerFromFile,
   }) => {
     if (!isImage && !isVideo) {
@@ -34,14 +33,16 @@ module.exports = {
       // Crear sticker desde imagen
       const sticker = new Sticker(imageBuffer, {
         type: "full",
-        pack: "Operacion Marshall", // Nombre del pack
-        author: "Krampus OM bot", // Autor del sticker
+        pack: "Krampus Stickers", // Nombre del pack
+        author: "Krampus", // Autor del sticker
       });
 
       await sticker.toFile(outputPath);
 
-      await sendSuccessReact();
       await sendStickerFromFile(outputPath);
+
+      // Reacción con 🧩
+      await webMessage.react("🧩");
 
       fs.unlinkSync(inputPath);
       fs.unlinkSync(outputPath);
@@ -71,14 +72,16 @@ Envía un video más corto.`);
       // Crear sticker desde video
       const sticker = new Sticker(videoBuffer, {
         type: "full",
-        pack: "Operacion Marshall",
-        author: "Krampus OM bot",
+        pack: "Krampus Stickers",
+        author: "Krampus",
       });
 
       await sticker.toFile(outputPath);
 
-      await sendSuccessReact();
       await sendStickerFromFile(outputPath);
+
+      // Reacción con 🧩
+      await webMessage.react("🧩");
 
       fs.unlinkSync(inputPath);
       fs.unlinkSync(outputPath);
