@@ -11,13 +11,18 @@ module.exports = {
   usage: `${PREFIX}sticker`,
   handle: async (args) => {
     try {
-      const messageType = getContentType(args.message);
+      if (!args.message.quoted) {
+        await args.sendReply(` Responde a una imagen o video con el comando para convertirlo en un sticker.`);
+        return;
+      }
+      const quotedMessage = args.message.quoted;
+      const messageType = getContentType(quotedMessage);
       if (messageType !== 'imageMessage' && messageType !== 'videoMessage') {
         await args.sendReply(` Responde a una imagen o video con el comando para convertirlo en un sticker.`);
         return;
       }
       await args.sendReact("");
-      const stream = await downloadMediaMessage(args.message, 'stream');
+      const stream = await downloadMediaMessage(quotedMessage, 'stream');
       const filePath = path.join(__dirname, "sticker." + (messageType === 'imageMessage' ? 'jpeg' : 'webp'));
       const writeStream = createWriteStream(filePath);
       stream.pipe(writeStream);
