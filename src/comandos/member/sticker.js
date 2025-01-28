@@ -5,10 +5,10 @@ const path = require("path");
 const { downloadMediaMessage } = require("@whiskeysockets/baileys");
 
 const isMediaMessage = (args) => {
-  console.log("Estructura del mensaje:", args.message);  // Añadimos esta línea para depuración
+  console.log("Estructura completa de args:", args);  // Mostramos args completos para entender mejor
 
-  // Revisa si el mensaje contiene una imagen o un video
-  return args.message?.imageMessage || args.message?.videoMessage || args.message?.documentMessage;
+  // Verificamos si args.message existe y tiene una propiedad válida para imágenes o videos
+  return args?.message?.imageMessage || args?.message?.videoMessage || args?.message?.documentMessage;
 };
 
 module.exports = {
@@ -18,7 +18,10 @@ module.exports = {
   usage: `${PREFIX}sticker`,
   handle: async (args) => {
     try {
-      // Asegúrate de que el mensaje tiene una imagen o un video
+      // Mostramos más detalles de la estructura de los argumentos antes de continuar
+      console.log("Estructura de los argumentos:", args);
+
+      // Asegúrate de que el mensaje tenga una imagen o video
       if (!isMediaMessage(args)) {
         await args.sendReply("❌ Responde a una imagen o video con el comando para convertirlo en un sticker.");
         return;
