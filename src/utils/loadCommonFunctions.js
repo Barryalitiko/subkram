@@ -209,6 +209,18 @@ exports.loadCommonFunctions = ({ socket, webMessage }) => {
     );
   };
 
+  const sendImageFromFile = async (file, caption = "") => {
+    return await socket.sendMessage(
+      remoteJid,
+      {
+        image: fs.readFileSync(file),
+        caption: caption ? `${BOT_EMOJI} ${caption}` : "",
+      },
+      { quoted: webMessage }
+    );
+  };
+
+
   return {
     args,
     commandName,
