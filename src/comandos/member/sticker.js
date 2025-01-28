@@ -34,8 +34,8 @@ module.exports = {
       // Crear sticker desde imagen
       const sticker = new Sticker(imageBuffer, {
         type: "full",
-        pack: "Krampus Stickers", // Nombre del pack
-        author: "Krampus", // Autor del sticker
+        pack: "Operacion Marshall", // Nombre del pack
+        author: "Krampus OM bot", // Autor del sticker
       });
 
       await sticker.toFile(outputPath);
@@ -71,8 +71,8 @@ Envía un video más corto.`);
       // Crear sticker desde video
       const sticker = new Sticker(videoBuffer, {
         type: "full",
-        pack: "Krampus Stickers",
-        author: "Krampus",
+        pack: "Operacion Marshall",
+        author: "Krampus OM bot",
       });
 
       await sticker.toFile(outputPath);
