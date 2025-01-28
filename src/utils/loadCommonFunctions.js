@@ -37,21 +37,6 @@ exports.loadCommonFunctions = ({ socket, webMessage, commandName }) => {
     return await download(webMessage, fileName, "video", "mp4");
   };
 
-  // Función para enviar el mensaje adecuado basado en el tipo de archivo
-  const sendMediaMessage = async (file, messageType) => {
-    let messageContent = {};
-
-    if (messageType === 'audio') {
-      messageContent = { audio: { url: file }, mimetype: 'audio/mpeg' };
-    } else if (messageType === 'video') {
-      messageContent = { video: { url: file }, mimetype: 'video/mp4' };
-    } else if (messageType === 'image') {
-      messageContent = { image: { url: file }, mimetype: 'image/png' };
-    }
-
-    await socket.sendMessage(remoteJid, messageContent, { quoted: webMessage });
-  };
-
   // Función para manejar los medios si se activa
   const handleMediaMessage = async (processMedia) => {
     if (!processMedia) return; // Solo procesa si se activa específicamente
@@ -70,7 +55,6 @@ exports.loadCommonFunctions = ({ socket, webMessage, commandName }) => {
 
     console.log("No se detectó imagen ni video.");
     return null;
-    }
   };
 
   // Funciones para enviar textos y respuestas
@@ -229,6 +213,7 @@ exports.loadCommonFunctions = ({ socket, webMessage, commandName }) => {
     args,
     fullArgs,
     fullMessage,
+    handleMediaMessage,
     isReply,
     isSticker,
     isVideo,
@@ -237,7 +222,7 @@ exports.loadCommonFunctions = ({ socket, webMessage, commandName }) => {
     replyJid,
     sendText,
     sendReply,
-    sendMediaMessage,  // Añadido para el envío de medios
+    sendMediaMessage,
     socket,
     userJid,
     webMessage,
