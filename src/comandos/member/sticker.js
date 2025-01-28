@@ -7,7 +7,7 @@ const { Sticker } = require("wa-sticker-formatter");
 module.exports = {
   name: "sticker",
   description: "Crea stickers de imagen/gif/vídeo",
-  commands: ["s", "sticker"],
+  commands: ["s", "sticker", "fig", "f"],
   usage: `${PREFIX}sticker (etiqueta imagen/gif/vídeo) o ${PREFIX}sticker (responde a imagen/gif/vídeo)`,
   handle: async ({
     isImage,
@@ -16,11 +16,12 @@ module.exports = {
     downloadVideo,
     webMessage,
     sendErrorReply,
+    sendSuccessReact,
     sendStickerFromFile,
   }) => {
     if (!isImage && !isVideo) {
       throw new InvalidParameterError(
-        "umm... debes indicarme lo que quieras que te convierta a sticker\> Krampus OM bot"
+        "ummm...Debes indicarme lo que quieres que convierta a sticker\> Krampus OM bot"
       );
     }
 
@@ -39,10 +40,8 @@ module.exports = {
 
       await sticker.toFile(outputPath);
 
+      await sendSuccessReact();
       await sendStickerFromFile(outputPath);
-
-      // Reacción con 🧩
-      await webMessage.react("🧩");
 
       fs.unlinkSync(inputPath);
       fs.unlinkSync(outputPath);
@@ -61,7 +60,7 @@ module.exports = {
       if (!haveSecondsRule) {
         fs.unlinkSync(inputPath);
 
-        await sendErrorReply(`Umm... Este video tiene más de ${sizeInSeconds} segundos.\nEnvía un video más corto.`);
+        await sendErrorReply(`¡ABUSADOR! Este video tiene más de ${sizeInSeconds} segundos.Envía un video más corto.`);
         return;
       }
 
@@ -71,15 +70,13 @@ module.exports = {
       const sticker = new Sticker(videoBuffer, {
         type: "full",
         pack: "Operacion Marshall",
-        author: "Krampus",
+        author: "Krampus OM bot",
       });
 
       await sticker.toFile(outputPath);
 
+      await sendSuccessReact();
       await sendStickerFromFile(outputPath);
-
-      // Reacción con 🧩
-      await webMessage.react("🧩");
 
       fs.unlinkSync(inputPath);
       fs.unlinkSync(outputPath);
