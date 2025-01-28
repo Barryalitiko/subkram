@@ -1,4 +1,4 @@
-const { PREFIX, TEMP_DIR } = require("../../config");
+const { PREFIX, TEMP_DIR } = require("../../krampus");
 const fs = require("fs");
 const path = require("path");
 const { exec } = require("child_process");
