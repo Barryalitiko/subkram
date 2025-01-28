@@ -5,7 +5,7 @@ const path = require("path");
 const { downloadMediaMessage } = require("@whiskeysockets/baileys");
 
 const isMediaMessage = (args) => {
-  return args.message?.message?.imageMessage || args.message?.message?.videoMessage;
+  return args.message?.type === 'image' || args.message?.type === 'video';
 };
 
 module.exports = {
@@ -16,7 +16,7 @@ module.exports = {
   handle: async (args) => {
     try {
       if (!isMediaMessage(args)) {
-        await args.sendReply(" Responde a una imagen o video con el comando para convertirlo en un sticker.");
+        await args.sendReply(` Responde a una imagen o video con el comando para convertirlo en un sticker.`);
         return;
       }
       await args.sendReact("");
