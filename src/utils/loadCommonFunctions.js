@@ -52,33 +52,26 @@ exports.loadCommonFunctions = ({ socket, webMessage, commandName }) => {
     await socket.sendMessage(remoteJid, messageContent, { quoted: webMessage });
   };
 
-  // Función para manejar los mensajes de medios
-  const handleMediaMessage = async () => {
-    if (commandName === "sticker") {
-      if (isImage) {
-        console.log("Imagen detectada. Enviando imagen como sticker...");
-        const imageUrl = await downloadImage(webMessage, 'image');
-        await sendMediaMessage(imageUrl, 'image');
-      } else if (isVideo) {
-        console.log("Video detectado. Enviando video como sticker...");
-        const videoUrl = await downloadVideo(webMessage, 'video');
-        await sendMediaMessage(videoUrl, 'video');
-      } else if (isSticker) {
-        console.log("Sticker detectado. Enviando sticker...");
-        const stickerUrl = await downloadSticker(webMessage, 'sticker');
-        await sendMediaMessage(stickerUrl, 'sticker');
-      } else {
-        console.log("No se detectó imagen, video ni sticker.");
-      }
-    } else {
-      console.log("El comando no requiere procesamiento de medios.");
+  // Función para manejar los medios si se activa
+  const handleMediaMessage = async (processMedia) => {
+    if (!processMedia) return; // Solo procesa si se activa específicamente
+
+    if (isImage) {
+      console.log("Procesando imagen...");
+      const imagePath = await downloadImage(webMessage, "image");
+      return { type: "image", path: imagePath };
+    }
+
+    if (isVideo) {
+      console.log("Procesando video...");
+      const videoPath = await downloadVideo(webMessage, "video");
+      return { type: "video", path: videoPath };
+    }
+
+    console.log("No se detectó imagen ni video.");
+    return null;
     }
   };
-
-  // Llamamos a la función de manejo de medios solo si es necesario
-  if (commandName === "sticker") {
-    handleMediaMessage();
-  }
 
   // Funciones para enviar textos y respuestas
   const sendText = async (text, mentions) => {
