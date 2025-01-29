@@ -8,17 +8,14 @@ const path = require("path");
 const welcomeConfigPath = path.resolve(process.cwd(), "assets/welcomeConfig.json");
 // Función para obtener la configuración de bienvenida desde el archivo JSON
 const getWelcomeConfig = (groupId) => {
-  try {
-    const data = fs.readFileSync(welcomeConfigPath, "utf-8");
-    const config = JSON.parse(data);
-
-    // Buscar la configuración del grupo
-    const groupConfig = config.find(item => item.groupId === groupId);
-    return groupConfig || null;  // Devuelve la configuración del grupo o null si no existe
-  } catch (error) {
-    warningLog("👻 𝙺𝚛𝚊𝚖𝚙𝚞𝚜.𝚋𝚘𝚝 👻 Error al leer el archivo de configuración de bienvenida", error);
-    return null;
-  }
+try {
+const data = fs.readFileSync(welcomeConfigPath, "utf-8");
+const config = JSON.parse(data);
+return config[groupId] || null;
+} catch (error) {
+warningLog("👻 𝙺𝚛𝚊𝚖𝚙𝚞𝚜.𝚋𝚘𝚝 👻 Error al leer el archivo de configuración de bienvenida", error);
+return null;
+}
 };
 
 exports.onGroupParticipantsUpdate = async ({ groupParticipantsUpdate, socket }) => {
