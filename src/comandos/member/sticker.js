@@ -16,7 +16,7 @@ module.exports = {
     downloadVideo,
     webMessage,
     sendErrorReply,
-    sendSuccessReact,
+    sendPuzzleReact,
     sendStickerFromFile,
   }) => {
     if (!isImage && !isVideo) {
@@ -40,7 +40,7 @@ module.exports = {
 
       await sticker.toFile(outputPath);
 
-      await sendSuccessReact();
+      await sendPuzzleReact();
       await sendStickerFromFile(outputPath);
 
       fs.unlinkSync(inputPath);
@@ -75,7 +75,7 @@ module.exports = {
 
       await sticker.toFile(outputPath);
 
-      await sendSuccessReact();
+      await sendPuzzleReact();
       await sendStickerFromFile(outputPath);
 
       fs.unlinkSync(inputPath);
