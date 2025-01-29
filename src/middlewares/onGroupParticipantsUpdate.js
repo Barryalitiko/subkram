@@ -1,5 +1,3 @@
-
-
 const fs = require("fs");
 const { onlyNumbers } = require("../utils");
 const { getProfileImageData } = require("../services/baileys");
