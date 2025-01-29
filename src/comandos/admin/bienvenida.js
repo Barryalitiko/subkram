@@ -1,44 +1,57 @@
 const { PREFIX } = require("../../krampus");
 const { InvalidParameterError } = require("../../errors/InvalidParameterError");
 const {
-  activateWelcomeGroup,
-  deactivateWelcomeGroup,
+activateWelcomeGroup,
+deactivateWelcomeGroup,
+setWelcomeMode
 } = require("../../utils/database");
 
 module.exports = {
-  name: "welcome",
-  description: "Activa o desactiva la bienvenida",
-  commands: [
-    "welcome",
-    "bienvenida",
-  ],
-  usage: `${PREFIX}welcome (1/0)`,
-  handle: async ({ args, sendReply, sendSuccessReact, remoteJid }) => {
-    if (!args.length) {
-      throw new InvalidParameterError(
-        " 👻 𝙺𝚛𝚊𝚖𝚙𝚞𝚜.𝚋𝚘𝚝 👻 𝙴𝚜𝚌𝚛𝚒𝚋𝚎 1 𝚘 0 𝚙𝚊𝚛𝚊 𝚊𝚌𝚝𝚒𝚟𝚊𝚛 𝚘 𝚍𝚎𝚜𝚊𝚌𝚝𝚒𝚟𝚊𝚛 𝚎𝚕 𝚌𝚘𝚖𝚊𝚗𝚍𝚘"
-      );
-    }
+name: "welcome",
+description: "Activa, desactiva o configura la bienvenida",
+commands: ["welcome", "bienvenida"],
+usage: `${PREFIX}welcome (0/1/2)`,
+handle: async ({ args, sendReply, sendSuccessReact, remoteJid }) => {
+if (!args.length) {
+throw new InvalidParameterError(
+"👻 𝙺𝚛𝚊𝚖𝚙𝚞𝚜.𝚋𝚘𝚝 👻 Escribe 0, 1 o 2 para configurar la bienvenida:\n\n" +
+"_0_: Desactivar\n" +
+"_1_: Activar sin foto\n" +
+"_2_: Activar con foto"
+);
+}
 
-    const welcome = args[0] === "1";
-    const notWelcome = args[0] === "0";
+const option = args[0];
 
-    if (!welcome && !notWelcome) {
-      throw new InvalidParameterError(
-        " 👻 𝙺𝚛𝚊𝚖𝚙𝚞𝚜.𝚋𝚘𝚝 👻 𝙴𝚜𝚌𝚛𝚒𝚋𝚎 1 𝚘 0 𝚙𝚊𝚛𝚊 𝚊𝚌𝚝𝚒𝚟𝚊𝚛 𝚘 𝚍𝚎𝚜𝚊𝚌𝚝𝚒𝚟𝚊𝚛 𝚎𝚕 𝚌𝚘𝚖𝚊𝚗𝚍𝚘"
-      );
-    }
+if (!["0", "1", "2"].includes(option)) {
+  throw new InvalidParameterError(
+    "👻 𝙺𝚛𝚊𝚖𝚙𝚞𝚜.𝚋𝚘𝚝 👻 Opción inválida. Usa:\n\n" +
+    "*0*: Desactivar\n" +
+    "*1*: Activar sin foto\n" +
+    "*2*: Activar con foto"
+  );
+}
 
-    if (welcome) {
-      activateWelcomeGroup(remoteJid);
-    } else {
-      deactivateWelcomeGroup(remoteJid);
-    }
+if (option === "0") {
+  deactivateWelcomeGroup(remoteJid);
+} else {
+  activateWelcomeGroup(remoteJid);
+  setWelcomeMode(remoteJid, option);
+}
 
-    await sendSuccessReact();
+await sendSuccessReact();
 
-    const context = welcome ? "*Activada*" : "*Apagada";
+const context =
+  option === "0"
+    ? "*Desactivada*"
+    : option === "1"
+    ? "*Activada sin foto*"
+    : "*Activada con foto*";
 
-    await sendReply( `👻 𝙺𝚛𝚊𝚖𝚙𝚞𝚜.𝚋𝚘𝚝 👻 𝙻𝚊 𝙱𝚒𝚎𝚗𝚟𝚎𝚗𝚒𝚍𝚊 𝚑𝚊 𝚜𝚒𝚍𝚘 ${context}`);
-  },
+await sendReply(
+  `👻 𝙺𝚛𝚊𝚖𝚙𝚞𝚜.𝚋𝚘𝚝 👻 La bienvenida ha sido configurada como: *${context}*`
+);
+},
 };
+
+
