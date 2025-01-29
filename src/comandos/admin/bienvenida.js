@@ -25,7 +25,7 @@ const option = args[0];
 
 if (!["0", "1", "2"].includes(option)) {
   throw new InvalidParameterError(
-    "\n>Krampus OM bot\nOpción inválida. Usa:\n\n" +
+    "\n> Krampus OM bot\nOpción inválida. Usa:\n\n" +
     "*0*: Desactivar\n" +
     "*1*: Activar sin foto\n" +
     "*2*: Activar con foto"
