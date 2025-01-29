@@ -5,7 +5,7 @@ const databasePath = path.resolve(__dirname, "..", "..", "database");
 
 const INACTIVE_GROUPS_FILE = "inactive-groups";
 const ANTI_LINK_GROUPS_FILE = "anti-link-groups";
-const WELCOME_MODE_GROUPS_FILE = "welcome-mode-groups";
+const NOT_WELCOME_GROUPS_FILE = "not-welcome-groups";
 
 
 function createIfNotExists(fullPath) {
@@ -50,16 +50,40 @@ exports.isActiveGroup = (groupId) => {
   return !inactiveGroups.includes(groupId);
 };
 
-// Manejo del modo de bienvenida
-exports.setWelcomeMode = (groupId, mode) => {
-  const welcomeModes = readJSON(WELCOME_MODE_GROUPS_FILE);
-  welcomeModes[groupId] = mode;
-  writeJSON(WELCOME_MODE_GROUPS_FILE, welcomeModes);
+exports.activateWelcomeGroup = (groupId) => {
+  const filename = NOT_WELCOME_GROUPS_FILE;
+
+  const notWelcomeGroups = readJSON(filename);
+
+  const index = notWelcomeGroups.indexOf(groupId);
+
+  if (index === -1) {
+    return;
+  }
+
+  notWelcomeGroups.splice(index, 1);
+
+  writeJSON(filename, notWelcomeGroups);
 };
 
-exports.getWelcomeMode = (groupId) => {
-  const welcomeModes = readJSON(WELCOME_MODE_GROUPS_FILE);
-  return welcomeModes[groupId] || "1"; // Por defecto, modo desactivado
+exports.deactivateWelcomeGroup = (groupId) => {
+  const filename = NOT_WELCOME_GROUPS_FILE;
+
+  const notWelcomeGroups = readJSON(filename);
+
+  if (!notWelcomeGroups.includes(groupId)) {
+    notWelcomeGroups.push(groupId);
+  }
+
+  writeJSON(filename, notWelcomeGroups);
+};
+
+exports.isActiveWelcomeGroup = (groupId) => {
+  const filename = NOT_WELCOME_GROUPS_FILE;
+
+  const notWelcomeGroups = readJSON(filename);
+
+  return !notWelcomeGroups.includes(groupId);
 };
 
 // Manejo del anti-link
