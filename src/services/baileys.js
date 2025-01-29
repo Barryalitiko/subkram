@@ -1,7 +1,7 @@
 const { getBuffer, getRandomName } = require("../utils");
 const fs = require("fs");
 const path = require("path");
-const { TEMP_DIR, ASSETS_DIR } = require("../config");
+const { TEMP_DIR, ASSETS_DIR } = require("../krampus");
 
 exports.getProfileImageData = async (socket, userJid) => {
   let profileImage = "";
@@ -28,4 +28,3 @@ exports.getProfileImageData = async (socket, userJid) => {
 
   return { buffer, profileImage, success };
 };
-
