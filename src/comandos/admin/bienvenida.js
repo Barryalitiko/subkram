@@ -49,7 +49,7 @@ const context =
     : "*Activada con foto*";
 
 await sendReply(
-  `La bienvenida ha sido *${context}*\n> Krampus OM bot`
+  `La bienvenida ha sido ${context}\n> Krampus OM bot`
 );
 },
 };
