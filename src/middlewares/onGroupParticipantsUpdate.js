@@ -1,10 +1,13 @@
 const fs = require("fs");
 const { getWelcomeMode } = require("../utils/database");
+const { onlyNumbers } = require("../utils");
 const { warningLog } = require("../utils/logger");
+const { getProfileImageData } = require("../services/baileys");
 
 exports.onGroupParticipantsUpdate = async ({ groupParticipantsUpdate, socket }) => {
   const { action, participants } = groupParticipantsUpdate;
   const groupId = groupParticipantsUpdate.remoteJid;
+  const userJid = participants[0];
 
   // Obtener el modo de bienvenida
   const welcomeMode = getWelcomeMode(groupId);
@@ -22,20 +25,19 @@ exports.onGroupParticipantsUpdate = async ({ groupParticipantsUpdate, socket }) 
       // Si el modo es 1 (con foto), obtenemos la imagen de perfil
       if (welcomeMode === "1") {
         try {
-          const profilePictureUrl = await socket.profilePictureUrl(participants[0], "image");
-          const response = await fetch(profilePictureUrl);
-          buffer = await response.buffer();
+          const { buffer: profileBuffer } = await getProfileImageData(socket, userJid);
+          buffer = profileBuffer;
         } catch {
           warningLog(
             "👻 𝙺𝚛𝚊𝚖𝚙𝚞𝚜.𝚋𝚘𝚝 👻 No se pudo obtener la foto de perfil, usando imagen predeterminada"
           );
-          buffer = null; // Puede manejarse un buffer predeterminado si es necesario
+          buffer = null; // Puedes manejar un buffer predeterminado si es necesario
         }
       }
 
       // Crear el mensaje de bienvenida
-      const welcomeMessage = ` ¡𝗕𝗶𝗲𝗻𝘃𝗲𝗻𝗶𝗱@ 𝗮𝗹 𝗴𝗿𝘂𝗽𝗼!
-@${participants[0].split("@")[0]}
+      const welcomeMessage = ` ¡𝗕𝗶𝗲𝗻𝗲𝗻𝗶𝗱@ 𝗮𝗹 𝗴𝗿𝘂𝗽𝗼!
+@${onlyNumbers(userJid)}
 𝘗𝘳𝘦𝘴𝘦𝘯𝘵𝘢𝘵𝘦 ᶜᵒⁿ 𝐟𝐨𝐭𝐨 y 𝐧𝐨𝐦𝐛𝐫𝐞 
 
 > Bot by Krampus OM
@@ -47,12 +49,12 @@ Oᴘᴇʀᴀᴄɪᴏɴ Mᴀʀsʜᴀʟʟ ༴༎𝙾𝙼༎
         await socket.sendMessage(groupId, {
           image: buffer,
           caption: welcomeMessage,
-          mentions: [participants[0]],
+          mentions: [userJid],
         });
       } else if (welcomeMode === "2") {
         await socket.sendMessage(groupId, {
           text: welcomeMessage,
-          mentions: [participants[0]],
+          mentions: [userJid],
         });
       }
     } catch (error) {
