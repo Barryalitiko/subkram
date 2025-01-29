@@ -93,6 +93,10 @@ exports.loadCommonFunctions = ({ socket, webMessage }) => {
   const sendSuccessReact = async () => {
     return await sendReact("✅");
   };
+  
+    const sendPuzzleReact = async () => {
+    return await sendReact("🧩");
+  };
 
   const sendMusicReact = async () => {
     return await sendReact("🎵");
@@ -243,6 +247,7 @@ exports.loadCommonFunctions = ({ socket, webMessage }) => {
     userJid,
     webMessage,
     sendReact,
+    sendPuzzleReact,
     sendImageFromFile,
     sendSuccessReact,
     sendMusicReact,
