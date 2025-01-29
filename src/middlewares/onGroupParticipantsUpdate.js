@@ -2,10 +2,10 @@ const fs = require("fs");
 const { onlyNumbers } = require("../utils");
 const { getProfileImageData } = require("../services/baileys");
 const { warningLog } = require("../utils/logger");
+const path = require("path");
 
 // Cargar el archivo JSON de configuración de bienvenida
-const welcomeConfigPath = "./assets/welcomeConfig.json";  // Ruta al archivo JSON
-
+const welcomeConfigPath = path.resolve(process.cwd(), "assets/welcomeConfig.json");
 // Función para obtener la configuración de bienvenida desde el archivo JSON
 const getWelcomeConfig = (groupId) => {
   try {
