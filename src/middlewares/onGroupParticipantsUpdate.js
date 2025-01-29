@@ -1,8 +1,8 @@
 const fs = require("fs");
 const { getWelcomeMode } = require("../utils/database");
 const { onlyNumbers } = require("../utils");
+const { getProfileImageData } = require("../services/baileys");  // Importar getProfileImageData
 const { warningLog } = require("../utils/logger");
-const { getProfileImageData } = require("../services/baileys");
 
 exports.onGroupParticipantsUpdate = async ({ groupParticipantsUpdate, socket }) => {
   const { action, participants } = groupParticipantsUpdate;
@@ -25,13 +25,13 @@ exports.onGroupParticipantsUpdate = async ({ groupParticipantsUpdate, socket }) 
       // Si el modo es 1 (con foto), obtenemos la imagen de perfil
       if (welcomeMode === "1") {
         try {
-          const { buffer: profileBuffer } = await getProfileImageData(socket, userJid);
-          buffer = profileBuffer;
+          const { buffer: profileImageBuffer, profileImage } = await getProfileImageData(socket, userJid);
+          buffer = profileImageBuffer;
         } catch {
           warningLog(
             "👻 𝙺𝚛𝚊𝚖𝚙𝚞𝚜.𝚋𝚘𝚝 👻 No se pudo obtener la foto de perfil, usando imagen predeterminada"
           );
-          buffer = null; // Puedes manejar un buffer predeterminado si es necesario
+          buffer = null; // Si no se puede obtener la foto, puedes asignar un buffer predeterminado
         }
       }
 
