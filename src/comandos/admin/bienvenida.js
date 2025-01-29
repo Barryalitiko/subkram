@@ -1,10 +1,22 @@
+const fs = require("fs");
 const { PREFIX } = require("../../krampus");
 const { InvalidParameterError } = require("../../errors/InvalidParameterError");
-const {
-  activateWelcomeGroup,
-  deactivateWelcomeGroup,
-  setWelcomeMode,
-} = require("../../utils/database");
+const welcomeConfigPath = "../../assets/welcomeConfig.json";  // Ruta al archivo JSON
+
+// Leer el archivo de configuración de bienvenida
+const readWelcomeConfig = () => {
+  try {
+    const data = fs.readFileSync(welcomeConfigPath);
+    return JSON.parse(data);
+  } catch (error) {
+    return {};  // Si hay un error, devolver un objeto vacío
+  }
+};
+
+// Guardar la configuración de bienvenida en el archivo JSON
+const writeWelcomeConfig = (config) => {
+  fs.writeFileSync(welcomeConfigPath, JSON.stringify(config, null, 2));
+};
 
 module.exports = {
   name: "welcome",
@@ -32,12 +44,22 @@ module.exports = {
       );
     }
 
+    // Leer la configuración actual
+    const welcomeConfig = readWelcomeConfig();
+
+    // Si la opción es 0, desactivamos la bienvenida para el grupo
     if (option === "0") {
-      deactivateWelcomeGroup(remoteJid);
+      delete welcomeConfig[remoteJid];  // Eliminar la entrada del grupo
     } else {
-      activateWelcomeGroup(remoteJid);
-      setWelcomeMode(remoteJid, option);
+      // Activamos la bienvenida y guardamos el modo de bienvenida (1 o 2)
+      welcomeConfig[remoteJid] = {
+        enabled: true,
+        mode: option,
+      };
     }
+
+    // Guardar la configuración actualizada
+    writeWelcomeConfig(welcomeConfig);
 
     await sendSuccessReact();
 
