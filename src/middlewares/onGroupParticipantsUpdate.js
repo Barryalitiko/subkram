@@ -1,16 +1,39 @@
 const fs = require("fs");
-const { getWelcomeMode } = require("../utils/database");
 const { onlyNumbers } = require("../utils");
-const { getProfileImageData } = require("../services/baileys");  // Importar getProfileImageData
+const { getProfileImageData } = require("../services/baileys");
 const { warningLog } = require("../utils/logger");
+
+// Cargar el archivo JSON de configuración de bienvenida
+const welcomeConfigPath = "./assets/welcomeConfig.json";  // Ruta al archivo JSON
+
+// Función para obtener la configuración de bienvenida desde el archivo JSON
+const getWelcomeConfig = (groupId) => {
+  try {
+    const data = fs.readFileSync(welcomeConfigPath, "utf-8");
+    const config = JSON.parse(data);
+
+    // Buscar la configuración del grupo
+    const groupConfig = config.find(item => item.groupId === groupId);
+    return groupConfig || null;  // Devuelve la configuración del grupo o null si no existe
+  } catch (error) {
+    warningLog("👻 𝙺𝚛𝚊𝚖𝚙𝚞𝚜.𝚋𝚘𝚝 👻 Error al leer el archivo de configuración de bienvenida", error);
+    return null;
+  }
+};
 
 exports.onGroupParticipantsUpdate = async ({ groupParticipantsUpdate, socket }) => {
   const { action, participants } = groupParticipantsUpdate;
   const groupId = groupParticipantsUpdate.remoteJid;
   const userJid = participants[0];
 
-  // Obtener el modo de bienvenida
-  const welcomeMode = getWelcomeMode(groupId);
+  // Obtener la configuración de bienvenida desde el archivo JSON
+  const welcomeConfig = getWelcomeConfig(groupId);
+
+  if (!welcomeConfig || !welcomeConfig.enabled) {
+    return; // Si la bienvenida está desactivada, no hacer nada
+  }
+
+  const welcomeMode = welcomeConfig.mode; // Obtener el modo de bienvenida del JSON
 
   // Si el modo de bienvenida es 0, está desactivado
   if (welcomeMode === "0") {
