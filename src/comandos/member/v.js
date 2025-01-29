@@ -42,7 +42,7 @@ module.exports = {
         return;
       }
 
-      await sendReply(`> Krampus Bot👻 procesando...`);
+      await sendReply(`ᴏᴘᴇʀᴀᴄɪᴏɴ ᴍᴀʀsʜᴀʟʟ\n> Krampus OM bot procesando...`);
 
       await sendReact("⏳", webMessage.key);
 
