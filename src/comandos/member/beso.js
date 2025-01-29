@@ -7,10 +7,10 @@ module.exports = {
   description: "Envía un audio como nota de voz.",
   commands: ["audio", "voz"],
   usage: `${PREFIX}audio`,
-  handle: async ({ socket, remoteJid, sendReply, isReply, replyJid }) => {
+  handle: async ({ socket, remoteJid, sendReply, webMessage }) => {
     try {
-      // Verificar si el comando se usó respondiendo a alguien
-      if (!isReply) {
+      // Verificar si el comando se usó respondiendo a un mensaje
+      if (!webMessage.contextInfo || !webMessage.contextInfo.quotedMessage) {
         return await sendReply("❌ Debes responder a un mensaje para enviar el audio.");
       }
 
@@ -27,7 +27,7 @@ module.exports = {
         audio: { url: audioPath },
         mimetype: "audio/mp4",
         ptt: true,
-      }, { quoted: replyJid });
+      }, { quoted: webMessage });
 
       // Reaccionar con 🎤 a la persona que usó el comando
       await socket.sendMessage(remoteJid, {
@@ -36,7 +36,7 @@ module.exports = {
           key: {
             remoteJid,
             fromMe: false,
-            id: replyJid
+            id: webMessage.key.id
           },
         },
       });
