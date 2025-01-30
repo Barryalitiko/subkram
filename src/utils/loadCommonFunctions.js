@@ -223,6 +223,17 @@ exports.loadCommonFunctions = ({ socket, webMessage }) => {
       { quoted: webMessage }
     );
   };
+  
+    const sendImageFromURL = async (url, caption = "") => {
+    return await socket.sendMessage(
+      remoteJid,
+      {
+        image: { url },
+        caption: caption ? `${BOT_EMOJI} ${caption}` : "",
+      },
+      { url, quoted: webMessage }
+    );
+  };
 
 
   return {
@@ -249,6 +260,7 @@ exports.loadCommonFunctions = ({ socket, webMessage }) => {
     sendReact,
     sendPuzzleReact,
     sendImageFromFile,
+    sendImageFromURL,
     sendSuccessReact,
     sendMusicReact,
     sendWarningReply,
