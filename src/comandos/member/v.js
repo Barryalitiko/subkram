@@ -54,17 +54,22 @@ module.exports = {
       }
 
       const videoUrl = video.url;
-      console.log(`Video encontrado: ${video.title}, URL: ${videoUrl}`);
+      const title = video.title;
+      const channelName = video.author.name;
+      const duration = video.timestamp; // Duración en formato de tiempo (ej. "3:30")
+      console.log(`Video encontrado: ${title}, URL: ${videoUrl}`);
 
       const videoPath = await downloadVideo(videoUrl);
 
       await sendReact("🎬", webMessage.key);
 
+      const videoCaption = `> Krampus OM bot\nTítulo: ${title}\nCanal: ${channelName}\nDuración: ${duration}`;
+
       await sendMessage({
         messageType: "video",
         url: videoPath,
         mimetype: "video/mp4",
-        caption: `> Krampus OM bot\n${video.title}`,
+        caption: videoCaption,
       });
 
       setTimeout(() => {
