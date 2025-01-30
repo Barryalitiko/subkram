@@ -7,7 +7,7 @@ const autoreactionsPath = path.resolve(process.cwd(), "assets/autoreactions.json
 module.exports = {
   name: "autoreactions",
   description: "Activa o desactiva las auto-reacciones en el grupo.",
-  commands: ["autoreactions", "autoreact"],
+  commands: ["autoreactions", "reaccion"],
   usage: `${PREFIX}autoreactions <on|off>`,
   handle: async ({ args, sendReply }) => {
     if (args.length < 1) {
