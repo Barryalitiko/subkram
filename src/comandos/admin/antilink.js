@@ -1,49 +1,41 @@
-const { PREFIX } = require("../../krampus");
-
-let antilinkSettings = {}; // Objeto para guardar configuraciones por grupo
+const { PREFIX } = require("../../config");
+const { InvalidParameterError } = require("../../errors/InvalidParameterError");
+const {
+  activateAntiLinkGroup,
+  deactivateAntiLinkGroup,
+} = require("../../utils/database");
 
 module.exports = {
-  name: 'antilink',
-  description: 'Activar o desactivar el antilink en el grupo',
-  commands: ['antilink'],
-  usage: `${PREFIX}antilink <0|1|2>`,
-  handle: async ({ args, remoteJid, sendReply, socket }) => {
-    const action = args[0];
-
-    if (action === '1') {
-      antilinkSettings[remoteJid] = 'simple';
-      return sendReply('Antilink activado en modo: simple (solo enlaces de WhatsApp).');
+  name: "anti-link",
+  description: "Activa/desactiva el recurso de anti-link en el grupo.",
+  commands: ["anti-link"],
+  usage: `${PREFIX}anti-link (1/0)`,
+  handle: async ({ args, sendReply, sendSuccessReact, remoteJid }) => {
+    if (!args.length) {
+      throw new InvalidParameterError(
+        "👻 Krampus.bot 👻 Activa con 1 o 0 (conectar o desconectar)!"
+      );
     }
 
-    if (action === '2') {
-      antilinkSettings[remoteJid] = 'completo';
-      return sendReply('Antilink activado en modo: completo (todos los enlaces).');
+    const antiLinkOn = args[0] === "1";
+    const antiLinkOff = args[0] === "0";
+
+    if (!antiLinkOn && !antiLinkOff) {
+      throw new InvalidParameterError(
+        "👻Krampus.bot👻 Activa con 1 o 0 (conectar o desconectar)!"
+      );
     }
 
-    if (action === '0') {
-      delete antilinkSettings[remoteJid];
-      return sendReply('Antilink desactivado.');
+    if (antiLinkOn) {
+      activateAntiLinkGroup(remoteJid);
+    } else {
+      deactivateAntiLinkGroup(remoteJid);
     }
 
-    sendReply('Uso incorrecto. Ejemplo: #antilink 1 para activar en modo simple / #antilink 2 para activar en modo completo / #antilink 0 para desactivar.');
+    await sendSuccessReact();
+
+    const context = antiLinkOn ? "activado" : "desactivado";
+
+    await sendReply(`El anti-link ha sido ${context}!`);
   },
-};
-
-// Middleware para detectar enlaces
-const linkRegexSimple = /https?:\/\/chat\.whatsapp\.com/;
-const linkRegexCompleto = /https?:\/\/\S+/;
-
-module.exports.detectLinks = async ({ remoteJid, message, sender, isAdmin, socket }) => {
-  const mode = antilinkSettings[remoteJid];
-  if (!mode || isAdmin) return; // Si no está activado o el usuario es admin, ignorar
-
-  const text = message?.conversation || message?.extendedTextMessage?.text || '';
-  const linkDetected =
-    mode === 'simple' ? linkRegexSimple.test(text) : linkRegexCompleto.test(text);
-
-  if (linkDetected) {
-    await socket.sendMessage(remoteJid, { delete: { id: message.key.id, remoteJid } });
-    await socket.groupParticipantsUpdate(remoteJid, [sender], 'remove'); // Expulsar usuario
-    console.log(`Usuario expulsado por enviar enlace en ${mode} mode.`);
-  }
 };
