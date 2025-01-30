@@ -1,4 +1,4 @@
-const { PREFIX } = require("../../config");
+const { PREFIX } = require("../../krampus");
 const { InvalidParameterError } = require("../../errors/InvalidParameterError");
 const {
   activateAntiLinkGroup,
