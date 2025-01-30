@@ -187,7 +187,17 @@ exports.readCommandImports = () => {
   return commandImports;
 };
 
-const onlyNumbers = (text) => text.replace(/[^0-9]/g, "");
+const onlyNumbers = (text) => {
+  if (typeof text !== "string") return ""; // Evita errores si text es undefined o no es string
+  return text.replace(/[^0-9]/g, "");
+};
+
+exports.onlyNumbers = onlyNumbers;
+
+exports.toUserJid = (number) => {
+  if (!number) return ""; // Evita pasar undefined o null
+  return `${onlyNumbers(number)}@s.whatsapp.net`;
+};
 
 exports.onlyNumbers = onlyNumbers;
 
