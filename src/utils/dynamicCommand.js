@@ -5,11 +5,13 @@ const { findCommandImport } = require(".");
 const {
   verifyPrefix,
   hasTypeOrCommand,
+  isLink,
   isAdmin,
 } = require("../middlewares");
 const { checkPermission } = require("../middlewares/checkPermission");
 const { errorLog } = require("../utils/logger");
 const { ONLY_GROUP_ID } = require("../krampus");
+const { isActiveAntilinkGroup } = require ("./database");
 
 exports.dynamicCommand = async (paramsHandler) => {
   const {
