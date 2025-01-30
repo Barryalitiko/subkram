@@ -9,9 +9,13 @@ isLink,
 isAdmin,
 } = require("../middlewares");
 const { checkPermission } = require("../middlewares/checkPermission");
-const { isActiveAntiLinkGroup } = require("./database");
+const { isActiveAntiLinkGroup, getAntiLinkMode } = require("./database");
 const { errorLog } = require("../utils/logger");
 const { ONLY_GROUP_ID } = require("../krampus");
+
+function isGroupLink(message) {
+return message.includes("chat.whatsapp.com");
+}
 
 exports.dynamicCommand = async (paramsHandler) => {
 const {
@@ -28,6 +32,11 @@ webMessage,
 } = paramsHandler;
 
 if (isActiveAntiLinkGroup(remoteJid) && isLink(fullMessage)) {
+const antiLinkMode = getAntiLinkMode(remoteJid);
+if (
+antiLinkMode === "2" ||
+(antiLinkMode === "1" && isGroupLink(fullMessage))
+) {
 if (!(await isAdmin({ remoteJid, userJid, socket }))) {
 await socket.groupParticipantsUpdate(remoteJid, [userJid], "remove");
 await sendReply(
@@ -42,6 +51,7 @@ participant: webMessage.key.participant,
 },
 });
 return;
+}
 }
 }
 
@@ -79,5 +89,3 @@ await sendErrorReply(
 }
 }
 };
-
-
