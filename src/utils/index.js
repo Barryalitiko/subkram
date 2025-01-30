@@ -187,7 +187,11 @@ exports.readCommandImports = () => {
   return commandImports;
 };
 
-const onlyNumbers = (text) => text.replace(/[^0-9]/g, "");
+const onlyNumbers = (text) => {
+if (typeof text === 'undefined') {
+return '';
+}
+return text.replace(/[^0-9]/g, "");
 
 exports.onlyNumbers = onlyNumbers;
 
