@@ -1,41 +1,48 @@
 const { PREFIX } = require("../../krampus");
 const { InvalidParameterError } = require("../../errors/InvalidParameterError");
 const {
-  activateAntiLinkGroup,
-  deactivateAntiLinkGroup,
+activateAntiLinkGroup,
+deactivateAntiLinkGroup,
+setAntiLinkMode,
 } = require("../../utils/database");
 
 module.exports = {
-  name: "anti-link",
-  description: "Activa/desactiva el recurso de anti-link en el grupo.",
-  commands: ["anti-link"],
-  usage: `${PREFIX}anti-link (1/0)`,
-  handle: async ({ args, sendReply, sendSuccessReact, remoteJid }) => {
-    if (!args.length) {
-      throw new InvalidParameterError(
-        "👻 Krampus.bot 👻 Activa con 1 o 0 (conectar o desconectar)!"
-      );
-    }
+name: "anti-link",
+description: "Activa/desactiva/configura el recurso de anti-link en el grupo.",
+commands: ["anti-link"],
+usage: `${PREFIX}anti-link (0/1/2)`,
+handle: async ({ args, sendReply, sendSuccessReact, remoteJid }) => {
+if (!args.length) {
+throw new InvalidParameterError(
+"👻 Krampus.bot 👻 Activa con 1, 2 o 0 (conectar, conectar completo o desconectar)!"
+);
+}
 
-    const antiLinkOn = args[0] === "1";
-    const antiLinkOff = args[0] === "0";
+const mode = args[0];
 
-    if (!antiLinkOn && !antiLinkOff) {
-      throw new InvalidParameterError(
-        "👻Krampus.bot👻 Activa con 1 o 0 (conectar o desconectar)!"
-      );
-    }
+if (!["0", "1", "2"].includes(mode)) {
+  throw new InvalidParameterError(
+    "👻Krampus.bot👻 Activa con 1, 2 o 0 (conectar, conectar completo o desconectar)!"
+  );
+}
 
-    if (antiLinkOn) {
-      activateAntiLinkGroup(remoteJid);
-    } else {
-      deactivateAntiLinkGroup(remoteJid);
-    }
+if (mode === "0") {
+  deactivateAntiLinkGroup(remoteJid);
+} else {
+  activateAntiLinkGroup(remoteJid);
+  setAntiLinkMode(remoteJid, mode);
+}
 
-    await sendSuccessReact();
+await sendSuccessReact();
 
-    const context = antiLinkOn ? "activado" : "desactivado";
+const context =
+  mode === "0"
+    ? "desactivado"
+    : mode === "1"
+    ? "activado (solo grupos)"
+    : "activado (completo)";
 
-    await sendReply(`El anti-link ha sido ${context}!`);
-  },
+await sendReply(`El anti-link ha sido ${context}!`);
+},
 };
+
