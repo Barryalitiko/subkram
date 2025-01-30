@@ -37,10 +37,10 @@ await sendSuccessReact();
 
 const context =
   mode === "0"
-    ? "desactivado"
+    ? "desactivado\n> Krampus OM bot"
     : mode === "1"
-    ? "activado (solo grupos)"
-    : "activado (completo)";
+    ? "activado (solo grupos)\n> Modo 1"
+    : "activado (completo)\n> Modo 2";
 
 await sendReply(`El anti-link ha sido ${context}!`);
 },
