@@ -3,7 +3,7 @@ const { PREFIX } = require("../../krampus");
 module.exports = {
   name: "cambiar-enlace",
   description: "Cambiar el enlace de invitación de un grupo",
-  commands: [`${PREFIX}cambiar-enlace`], // El comando que usará el usuario
+  commands: [`${PREFIX}cambiarenlace`], // El comando que usará el usuario
   usage: `${PREFIX}cambiar-enlace`,
   cooldown: 180, // 3 minutos de cooldown
   handle: async ({ sendReply, sendReact, socket, remoteJid }) => {
