@@ -79,39 +79,38 @@ return welcomeGroups[groupId] && welcomeGroups[groupId].enabled;
 };
 
 // Manejo del anti-link
-exports.activateAntiLinkGroup = (groupId) => {
-  const filename = ANTI_LINK_GROUPS_FILE;
-
-  const antiLinkGroups = readJSON(filename);
-
-  if (!antiLinkGroups.includes(groupId)) {
-    antiLinkGroups.push(groupId);
-  }
-
-  writeJSON(filename, antiLinkGroups);
+exports.activateAntiLinkGroup = (groupId, mode = "1") => {
+const filename = ANTI_LINK_GROUPS_FILE;
+const antiLinkGroups = readJSON(filename);
+antiLinkGroups[groupId] = { enabled: true, mode };
+writeJSON(filename, antiLinkGroups);
 };
 
 exports.deactivateAntiLinkGroup = (groupId) => {
-  const filename = ANTI_LINK_GROUPS_FILE;
+const filename = ANTI_LINK_GROUPS_FILE;
+const antiLinkGroups = readJSON(filename);
+delete antiLinkGroups[groupId];
+writeJSON(filename, antiLinkGroups);
+};
 
-  const antiLinkGroups = readJSON(filename);
+exports.setAntiLinkMode = (groupId, mode) => {
+const filename = ANTI_LINK_GROUPS_FILE;
+const antiLinkGroups = readJSON(filename);
+if (antiLinkGroups[groupId]) {
+antiLinkGroups[groupId].mode = mode;
+writeJSON(filename, antiLinkGroups);
+}
+};
 
-  const index = antiLinkGroups.indexOf(groupId);
-
-  if (index === -1) {
-    return;
-  }
-
-  antiLinkGroups.splice(index, 1);
-
-  writeJSON(filename, antiLinkGroups);
+exports.getAntiLinkMode = (groupId) => {
+const filename = ANTI_LINK_GROUPS_FILE;
+const antiLinkGroups = readJSON(filename);
+return antiLinkGroups[groupId] ? antiLinkGroups[groupId].mode : null;
 };
 
 exports.isActiveAntiLinkGroup = (groupId) => {
-  const filename = ANTI_LINK_GROUPS_FILE;
-
-  const antiLinkGroups = readJSON(filename);
-
-  return antiLinkGroups.includes(groupId);
+const filename = ANTI_LINK_GROUPS_FILE;
+const antiLinkGroups = readJSON(filename);
+return antiLinkGroups[groupId] && antiLinkGroups[groupId].enabled;
 };
 
