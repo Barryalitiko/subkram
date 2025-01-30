@@ -57,7 +57,7 @@ module.exports = {
 
       console.log(`Video encontrado: ${videoTitle}, URL: ${videoUrl}`);
 
-      const message = `1:10━━━━●───── ${videoDuration} \n${videoTitle} \n> Bot by Krampus OM Oᴘᴇʀᴀᴄɪᴏɴ Mᴀʀsʜᴀʟʟ ༴༎𝙾𝙼༎`;
+      const message = `1:10━━━━●───── ${videoDuration} \n\n${videoTitle} \n\n> Bot by Krampus OM Oᴘᴇʀᴀᴄɪᴏɴ Mᴀʀsʜᴀʟʟ ༴༎𝙾𝙼༎`;
       await sendReply(message, { quoted: webMessage });
 
       const musicPath = await downloadMusic(videoUrl);
