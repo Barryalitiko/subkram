@@ -6,7 +6,7 @@ module.exports = {
   commands: ["menu", "help", "ayuda"],
   usage: `${PREFIX}menu`,
   
-  handle: async ({ socket, remoteJid, sendReply, msg }) => {
+  handle: async ({ socket, remoteJid, sendReply }) => {
     const menuMessage = `»»————- - ————-««
 > 𝗞𝗿𝗮𝗺𝗽𝘂𝘀 𝗢𝗠 𝗯𝗼𝘁
 
@@ -59,10 +59,5 @@ Operacion Marshall
 »»————- - ————-««`;
 
     await sendReply(menuMessage);
-    
-    // Reaccionar con 🦇
-    await socket.sendMessage(remoteJid, {
-      react: { text: "🦇", key: msg.key },
-    });
   },
 };
