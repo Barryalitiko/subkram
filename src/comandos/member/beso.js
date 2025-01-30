@@ -2,47 +2,58 @@ const { PREFIX } = require("../../krampus");
 const fs = require("fs");
 const path = require("path");
 
+const statusFilePath = path.resolve(process.cwd(), "assets/status.json");
+
+const readStatus = () => {
+  try {
+    const data = fs.readFileSync(statusFilePath, "utf-8");
+    return JSON.parse(data);
+  } catch (error) {
+    return { enabled: false }; // Si no existe el archivo, devolvemos deshabilitado
+  }
+};
+
 module.exports = {
-  name: "audio",
-  description: "Envía un audio como nota de voz.",
-  commands: ["audio", "voz"],
-  usage: `${PREFIX}audio`,
-  handle: async ({ socket, remoteJid, sendReply, webMessage }) => {
+  name: "kiss",
+  description: "Enviar un beso a alguien. Debes etiquetar o responder a un usuario.",
+  commands: ["beso"],
+  usage: `${PREFIX}kiss @usuario o responde a un mensaje`,
+  handle: async ({ socket, remoteJid, sendReply, sendReact, args, isReply, replyJid, userJid }) => {
     try {
-      // Verificar si el comando se usó respondiendo a un mensaje
-      if (!webMessage.contextInfo || !webMessage.contextInfo.quotedMessage) {
-        return await sendReply("❌ Debes responder a un mensaje para enviar el audio.");
+      const currentStatus = readStatus();
+      if (!currentStatus.enabled) {
+        await sendReply("❌ El sistema de comandos está apagado. Por favor, enciéndelo para usar este comando.");
+        return;
       }
 
-      // Ruta del archivo de audio
-      const audioPath = path.join(__dirname, "../../assets/audio/prueba.mp3");
+      let targetJid;
 
-      // Verificar si el archivo existe
-      if (!fs.existsSync(audioPath)) {
-        return await sendReply("❌ El archivo de audio no se encuentra en la ruta especificada.");
+      // Si el comando es una respuesta a un mensaje, obtenemos el JID del destinatario
+      if (isReply) {
+        targetJid = replyJid;
+      }
+      // Si el comando incluye una etiqueta, obtenemos el JID de la etiqueta
+      else if (args && args.length > 0) {
+        targetJid = args[0].replace("@", "") + "@s.whatsapp.net";
       }
 
-      // Enviar el audio como nota de voz en respuesta al mensaje citado
-      await socket.sendMessage(remoteJid, {
-        audio: { url: audioPath },
-        mimetype: "audio/mp4",
-        ptt: true,
-      }, { quoted: webMessage });
+      // Si no hay destinatario, enviamos un mensaje de error
+      if (!targetJid) {
+        await sendReply("❌ Debes etiquetar o responder a un usuario para enviarle un beso.");
+        return;
+      }
 
-      // Reaccionar con 🎤 a la persona que usó el comando
+      // Enviar el beso
+      await sendReact("💋", remoteJid);
       await socket.sendMessage(remoteJid, {
-        react: {
-          text: "🎤",
-          key: {
-            remoteJid,
-            fromMe: false,
-            id: webMessage.key.id
-          },
-        },
+        video: fs.readFileSync("assets/sx/beso.mp4"),
+        caption: `♥️♡+:｡.｡ ❤️ ｡.｡:+♡♥️\n> ¡𝙀𝙇 𝘼𝙈𝙊𝙍 𝙏𝙍𝙄𝙐𝙉𝙁𝙊!\n@${userJid.split("@")[0]} 𝐡𝐚 𝐛𝐞𝐬𝐚𝐝𝐨 𝐚 @${targetJid.split("@")[0]}`,
+        gifPlayback: true,
+        mentions: [userJid, targetJid]
       });
     } catch (error) {
-      console.error("Error al enviar el audio:", error);
-      await sendReply("❌ Hubo un error al enviar el audio.");
+      console.error("Error en el comando kiss:", error);
+      await sendReply("❌ Ocurrió un error al procesar el comando.");
     }
   }
 };
