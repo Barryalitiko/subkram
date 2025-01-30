@@ -9,7 +9,7 @@ setAntiLinkMode,
 module.exports = {
 name: "anti-link",
 description: "Activa/desactiva/configura el recurso de anti-link en el grupo.",
-commands: ["anti-link"],
+commands: ["antilink"],
 usage: `${PREFIX}anti-link (0/1/2)`,
 handle: async ({ args, sendReply, sendSuccessReact, remoteJid }) => {
 if (!args.length) {
