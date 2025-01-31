@@ -13,11 +13,9 @@
     "@bochilteam/scraper": "^4.2.4",
     "fluent-ffmpeg": "^2.1.2",
     "hercai": "^12.4.0",
-    "helmet": "^8.0.0",
     "pino": "^9.6.0",
     "node-fetch": "^3.2.10",
     "node-cache": "^5.1.2",
-    "wa-sticker-formatter": "^4.4.4",
-    "play-dl": "^1.9.7"
+    "wa-sticker-formatter": "^4.4.4"
   }
 }
