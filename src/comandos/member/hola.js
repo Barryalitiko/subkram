@@ -5,23 +5,18 @@ module.exports = {
   description: "prueba",
   commands: ["hola"],
   usage: `${PREFIX}hola`,
-  handle: async ({ socket, remoteJid }) => {
+  handle: async ({ socket, remoteJid, sendReplyWithButton }) => {
     const buttons = [
       {
-        index: 0,
-        urlButton: {
+        buttonId: "ver_canal",
+        buttonText: {
           displayText: "Ver canal",
-          url: "https://whatsapp.com/channel/0029Vap2vVA3QxRxY4ZuD00k",
         },
+        type: 1,
+        url: "https://whatsapp.com/channel/0029Vap2vVA3QxRxY4ZuD00k",
       },
     ];
 
-    const buttonMessage = {
-      text: "Hola",
-      buttons: buttons,
-      headerType: 1,
-    };
-
-    await socket.sendMessage(remoteJid, buttonMessage);
+    await sendReplyWithButton("Hola", buttons);
   },
 };
