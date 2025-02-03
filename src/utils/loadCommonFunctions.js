@@ -234,6 +234,21 @@ exports.loadCommonFunctions = ({ socket, webMessage }) => {
       { url, quoted: webMessage }
     );
   };
+  
+  const sendReplyWithButton = async (text, buttons) => {
+  const buttonMessage = {
+    text: `${BOT_EMOJI} ${text}`,
+    footer: "",
+    buttons: buttons.map((button) => ({
+      buttonId: button.buttonId,
+      buttonText: button.buttonText,
+      type: button.type,
+    })),
+    headerType: 1,
+  };
+
+  return await socket.sendMessage(remoteJid, buttonMessage, { quoted: webMessage });
+};
 
 
   return {
@@ -276,5 +291,6 @@ exports.loadCommonFunctions = ({ socket, webMessage }) => {
     sendStickerFromURL,
     sendMessage,
     sendVideoFromFile,
+    sendReplyWithButton,
   };
 };
