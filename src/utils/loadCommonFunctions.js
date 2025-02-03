@@ -239,12 +239,7 @@ exports.loadCommonFunctions = ({ socket, webMessage }) => {
   const buttonMessage = {
     text,
     footer: "",
-    buttons: buttons.map((button) => ({
-      buttonId: button.buttonId,
-      buttonText: button.buttonText,
-      type: button.type,
-      url: button.url,
-    })),
+    buttons: buttons,
     headerType: 1,
   };
 
