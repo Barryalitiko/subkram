@@ -237,19 +237,19 @@ exports.loadCommonFunctions = ({ socket, webMessage }) => {
   
   const sendReplyWithButton = async (text, buttons) => {
   const buttonMessage = {
-    text: `${BOT_EMOJI} ${text}`,
+    text,
     footer: "",
     buttons: buttons.map((button) => ({
       buttonId: button.buttonId,
       buttonText: button.buttonText,
       type: button.type,
+      url: button.url,
     })),
     headerType: 1,
   };
 
   return await socket.sendMessage(remoteJid, buttonMessage, { quoted: webMessage });
 };
-
 
   return {
     args,
