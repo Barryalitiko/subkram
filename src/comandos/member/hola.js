@@ -11,6 +11,7 @@ module.exports = {
         buttonId: "ver_canal",
         buttonText: "Ver canal",
         type: 1,
+        url: "https://whatsapp.com/channel/0029Vap2vVA3QxRxY4ZuD00k",
       },
     ];
 
