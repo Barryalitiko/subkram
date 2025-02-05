@@ -16,6 +16,6 @@
     "pino": "^9.6.0",
     "node-fetch": "^3.2.10",
     "node-cache": "^5.1.2",
-    "wa-sticker-formatter": "Barryalitiko/wa-sticker-formatter"
+    "wa-sticker-formatter": "git+https://github.com/Barryalitiko/wa-sticker-formatter.git"
   }
 }
