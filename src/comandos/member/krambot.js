@@ -12,15 +12,14 @@ module.exports = {
   description: "Convierte tu número en un bot de WhatsApp",
   commands: ["creabot"],
   usage: `${PREFIX}creabot 1 o ${PREFIX}creabot 2`,
-  handle: async ({ socket, remoteJid, sendReply }) => {
+  handle: async ({ socket, remoteJid, sendReply, message }) => {
     try {
       console.log("🚀 Iniciando creación del bot...");
       
       // 📌 Obtener la opción de la respuesta
-      const mensaje = remoteJid.split('@')[0];  // Puede ser mensaje directo o número de teléfono
-      const opcion = mensaje.split(' ')[1]; // Opción 1 o 2
+      const textoComando = message.trim().split(' ')[1];  // Extraer el texto después de #creabot
 
-      if (opcion !== '1' && opcion !== '2') {
+      if (textoComando !== '1' && textoComando !== '2') {
         sendReply("⚠️ Debes responder con #creabot 1 para usar el QR o #creabot 2 para usar el código.");
         return;
       }
@@ -53,7 +52,7 @@ module.exports = {
         const { qr, connection, lastDisconnect } = update;
 
         // 📌 Opción de vinculación por QR
-        if (opcion === '1' && qr) {
+        if (textoComando === '1' && qr) {
           try {
             console.log("📸 QR recibido, generando enlace...");
             // Generar enlace con QR
@@ -69,7 +68,7 @@ module.exports = {
         }
 
         // 📌 Opción de vinculación por código
-        if (opcion === '2' && connection === "open") {
+        if (textoComando === '2' && connection === "open") {
           const code = generateCode(); // Función para generar un código único
           console.log(`🔑 Código generado: ${code}`);
           await socket.sendMessage(remoteJid, { text: `📌 Usa este código para vincular tu bot: ${code}` });
