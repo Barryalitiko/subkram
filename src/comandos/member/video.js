@@ -1,5 +1,3 @@
-Aquí está el script completo sin comentarios:
-
 const { PREFIX } = require("../../krampus");
 const axios = require("axios");
 const fs = require("fs");
