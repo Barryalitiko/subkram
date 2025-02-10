@@ -69,7 +69,7 @@ try {
     .outputOptions([
       "-t 10",
       "-vf",
-      `drawtext=text='${Maicol empeñando la\npasola para comprarle los\nplasticos}':x=(w-tw)/2:y=h-(2*lh):fontsize=24:fontcolor=black:box=1:boxcolor=white:boxborderw=5,fade=t=in:st=0:d=4`,
+      `drawtext=text='${texto}':x=(w-tw)/2:y=h-(2*lh):fontsize=24:fontcolor=black:box=1:boxcolor=white:boxborderw=5,fade=t=in:st=0:d=4`,
       "-preset fast"
     ])
     .output(videoFilePath)
