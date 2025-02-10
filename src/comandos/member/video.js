@@ -36,8 +36,14 @@ module.exports = {
         return;
       }
 
+      // Crear la carpeta temp si no existe
+      const tempFolder = path.resolve(__dirname, "temp");
+      if (!fs.existsSync(tempFolder)) {
+        fs.mkdirSync(tempFolder);
+      }
+
       // Descargamos la imagen
-      const imageFilePath = path.resolve(__dirname, "temp", `${userJid}_profile.jpg`);
+      const imageFilePath = path.resolve(tempFolder, `${userJid}_profile.jpg`);
       const response = await axios({ url: profilePicUrl, responseType: "arraybuffer" });
       fs.writeFileSync(imageFilePath, response.data);
 
@@ -45,7 +51,7 @@ module.exports = {
       const audioFilePath = path.resolve(__dirname, "assets", "audio", "audio.mp3");
 
       // Generar el video usando ffmpeg
-      const videoFilePath = path.resolve(__dirname, "temp", `${userJid}_video.mp4`);
+      const videoFilePath = path.resolve(tempFolder, `${userJid}_video.mp4`);
 
       ffmpeg()
         .input(imageFilePath)
