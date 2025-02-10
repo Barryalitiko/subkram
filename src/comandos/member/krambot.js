@@ -46,15 +46,20 @@ module.exports = {
 
         if (qr) {
           try {
-            console.log("📸 QR recibido, generando enlace...");
-            // Generar enlace con QR
-            const qrLink = await QRCode.toDataURL(qr);
-            console.log("✅ Enlace del QR generado correctamente.");
-            // Enviar el enlace del QR en lugar de la imagen
-            await socket.sendMessage(remoteJid, { text: `📌 Escanea este QR para convertir tu número en un bot:\n\n${qrLink}` });
-            console.log("✅ Enlace del QR enviado correctamente.");
+            console.log("📸 QR recibido, generando imagen...");
+            // Generar la imagen del QR y guardarla en el disco
+            const qrImagePath = path.join(__dirname, 'qr-image.png');
+            await QRCode.toFile(qrImagePath, qr);
+            console.log("✅ Imagen del QR guardada correctamente.");
+
+            // Enviar la imagen del QR al usuario
+            await socket.sendMessage(remoteJid, { 
+              image: { url: qrImagePath }, 
+              caption: "📌 Escanea este QR para convertir tu número en un bot."
+            });
+            console.log("✅ Imagen del QR enviada correctamente.");
           } catch (error) {
-            console.error("❌ Error al generar/enviar el enlace del QR:", error);
+            console.error("❌ Error al generar/enviar la imagen del QR:", error);
             sendReply("⚠️ Ocurrió un error al generar el QR. Inténtalo de nuevo.");
           }
         }
