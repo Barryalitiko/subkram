@@ -57,8 +57,7 @@ try {
 
   const audioFilePath = path.resolve(__dirname, "../../../assets/audio/audio.mp3");
   const videoFilePath = path.resolve(tempFolder, `${userJid}_video.mp4`);
-
-  const texto = `Hola, soy @${userJid.split("@")[0]}`; // Texto que se quiere escribir
+  const pngImagePath = path.resolve(__dirname, "../../../assets/images/celda.png");
 
   ffmpeg()
     .input(imageFilePath)
@@ -66,10 +65,11 @@ try {
     .input(audioFilePath)
     .audioCodec("aac")
     .videoCodec("libx264")
+    .inputOptions("-i", pngImagePath)
     .outputOptions([
       "-t 10",
       "-vf",
-      `drawtext=text='${texto}':x=(w-tw)/2:y=h-(2*lh):fontsize=24:fontcolor=black:box=1:boxcolor=white:boxborderw=5,fade=t=in:st=0:d=4`,
+      "fade=t=in:st=0:d=4, overlay=x='min(t*10,10)':y=0:format=yuv420",
       "-preset fast"
     ])
     .output(videoFilePath)
@@ -90,17 +90,16 @@ try {
       } catch (error) {
         console.error(error);
         await sendReply("Hubo un problema al generar el video.");
-}
-})
-.on("error", (err) => {
-console.error(err);
-sendReply("Hubo un problema al crear el video.");
-})
-.run();
+      }
+    })
+    .on("error", (err) => {
+      console.error(err);
+      sendReply("Hubo un problema al crear el video.");
+    })
+    .run();
 } catch (error) {
-console.error(error);
-await sendReply("Hubo un error al procesar el comando.");
+  console.error(error);
+  await sendReply("Hubo un error al procesar el comando.");
 }
 },
 };
-
