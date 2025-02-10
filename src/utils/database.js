@@ -7,6 +7,7 @@ const INACTIVE_GROUPS_FILE = "inactive-groups";
 const ANTI_LINK_GROUPS_FILE = "anti-link-groups";
 const WELCOME_GROUPS_FILE = "welcome-groups";
 const GOODBYE_GROUPS_FILE = "goodbye-groups"; // Archivo para gestionar la despedida
+const SPAM_DETECTION_FILE = "spam-detection";
 
 // Crear las carpetas necesarias si no existen
 function createIfNotExists(fullPath) {
@@ -161,4 +162,22 @@ exports.isActiveAntiLinkGroup = (groupId) => {
     const filename = ANTI_LINK_GROUPS_FILE;
     const antiLinkGroups = readJSON(filename);
     return antiLinkGroups[groupId] && antiLinkGroups[groupId].enabled;
+};
+
+// Manejo de la detección de spam
+exports.activateSpamDetection = (groupId) => {
+    const spamDetection = readJSON(SPAM_DETECTION_FILE);
+    spamDetection[groupId] = true;
+    writeJSON(SPAM_DETECTION_FILE, spamDetection);
+};
+
+exports.deactivateSpamDetection = (groupId) => {
+    const spamDetection = readJSON(SPAM_DETECTION_FILE);
+    delete spamDetection[groupId];
+    writeJSON(SPAM_DETECTION_FILE, spamDetection);
+};
+
+exports.isSpamDetectionActive = (groupId) => {
+    const spamDetection = readJSON(SPAM_DETECTION_FILE);
+    return !!spamDetection[groupId];
 };
