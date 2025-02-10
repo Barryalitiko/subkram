@@ -1,3 +1,5 @@
+Aquí está el script completo sin comentarios:
+
 const { PREFIX } = require("../../krampus");
 const axios = require("axios");
 const fs = require("fs");
@@ -56,14 +58,10 @@ try {
     .output(videoFilePath)
     .on("end", async () => {
       try {
-        if (!fs.existsSync(videoFilePath)) {
-          console.error("Error al crear el video: archivo no existe");
-          await sendReply("Hubo un problema al crear el video.");
-          return;
-        }
-
         await socket.sendMessage(remoteJid, {
-          video: fs.createReadStream(videoFilePath),
+          video: {
+            url: videoFilePath,
+          },
           caption: `Aquí está tu mini video, @${userJid.split("@")[0]}`,
           mentions: [userJid],
         });
