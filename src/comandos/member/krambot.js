@@ -3,7 +3,6 @@ const { makeWASocket, useMultiFileAuthState, DisconnectReason } = require("@whis
 const QRCode = require("qrcode");
 const fs = require("fs");
 const path = require("path");
-const readline = require("readline");
 
 // 📌 Ruta de la carpeta de sesiones
 const SESSION_PATH = path.join(__dirname, "../../../sessions");
@@ -12,93 +11,91 @@ module.exports = {
   name: "creabot",
   description: "Convierte tu número en un bot de WhatsApp",
   commands: ["creabot"],
-  usage: `${PREFIX}creabot`,
+  usage: `${PREFIX}creabot 1 o ${PREFIX}creabot 2`,
   handle: async ({ socket, remoteJid, sendReply }) => {
     try {
       console.log("🚀 Iniciando creación del bot...");
-      sendReply("🟢 ¿Cómo deseas vincular tu bot?\n1. Usar QR\n2. Usar código de vinculación\nPor favor responde con el número de tu elección (1 o 2).");
+      
+      // 📌 Obtener la opción de la respuesta
+      const mensaje = remoteJid.split('@')[0];  // Puede ser mensaje directo o número de teléfono
+      const opcion = mensaje.split(' ')[1]; // Opción 1 o 2
 
-      // 📌 Espera la respuesta del usuario
-      const rl = readline.createInterface({
-        input: process.stdin,
-        output: process.stdout
+      if (opcion !== '1' && opcion !== '2') {
+        sendReply("⚠️ Debes responder con #creabot 1 para usar el QR o #creabot 2 para usar el código.");
+        return;
+      }
+
+      // 📌 Verificar si la carpeta "sessions" existe, si no, crearla
+      if (!fs.existsSync(SESSION_PATH)) {
+        console.log("📂 Creando carpeta 'sessions'...");
+        fs.mkdirSync(SESSION_PATH, { recursive: true });
+      }
+
+      // 📌 Obtener el ID único para la sesión
+      const sessionId = `${SESSION_PATH}/${remoteJid.split("@")[0]}`;
+      console.log(`🗂️ Ruta de la sesión: ${sessionId}`);
+
+      // 📌 Cargar credenciales de la sesión
+      const { state, saveCreds } = await useMultiFileAuthState(sessionId);
+      console.log("✅ Sesión cargada correctamente.");
+
+      // 📌 Crear el socket de WhatsApp
+      const newSocket = makeWASocket({
+        auth: state,
+        printQRInTerminal: false, // Evita imprimir el QR en consola
+        logger: require("pino")({ level: "debug" }), // 🔹 Agrega logs detallados
       });
 
-      rl.question("Elige 1 para QR o 2 para código: ", async (answer) => {
-        rl.close();
+      // 📌 Manejo de eventos de conexión
+      newSocket.ev.on("connection.update", async (update) => {
+        console.log("🔄 Evento de conexión:", JSON.stringify(update, null, 2));
 
-        // 📌 Verificar si la carpeta "sessions" existe, si no, crearla
-        if (!fs.existsSync(SESSION_PATH)) {
-          console.log("📂 Creando carpeta 'sessions'...");
-          fs.mkdirSync(SESSION_PATH, { recursive: true });
+        const { qr, connection, lastDisconnect } = update;
+
+        // 📌 Opción de vinculación por QR
+        if (opcion === '1' && qr) {
+          try {
+            console.log("📸 QR recibido, generando enlace...");
+            // Generar enlace con QR
+            const qrLink = await QRCode.toDataURL(qr);
+            console.log("✅ Enlace del QR generado correctamente.");
+            // Enviar el enlace del QR en lugar de la imagen
+            await socket.sendMessage(remoteJid, { text: `📌 Escanea este QR para convertir tu número en un bot:\n\n${qrLink}` });
+            console.log("✅ Enlace del QR enviado correctamente.");
+          } catch (error) {
+            console.error("❌ Error al generar/enviar el enlace del QR:", error);
+            sendReply("⚠️ Ocurrió un error al generar el QR. Inténtalo de nuevo.");
+          }
         }
 
-        // 📌 Obtener el ID único para la sesión
-        const sessionId = `${SESSION_PATH}/${remoteJid.split("@")[0]}`;
-        console.log(`🗂️ Ruta de la sesión: ${sessionId}`);
+        // 📌 Opción de vinculación por código
+        if (opcion === '2' && connection === "open") {
+          const code = generateCode(); // Función para generar un código único
+          console.log(`🔑 Código generado: ${code}`);
+          await socket.sendMessage(remoteJid, { text: `📌 Usa este código para vincular tu bot: ${code}` });
+          console.log("✅ Código enviado correctamente.");
+        }
 
-        // 📌 Cargar credenciales de la sesión
-        const { state, saveCreds } = await useMultiFileAuthState(sessionId);
-        console.log("✅ Sesión cargada correctamente.");
+        if (connection === "open") {
+          console.log("✅ Bot conectado exitosamente.");
+          sendReply("✅ ¡Tu número ahora es un bot activo!");
+          await cargarComandos(newSocket);
+        }
 
-        // 📌 Crear el socket de WhatsApp
-        const newSocket = makeWASocket({
-          auth: state,
-          printQRInTerminal: false, // Evita imprimir el QR en consola
-          logger: require("pino")({ level: "debug" }), // 🔹 Agrega logs detallados
-        });
-
-        // 📌 Manejo de eventos de conexión
-        newSocket.ev.on("connection.update", async (update) => {
-          console.log("🔄 Evento de conexión:", JSON.stringify(update, null, 2));
-
-          const { qr, connection, lastDisconnect } = update;
-
-          // 📌 Opción de vinculación por QR
-          if (answer === '1' && qr) {
-            try {
-              console.log("📸 QR recibido, generando enlace...");
-              // Generar enlace con QR
-              const qrLink = await QRCode.toDataURL(qr);
-              console.log("✅ Enlace del QR generado correctamente.");
-              // Enviar el enlace del QR en lugar de la imagen
-              await socket.sendMessage(remoteJid, { text: `📌 Escanea este QR para convertir tu número en un bot:\n\n${qrLink}` });
-              console.log("✅ Enlace del QR enviado correctamente.");
-            } catch (error) {
-              console.error("❌ Error al generar/enviar el enlace del QR:", error);
-              sendReply("⚠️ Ocurrió un error al generar el QR. Inténtalo de nuevo.");
-            }
+        if (connection === "close") {
+          console.log("❌ Conexión cerrada.");
+          const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut;
+          if (shouldReconnect) {
+            console.log("🔄 Reintentando conexión...");
+            makeWASocket({ auth: state });
+          } else {
+            console.log("🔒 El usuario cerró sesión, no se puede reconectar.");
           }
-
-          // 📌 Opción de vinculación por código
-          if (answer === '2' && connection === "open") {
-            const code = generateCode(); // Función para generar un código único
-            console.log(`🔑 Código generado: ${code}`);
-            await socket.sendMessage(remoteJid, { text: `📌 Usa este código para vincular tu bot: ${code}` });
-            console.log("✅ Código enviado correctamente.");
-          }
-
-          if (connection === "open") {
-            console.log("✅ Bot conectado exitosamente.");
-            sendReply("✅ ¡Tu número ahora es un bot activo!");
-            await cargarComandos(newSocket);
-          }
-
-          if (connection === "close") {
-            console.log("❌ Conexión cerrada.");
-            const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut;
-            if (shouldReconnect) {
-              console.log("🔄 Reintentando conexión...");
-              makeWASocket({ auth: state });
-            } else {
-              console.log("🔒 El usuario cerró sesión, no se puede reconectar.");
-            }
-          }
-        });
-
-        // 📌 Guardar credenciales cuando se actualicen
-        newSocket.ev.on("creds.update", saveCreds);
+        }
       });
+
+      // 📌 Guardar credenciales cuando se actualicen
+      newSocket.ev.on("creds.update", saveCreds);
     } catch (error) {
       console.error("❌ Error en el comando creabot:", error);
       sendReply("⚠️ Hubo un problema al generar el bot.");
