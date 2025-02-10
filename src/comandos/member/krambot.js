@@ -9,15 +9,13 @@ const SESSION_PATH = path.join(__dirname, "../../../sessions");
 
 module.exports = {
   name: "creabot",
-  description: "Inicia el proceso para convertir tu número en un bot de WhatsApp",
+  description: "Inicia el proceso para convertir tu número en un bot de WhatsApp usando QR",
   commands: ["creabot"],
   usage: `${PREFIX}creabot`,
   handle: async ({ socket, remoteJid, sendReply, message }) => {
     try {
-      // Enviar un mensaje pidiendo al usuario que elija entre QR o código
-      const replyText = `📌 Para convertir tu número en un bot de WhatsApp, elige una de las siguientes opciones:
-1️⃣ Usar **QR** con \`#creabot1\`
-2️⃣ Usar **Código** con \`#creabot2\``;
+      // Enviar un mensaje indicando que solo se usará QR
+      const replyText = `📌 Para convertir tu número en un bot de WhatsApp, usa el siguiente comando para generar el QR: \n\n\`#creabot1\``;
       await sendReply(replyText);
 
     } catch (error) {
