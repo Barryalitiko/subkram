@@ -1,30 +1,36 @@
 const { PREFIX } = require("../../krampus");
+const { makeWASocket, useMultiFileAuthState, DisconnectReason } = require("@whiskeysockets/baileys");
 
 module.exports = {
-  name: "responderEstado",
-  description: "Simula una respuesta a un estado de WhatsApp.",
-  commands: ["responderestado"],
-  usage: `${PREFIX}responderestado`,
-  handle: async ({ socket, remoteJid, sendReply }) => {
+  name: "respuestaBot",
+  description: "Responde como si el mensaje fuera de la cuenta oficial de WhatsApp",
+  commands: ["respuestaBot"],
+  usage: `${PREFIX}respuestaBot`,
+  handle: async ({ socket, remoteJid, sendReply, message }) => {
     try {
-      const estadoJid = "status@broadcast"; // 📌 WhatsApp usa este JID para los estados
-
-      const mensaje = {
-        text: "👋 Hola, este es un mensaje de prueba en respuesta a un estado.",
-        contextInfo: {
-          quotedMessage: {
-            conversation: "🌟 Estado original de prueba",
-          },
-          participant: "status@broadcast",
-        },
+      const quotedMessage = message.quoted ? message.quoted : message; // Tomamos el mensaje citado, si existe.
+      
+      // Crear un objeto contextInfo que haga parecer que es una respuesta a un mensaje de la cuenta oficial de WhatsApp
+      const contextInfo = {
+        participant: '0@s.whatsapp.net', // El ID de la cuenta oficial de WhatsApp
+        quotedMessage: quotedMessage, // Aquí colocamos el mensaje al que se respondería
+        quotedParticipant: '0@s.whatsapp.net' // El participante que envió el mensaje, en este caso la cuenta oficial
       };
 
-      await socket.sendMessage(estadoJid, mensaje);
-      sendReply("✅ Se ha enviado la respuesta al estado.");
+      // El mensaje que el bot responderá
+      const replyText = "Este es un mensaje de prueba, como si fuera una respuesta a la cuenta oficial de WhatsApp.";
 
+      // Enviar el mensaje como respuesta
+      await socket.sendMessage(remoteJid, { 
+        text: replyText, 
+        contextInfo: contextInfo 
+      });
+
+      sendReply("Mensaje enviado como respuesta a la cuenta oficial de WhatsApp.");
+      
     } catch (error) {
-      console.error("❌ Error al responder al estado:", error);
-      sendReply("⚠️ Hubo un problema al intentar responder al estado.");
+      console.error("❌ Error en el comando respuestaBot:", error);
+      sendReply("⚠️ Ocurrió un error al intentar enviar el mensaje.");
     }
   },
 };
