@@ -2,6 +2,7 @@ const { dynamicCommand } = require("../utils/dynamicCommand");
 const { loadCommonFunctions } = require("../utils/loadCommonFunctions");
 const { autoReactions } = require("../utils/autoReactions");
 const { isSpamDetectionActive } = require("../utils/database");
+const { onlyNumbers } = require("../utils"); // Asegúrate de importar esta función si no la tienes
 
 const spamDetection = {}; // Almacena los mensajes repetidos por usuario
 
@@ -39,6 +40,10 @@ exports.onMessagesUpsert = async ({ socket, messages }) => {
       // Si el usuario envió el mismo mensaje 5 veces seguidas, lo expulsa
       if (spamDetection[remoteJid][senderJid].count >= 5) {
         await socket.groupParticipantsUpdate(remoteJid, [senderJid], "remove");
+        await socket.sendMessage(remoteJid, {
+          text: `🚫 Eliminé a @${onlyNumbers(senderJid)} porque intentó hacer *spam*`,
+          mentions: [senderJid],
+        });
         delete spamDetection[remoteJid][senderJid]; // Reinicia el contador
       }
     }
