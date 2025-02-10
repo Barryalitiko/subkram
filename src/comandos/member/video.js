@@ -22,7 +22,7 @@ module.exports = {
     }
 
     try {
-      // Obtener la foto de perfil del usuario usando la lógica del comando profilepic
+      // Obtener la foto de perfil del usuario
       let profilePicUrl;
       try {
         profilePicUrl = await socket.profilePictureUrl(userJid, "image");
@@ -37,9 +37,9 @@ module.exports = {
       }
 
       // Crear la carpeta temp si no existe
-      const tempFolder = path.resolve(__dirname, "temp");
+      const tempFolder = path.resolve(__dirname, "../../../assets/temp");
       if (!fs.existsSync(tempFolder)) {
-        fs.mkdirSync(tempFolder);
+        fs.mkdirSync(tempFolder, { recursive: true });
       }
 
       // Descargamos la imagen
@@ -47,19 +47,19 @@ module.exports = {
       const response = await axios({ url: profilePicUrl, responseType: "arraybuffer" });
       fs.writeFileSync(imageFilePath, response.data);
 
-      // Ruta del archivo de audio (puedes cambiarla según donde guardes tu archivo de audio)
-      const audioFilePath = path.resolve(__dirname, "assets", "audio", "audio.mp3");
+      // Ruta del archivo de audio
+      const audioFilePath = path.resolve(__dirname, "../../../assets/audio/audio.mp3");
 
       // Generar el video usando ffmpeg
       const videoFilePath = path.resolve(tempFolder, `${userJid}_video.mp4`);
 
       ffmpeg()
         .input(imageFilePath)
-        .loop(10) // Loops the image for 10 seconds
+        .loop(10) // Imagen estática por 10 segundos
         .input(audioFilePath)
         .audioCodec("aac")
         .videoCodec("libx264")
-        .outputOptions(["-t 10", "-vf fade=t=in:st=0:d=1", "-preset fast"]) // Aparece gradualmente
+        .outputOptions(["-t 10", "-vf fade=t=in:st=0:d=1", "-preset fast"]) // Efecto de fade-in en 1s
         .output(videoFilePath)
         .on("end", async () => {
           try {
