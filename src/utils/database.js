@@ -6,6 +6,7 @@ const databasePath = path.resolve(__dirname, "..", "..", "database");
 const INACTIVE_GROUPS_FILE = "inactive-groups";
 const ANTI_LINK_GROUPS_FILE = "anti-link-groups";
 const WELCOME_GROUPS_FILE = "welcome-groups";
+const GOODBYE_GROUPS_FILE = "goodbye-groups"; // Archivo para gestionar la despedida
 
 // Crear las carpetas necesarias si no existen
 function createIfNotExists(fullPath) {
@@ -93,6 +94,37 @@ exports.getWelcomeMode = (groupId) => {
 exports.isActiveWelcomeGroup = (groupId) => {
     const welcomeGroups = readJSON(WELCOME_GROUPS_FILE);
     return welcomeGroups[groupId] && welcomeGroups[groupId].enabled;
+};
+
+// Manejo de la configuración de despedida
+exports.activateGoodbyeGroup = (groupId) => {
+    const goodbyeGroups = readJSON(GOODBYE_GROUPS_FILE); // Crear archivo goodbye-groups si no existe
+    goodbyeGroups[groupId] = { enabled: true, mode: "1" };
+    writeJSON(GOODBYE_GROUPS_FILE, goodbyeGroups);
+};
+
+exports.deactivateGoodbyeGroup = (groupId) => {
+    const goodbyeGroups = readJSON(GOODBYE_GROUPS_FILE);
+    delete goodbyeGroups[groupId];
+    writeJSON(GOODBYE_GROUPS_FILE, goodbyeGroups);
+};
+
+exports.setGoodbyeMode = (groupId, mode) => {
+    const goodbyeGroups = readJSON(GOODBYE_GROUPS_FILE);
+    if (goodbyeGroups[groupId]) {
+        goodbyeGroups[groupId].mode = mode;
+        writeJSON(GOODBYE_GROUPS_FILE, goodbyeGroups);
+    }
+};
+
+exports.getGoodbyeMode = (groupId) => {
+    const goodbyeGroups = readJSON(GOODBYE_GROUPS_FILE);
+    return goodbyeGroups[groupId] ? goodbyeGroups[groupId].mode : null;
+};
+
+exports.isActiveGoodbyeGroup = (groupId) => {
+    const goodbyeGroups = readJSON(GOODBYE_GROUPS_FILE);
+    return goodbyeGroups[groupId] && goodbyeGroups[groupId].enabled;
 };
 
 // Manejo del anti-link
