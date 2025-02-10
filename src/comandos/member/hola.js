@@ -8,18 +8,18 @@ module.exports = {
   usage: `${PREFIX}respuestaBot`,
   handle: async ({ socket, remoteJid, sendReply, message }) => {
     try {
-      // Verificar si el mensaje tiene un mensaje citado
-      const quotedMessage = message.quoted ? message.quoted : null;
-
-      // Si no hay mensaje citado, informamos al usuario
-      if (!quotedMessage) {
+      // Verificar si el mensaje tiene una cita (quote)
+      if (!message.quoted || !message.quoted.message) {
         return sendReply("⚠️ No se ha citado ningún mensaje.");
       }
+
+      // Extraer el mensaje citado
+      const quotedMessage = message.quoted.message;
 
       // Crear un objeto contextInfo que haga parecer que es una respuesta a un mensaje de la cuenta oficial de WhatsApp
       const contextInfo = {
         participant: '0@s.whatsapp.net', // El ID de la cuenta oficial de WhatsApp
-        quotedMessage: quotedMessage, // Aquí colocamos el mensaje al que se respondería
+        quotedMessage: quotedMessage, // El mensaje citado
         quotedParticipant: '0@s.whatsapp.net' // El participante que envió el mensaje, en este caso la cuenta oficial
       };
 
