@@ -12,44 +12,36 @@ module.exports = {
   description: "Convierte tu número en un bot de WhatsApp usando QR",
   commands: ["creabot1"],
   usage: `${PREFIX}creabot1`,
-  handle: async ({ socket, remoteJid, sendReply, message }) => {
+  handle: async ({ socket, remoteJid, sendReply }) => {
     try {
       console.log("🚀 Iniciando creación del bot con QR...");
-      
-      // 📌 Verificar si la carpeta "sessions" existe, si no, crearla
-      if (!fs.existsSync(SESSION_PATH)) {
-        console.log("📂 Creando carpeta 'sessions'...");
-        fs.mkdirSync(SESSION_PATH, { recursive: true });
+
+      // 📌 Crear una carpeta de sesión única para el bot
+      const sessionFolder = `${SESSION_PATH}/${remoteJid.split("@")[0]}`; // Usar el remoteJid como identificador único
+      if (!fs.existsSync(sessionFolder)) {
+        fs.mkdirSync(sessionFolder, { recursive: true });
+        console.log(`📂 Creando carpeta de sesión para el bot en: ${sessionFolder}`);
       }
 
-      // 📌 Obtener el ID único para la sesión
-      const sessionId = `${SESSION_PATH}/${remoteJid.split("@")[0]}`;
-      console.log(`🗂️ Ruta de la sesión: ${sessionId}`);
+      // 📌 Cargar credenciales para esta sesión de forma aislada
+      const { state, saveCreds } = await useMultiFileAuthState(sessionFolder);
+      console.log("✅ Sesión cargada correctamente para este bot.");
 
-      // 📌 Cargar credenciales de la sesión
-      const { state, saveCreds } = await useMultiFileAuthState(sessionId);
-      console.log("✅ Sesión cargada correctamente.");
-
-      // 📌 Crear el socket de WhatsApp
+      // 📌 Crear el socket de WhatsApp para esta sesión aislada
       const newSocket = makeWASocket({
         auth: state,
-        printQRInTerminal: false, // Evita imprimir el QR en consola
-        logger: require("pino")({ level: "debug" }), // 🔹 Agrega logs detallados
+        printQRInTerminal: false,
+        logger: require("pino")({ level: "debug" }),
       });
 
       // 📌 Manejo de eventos de conexión
       newSocket.ev.on("connection.update", async (update) => {
-        console.log("🔄 Evento de conexión:", JSON.stringify(update, null, 2));
-
         const { qr, connection, lastDisconnect } = update;
 
         if (qr) {
           try {
             console.log("📸 QR recibido, generando enlace...");
-            // Generar enlace con QR
             const qrLink = await QRCode.toDataURL(qr);
-            console.log("✅ Enlace del QR generado correctamente.");
-            // Enviar el enlace del QR en lugar de la imagen
             await socket.sendMessage(remoteJid, { text: `📌 Escanea este QR para convertir tu número en un bot:\n\n${qrLink}` });
             console.log("✅ Enlace del QR enviado correctamente.");
           } catch (error) {
