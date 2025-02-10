@@ -45,9 +45,10 @@ module.exports = {
         const { qr, connection, lastDisconnect } = update;
 
         if (qr) {
-          console.log("📸 QR recibido, generando imagen...");
           try {
+            console.log("📸 QR recibido, generando imagen...");
             const qrImage = await QRCode.toDataURL(qr);
+            console.log("✅ QR generado correctamente.");
             await socket.sendMessage(remoteJid, { image: { url: qrImage }, caption: "📌 Escanea este QR para convertir tu número en un bot." });
             console.log("✅ QR enviado correctamente.");
           } catch (error) {
