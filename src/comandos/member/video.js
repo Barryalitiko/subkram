@@ -12,7 +12,16 @@ name: "miniVideo",
 description: "Genera un mini video con la foto de perfil de un usuario y un audio.",
 commands: ["minivideo", "videoPerfil"],
 usage: `${PREFIX}minivideo @usuario`,
-handle: async ({ args, socket, remoteJid, sendReply, sendReact, isReply, replyJid, senderJid }) => {
+handle: async ({
+args,
+socket,
+remoteJid,
+sendReply,
+sendReact,
+isReply,
+replyJid,
+senderJid,
+}) => {
 let userJid;
 if (isReply) {
 userJid = replyJid;
@@ -69,8 +78,8 @@ try {
     .outputOptions([
       "-t 10",
       "-vf",
-      "fade=t=in:st=0:d=4, overlay=x='if(gte(t*10,10),10,t*10)':y=0:format=yuv420",
-      "-preset fast"
+      "fade=t=in:st=0:d=4, scale2ref=iw:ih, overlay=x=10:y=0:format=yuv420",
+      "-preset fast",
     ])
     .output(videoFilePath)
     .on("end", async () => {
