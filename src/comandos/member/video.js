@@ -69,7 +69,7 @@ try {
     .outputOptions([
       "-t 10",
       "-vf",
-      "fade=t=in:st=0:d=4, overlay=x='min(t*10,10)':y=0:format=yuv420",
+      "fade=t=in:st=0:d=4, overlay=x='if(gte(t*10,10),10,t*10)':y=0:format=yuv420",
       "-preset fast"
     ])
     .output(videoFilePath)
