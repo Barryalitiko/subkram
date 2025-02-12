@@ -2,9 +2,9 @@ const { dynamicCommand } = require("../utils/dynamicCommand");
 const { loadCommonFunctions } = require("../utils/loadCommonFunctions");
 const { autoReactions } = require("../utils/autoReactions");
 const { isSpamDetectionActive } = require("../utils/database");
-const { onlyNumbers } = require("../utils"); // Asegúrate de importar esta función si no la tienes
+const { onlyNumbers } = require("../utils");
 
-const spamDetection = {}; // Almacena los mensajes repetidos por usuario
+const spamDetection = {};
 
 exports.onMessagesUpsert = async ({ socket, messages }) => {
   if (!messages.length) {
@@ -21,34 +21,39 @@ exports.onMessagesUpsert = async ({ socket, messages }) => {
     const remoteJid = webMessage.key.remoteJid;
     const senderJid = webMessage.key.participant || webMessage.key.remoteJid;
 
-    // Verifica si la detección de spam está activada en este grupo
     if (isSpamDetectionActive(remoteJid)) {
       if (!spamDetection[remoteJid]) {
         spamDetection[remoteJid] = {};
       }
 
       if (!spamDetection[remoteJid][senderJid]) {
-        spamDetection[remoteJid][senderJid] = { text: messageText, count: 1 };
+        spamDetection[remoteJid][senderJid] = {
+          text: messageText,
+          count: 1,
+          lastMessage: messageText,
+        };
       } else {
         if (spamDetection[remoteJid][senderJid].text === messageText) {
           spamDetection[remoteJid][senderJid].count++;
         } else {
-          spamDetection[remoteJid][senderJid] = { text: messageText, count: 1 };
+          spamDetection[remoteJid][senderJid] = {
+            text: messageText,
+            count: 1,
+            lastMessage: messageText,
+          };
         }
       }
 
-      // Si el usuario envió el mismo mensaje 5 veces seguidas, lo expulsa
-      if (spamDetection[remoteJid][senderJid].count >= 5) {
+      if (spamDetection[remoteJid][senderJid].count >= 5 && spamDetection[remoteJid][senderJid].lastMessage === messageText) {
         await socket.groupParticipantsUpdate(remoteJid, [senderJid], "remove");
         await socket.sendMessage(remoteJid, {
           text: `🚫 Eliminé a @${onlyNumbers(senderJid)} porque intentó hacer *spam*`,
           mentions: [senderJid],
         });
-        delete spamDetection[remoteJid][senderJid]; // Reinicia el contador
+        delete spamDetection[remoteJid][senderJid];
       }
     }
 
-    // Auto Reacciones
     for (const [keyword, emoji] of Object.entries(autoReactions)) {
       if (messageText.toLowerCase().includes(keyword)) {
         await socket.sendMessage(remoteJid, {
@@ -60,7 +65,6 @@ exports.onMessagesUpsert = async ({ socket, messages }) => {
       }
     }
 
-    // Comandos dinámicos
     await dynamicCommand(commonFunctions);
   }
 };
