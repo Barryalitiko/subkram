@@ -7,20 +7,9 @@ async function start() {
     bannerLog();
     infoLog("Kram está procesando...");
 
-    // Conectar bot principal
-    const mainSocket = await connect();
-    load(mainSocket);
+    const socket = await connect();
 
-    // Crear subbots
-    const subbots = [
-      { nombre: "Subbot 1", prefijo: "!" },
-      { nombre: "Subbot 2", prefijo: "?" },
-    ];
-
-    subbots.forEach(async (subbot) => {
-      const subbotSocket = await connect(subbot.nombre);
-      load(subbotSocket, subbot.prefijo);
-    });
+    load(socket);
   } catch (error) {
     console.log(error);
   }
