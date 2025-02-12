@@ -78,10 +78,7 @@ module.exports = {
       fs.writeFileSync(imageFilePath, response.data);
 
       const audioFilePath = path.resolve(__dirname, "../../../assets/audio/audio.mp3");
-      const videoFilePath = path.resolve(
-        tempFolder,
-        `${userJid.replace("@", "_").replace(":", "_").replace(".", "_").replace("-", "_")}_video.mp4`
-      );
+      const videoFilePath = path.resolve(tempFolder, `${userJid}_video.mp4`);
       const pngImagePath = path.resolve(__dirname, "../../../assets/images/celda.png");
 
       ffmpeg()
