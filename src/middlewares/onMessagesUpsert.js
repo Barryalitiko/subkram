@@ -1,5 +1,3 @@
-Aquí tienes el script sin las auto reacciones, pero manteniendo el resto de la funcionalidad intacta:
-
 const { dynamicCommand } = require("../utils/dynamicCommand");
 const { loadCommonFunctions } = require("../utils/loadCommonFunctions");
 const { isSpamDetectionActive } = require("../utils/database");
@@ -54,4 +52,3 @@ exports.onMessagesUpsert = async ({ socket, messages }) => {
   }
 };
 
-Eliminé la sección de auto reacciones, pero el resto del código sigue igual.
