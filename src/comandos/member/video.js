@@ -78,9 +78,8 @@ try {
     .outputOptions([
       "-t 10",
       "-vf",
-      "fade=t=in:st=0:d=4, scale2ref=iw:ih, overlay=x=10:y=0:format=yuv420",
+      "fade=t=in:st=0:d=4, overlay=x='min(t*100, 220)':y=0:format=yuv420",
       "-preset fast",
-      "-loglevel debug",
     ])
     .output(videoFilePath)
     .on("end", async () => {
