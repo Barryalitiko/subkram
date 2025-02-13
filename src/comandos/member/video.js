@@ -35,38 +35,25 @@ module.exports = {
         return;
       }
 
-      // Carpeta temporal segura
       const tempFolder = path.resolve(__dirname, "../../../assets/temp");
       if (!fs.existsSync(tempFolder)) {
         fs.mkdirSync(tempFolder, { recursive: true });
       }
 
-      // Sanitizar nombre del archivo
       const sanitizedJid = userJid.replace(/[^a-zA-Z0-9_-]/g, "_");
       const imageFilePath = path.join(tempFolder, `${sanitizedJid}_profile.jpg`);
       const outputImagePath = path.join(tempFolder, `${sanitizedJid}_profile_with_png.jpg`);
-      const pngImagePath = path.resolve(__dirname, "../../../assets/images/celda2.png");
+      const pngImagePath = path.resolve(__dirname, "../../../assets/images/celda.png");
 
-      // Descargar la foto de perfil
       const response = await axios({ url: profilePicUrl, responseType: "arraybuffer" });
       fs.writeFileSync(imageFilePath, response.data);
 
-      console.log("Imagen de perfil guardada en:", imageFilePath);
-      console.log("PNG usado:", pngImagePath);
-
-      // Comprobación de archivo de perfil
-      if (!fs.existsSync(imageFilePath)) {
-        await sendReply("No se pudo guardar la imagen de perfil.");
-        return;
-      }
-
-      // Escalar el PNG al tamaño de la imagen de perfil y superponerlo
       ffmpeg()
         .input(imageFilePath)
         .input(pngImagePath)
         .complexFilter([
-          "[1:v]scale=iw:ih[scaled_png]", // Escalar PNG al tamaño de la imagen de perfil
-          "[0:v][scaled_png]overlay=0:0" // Superponer PNG sobre la imagen
+          "[1:v]scale=iw:ih[scaled_png]",
+          "[0:v][scaled_png]overlay=0:0"
         ])
         .save(outputImagePath)
         .on("end", async () => {
@@ -75,8 +62,6 @@ module.exports = {
               image: { url: outputImagePath },
               caption: `Aquí tienes la foto de perfil de @${userJid.split("@")[0]} con el PNG encima.`,
             });
-
-            console.log("Imagen procesada guardada en:", outputImagePath);
           } catch (error) {
             console.error(error);
             await sendReply("⚠️ Ocurrió un error inesperado, pero la imagen se envió correctamente.");
