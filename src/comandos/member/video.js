@@ -42,7 +42,7 @@ module.exports = {
       }
 
       // Sanitizar nombre del archivo
-      const sanitizedJid = userJid.replace(/[^a-zA-Z0-9_-]/g, "_"); // Reemplazar caracteres problemáticos
+      const sanitizedJid = userJid.replace(/[^a-zA-Z0-9_-]/g, "_");
       const imageFilePath = path.join(tempFolder, `${sanitizedJid}_profile.jpg`);
       const outputImagePath = path.join(tempFolder, `${sanitizedJid}_profile_with_png.jpg`);
       const pngImagePath = path.resolve(__dirname, "../../../assets/images/celda.png");
@@ -51,7 +51,7 @@ module.exports = {
       const response = await axios({ url: profilePicUrl, responseType: "arraybuffer" });
       fs.writeFileSync(imageFilePath, response.data);
 
-      // Comprobación de archivos
+      // Verificar que los archivos existen
       if (!fs.existsSync(imageFilePath)) {
         await sendReply("No se pudo guardar la imagen de perfil.");
         return;
@@ -61,29 +61,28 @@ module.exports = {
         return;
       }
 
-      // Escalar el PNG al tamaño de la imagen de perfil y superponerlo
+      // Ajustar el tamaño del PNG al de la imagen de perfil
       ffmpeg()
         .input(imageFilePath)
         .input(pngImagePath)
         .complexFilter([
-          "[1:v]scale=iw:ih[scaled_png]", // Escalar PNG al tamaño de la imagen de perfil
-          "[0:v][scaled_png]overlay=0:0" // Superponer PNG sobre la imagen
+          "[0:v]scale=500:500[bg];", // Redimensionar la imagen de perfil a 500x500
+          "[1:v]scale=500:500[overlay];", // Redimensionar el PNG al mismo tamaño
+          "[bg][overlay]overlay=0:0[out]" // Superponer el PNG encima de la imagen de perfil
         ])
+        .map("[out]") // Usar la salida correcta
         .save(outputImagePath)
         .on("end", async () => {
           try {
+            // Enviar la imagen editada
             await socket.sendMessage(remoteJid, {
               image: { url: outputImagePath },
               caption: `Aquí tienes la foto de perfil de @${userJid.split("@")[0]} con el PNG encima.`,
             });
 
-            // Limpiar archivos temporales con manejo de errores
-            try {
-              fs.unlinkSync(imageFilePath);
-              fs.unlinkSync(outputImagePath);
-            } catch (cleanupError) {
-              console.error("Error eliminando archivos temporales:", cleanupError);
-            }
+            // Limpiar archivos temporales
+            fs.unlinkSync(imageFilePath);
+            fs.unlinkSync(outputImagePath);
           } catch (error) {
             console.error(error);
             await sendReply("⚠️ Ocurrió un error inesperado, pero la imagen se envió correctamente.");
