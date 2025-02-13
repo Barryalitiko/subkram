@@ -49,7 +49,7 @@ module.exports = {
       const sanitizedJid = userJid.replace(/[^a-zA-Z0-9_-]/g, "_");
       const imageFilePath = path.join(tempFolder, `${sanitizedJid}_profile.jpg`);
       const outputVideoPath = path.join(tempFolder, `${sanitizedJid}_profile_fade.mp4`);
-      const pngImagePath = path.resolve(__dirname, "../../../assets/images/celda2.png");
+      const pngImagePath = path.resolve(__dirname, "../../../assets/images/celda.png`);
 
       console.log("Descargando la imagen de perfil...");
       const response = await axios({ url: profilePicUrl, responseType: "arraybuffer" });
@@ -61,11 +61,10 @@ module.exports = {
         ffmpeg()
           .input(imageFilePath)
           .input(pngImagePath)
-          .complexFilter([
-            "[1:v]format=rgba,colorchannelmixer=alpha=0[fadein];",  // Iniciar con PNG transparente
-            "[fadein]fade=t=in:st=0:d=3[fade];",  // PNG aparece en 3 segundos
-            "[0:v][fade]overlay=0:0:enable='between(t,0,10)'",  // Superponer PNG durante 10s
-          ])
+          .filterComplex(`
+            [1:v]fade=t=in:st=0:d=3[fade]; 
+            [0:v][fade]overlay=0:0
+          `)
           .output(outputVideoPath)
           .duration(10)
           .on("end", async () => {
