@@ -48,6 +48,7 @@ module.exports = {
       const response = await axios({ url: profilePicUrl, responseType: "arraybuffer" });
       fs.writeFileSync(imageFilePath, response.data);
 
+      // Agregamos un manejo de errores adicional para la generación del video.
       await new Promise((resolve, reject) => {
         ffmpeg()
           .input(imageFilePath) // Entrada de la imagen de perfil
@@ -67,21 +68,29 @@ module.exports = {
           .duration(10) // Duración del video (10 segundos)
           .outputOptions(["-shortest", "-preset fast"]) // Asegura que el video y el audio estén sincronizados
           .on("end", async () => {
-            // Ahora se asegura de que se envíe el video con audio
-            await socket.sendMessage(remoteJid, {
-              video: { url: outputVideoPath },
-              caption: `Aquí tienes un video donde la imagen de @${userJid.split("@")[0]} se combina con el PNG y el audio.`,
-            });
-            resolve();
+            try {
+              // Si el proceso termina, se envía el video con audio
+              await socket.sendMessage(remoteJid, {
+                video: { url: outputVideoPath },
+                caption: `Aquí tienes un video donde la imagen de @${userJid.split("@")[0]} se combina con el PNG y el audio.`,
+              });
+              resolve();
+            } catch (error) {
+              console.error("Error al enviar el video: ", error);
+              sendReply("Hubo un problema al enviar el video.");
+            }
           })
           .on("error", (err) => {
+            console.error("Error al generar el video: ", err);
             sendReply("Hubo un problema al generar el video.");
             reject(err);
           })
           .run();
       });
     } catch (error) {
+      console.error("Error al procesar el comando: ", error);
       await sendReply("Hubo un error al procesar el comando.");
     }
   },
 };
+
