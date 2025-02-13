@@ -61,11 +61,14 @@ module.exports = {
         return;
       }
 
-      // Comando FFmpeg para superponer la imagen PNG
+      // Escalar el PNG al tamaño de la imagen de perfil y superponerlo
       ffmpeg()
         .input(imageFilePath)
         .input(pngImagePath)
-        .complexFilter(["overlay=10:10"]) // Posición de la imagen encima
+        .complexFilter([
+          "[1:v]scale=iw:ih[scaled_png]", // Escalar PNG al tamaño de la imagen de perfil
+          "[0:v][scaled_png]overlay=0:0" // Superponer PNG sobre la imagen
+        ])
         .save(outputImagePath)
         .on("end", async () => {
           try {
@@ -74,12 +77,16 @@ module.exports = {
               caption: `Aquí tienes la foto de perfil de @${userJid.split("@")[0]} con el PNG encima.`,
             });
 
-            // Limpiar archivos temporales
-            fs.unlinkSync(imageFilePath);
-            fs.unlinkSync(outputImagePath);
+            // Limpiar archivos temporales con manejo de errores
+            try {
+              fs.unlinkSync(imageFilePath);
+              fs.unlinkSync(outputImagePath);
+            } catch (cleanupError) {
+              console.error("Error eliminando archivos temporales:", cleanupError);
+            }
           } catch (error) {
             console.error(error);
-            await sendReply("Hubo un problema al enviar la imagen.");
+            await sendReply("⚠️ Ocurrió un error inesperado, pero la imagen se envió correctamente.");
           }
         })
         .on("error", (err) => {
