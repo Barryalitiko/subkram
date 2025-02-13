@@ -73,17 +73,18 @@ module.exports = {
               console.log("La imagen ya fue procesada y enviada anteriormente. Ignorando el envío.");
               return;
             }
-            console.log("Proceso de ffmpeg finalizado, enviando la imagen...");
+            console.log("Proceso de ffmpeg finalizado, enviando la imagen procesada...");
             try {
+              // Enviar la imagen procesada
               await socket.sendMessage(remoteJid, {
                 image: { url: outputImagePath },
                 caption: `Aquí tienes la foto de perfil de @${userJid.split("@")[0]} con el PNG encima.`,
               });
-              console.log("Imagen enviada correctamente.");
+              console.log("Imagen procesada enviada correctamente.");
               isProcessed = true; // Marcamos que la imagen fue procesada y enviada
-              resolve(); // Resolvemos la promesa cuando se envía la imagen
+              resolve(); // Resolvemos la promesa cuando se envía la imagen procesada
             } catch (error) {
-              console.error("Error al enviar la imagen:", error);
+              console.error("Error al enviar la imagen procesada:", error);
               await sendReply("⚠️ Ocurrió un error inesperado, pero la imagen se envió correctamente.");
               isProcessed = true; // Marcamos que la imagen fue procesada y enviada
               resolve(); // Resolvemos la promesa incluso si hubo un error
