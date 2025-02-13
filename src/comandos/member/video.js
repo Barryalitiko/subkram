@@ -54,14 +54,8 @@ module.exports = {
           .loop(10) // Hace que la imagen de perfil dure 10s
           .input(pngImagePath) // Entrada del PNG
           .loop(10) // Hace que la imagen PNG dure 10s
-          .input(audioFilePath) // Entrada de audio
+          .input(audioFilePath) // Entrada del audio
           .audioCodec("aac") // Codec de audio para asegurar la compatibilidad
-          .complexFilter([
-            "[1:v]format=rgba,fade=t=in:st=1:d=3[fade]", // Fade-in en la imagen PNG
-            "[0:v][fade]overlay=0:0[final]" // Superpone el PNG sobre la imagen de perfil
-          ])
-          .map("[final]") // Mapeo de la imagen final
-          .map("a:0") // Mapeo de audio
           .output(outputVideoPath)
           .duration(10) // Duración del video (10 segundos)
           .outputOptions(["-shortest"]) // Asegura que el video no termine antes de tiempo
