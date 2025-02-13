@@ -59,6 +59,7 @@ module.exports = {
 
       const audioFilePath = path.resolve(__dirname, "../../../assets/audio/audio.mp3");
       const videoFilePath = path.resolve(tempFolder, `${sanitizedJid}_video.mp4`);
+      const pngImagePath = path.resolve(__dirname, "../../../assets/images/celda.png");
 
       const texto = `Hola, soy @${userJid.split("@")[0]}`; // Texto que se quiere escribir
 
@@ -68,10 +69,11 @@ module.exports = {
         .input(audioFilePath)
         .audioCodec("aac")
         .videoCodec("libx264")
+        .input(pngImagePath) // Cargar la imagen PNG correctamente
         .outputOptions([
           "-t 10",
           "-vf",
-          `drawtext=text='${texto}':x=(w-tw)/2:y=h-(2*lh):fontsize=24:fontcolor=black:box=1:boxcolor=white:boxborderw=5,fade=t=in:st=0:d=4`,
+          `drawtext=text='${texto}':x=(w-tw)/2:y=h-(2*lh):fontsize=24:fontcolor=black:box=1:boxcolor=white:boxborderw=5,fade=t=in:st=0:d=4,overlay=x='min(t*100, 220)':y=0:format=yuv420`,
           "-preset fast"
         ])
         .output(videoFilePath)
