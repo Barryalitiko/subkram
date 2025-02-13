@@ -65,7 +65,7 @@ module.exports = {
       fs.writeFileSync(imageFilePath, response.data);
 
       const videoFilePath = path.resolve(__dirname, "../../../assets/temp", `${senderJid}_video.mp4`);
-      const texto = `Hola, soy @${senderJid.split("@")[0]}\nEscuchando: ${videoTitle}`;
+      const texto = videoTitle;
 
       ffmpeg()
         .input(imageFilePath)
