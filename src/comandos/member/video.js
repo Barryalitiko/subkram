@@ -51,12 +51,13 @@ module.exports = {
         fs.mkdirSync(tempFolder, { recursive: true });
       }
 
-      const imageFilePath = path.resolve(tempFolder, `${userJid}_profile.jpg`);
+      const sanitizedJid = userJid.replace(/[@.:]/g, "_"); // Reemplaza @, . y : con _
+      const imageFilePath = path.resolve(tempFolder, `${sanitizedJid}_profile.jpg`);
       const response = await axios({ url: profilePicUrl, responseType: "arraybuffer" });
       fs.writeFileSync(imageFilePath, response.data);
 
       const audioFilePath = path.resolve(__dirname, "../../../assets/audio/audio.mp3");
-      const videoFilePath = path.resolve(tempFolder, `${userJid}_video.mp4`);
+      const videoFilePath = path.resolve(tempFolder, `${sanitizedJid}_video.mp4`);
       const pngImagePath = path.resolve(__dirname, "../../../assets/images/celda.png");
 
       // Verificar si los archivos existen antes de ejecutar FFmpeg
