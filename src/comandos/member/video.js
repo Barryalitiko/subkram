@@ -48,7 +48,6 @@ module.exports = {
       const response = await axios({ url: profilePicUrl, responseType: "arraybuffer" });
       fs.writeFileSync(imageFilePath, response.data);
 
-      // Agregamos un manejo de errores adicional para la generación del video.
       await new Promise((resolve, reject) => {
         ffmpeg()
           .input(imageFilePath) // Entrada de la imagen de perfil
@@ -57,40 +56,30 @@ module.exports = {
           .loop(10) // Hace que la imagen PNG dure 10s
           .input(audioFilePath) // Entrada del audio
           .audioCodec("aac") // Codec de audio para asegurar la compatibilidad
-          .videoCodec("libx264")
           .complexFilter([
             "[1:v]format=rgba,fade=t=in:st=1:d=3[fade]", // Fade-in en la imagen PNG
             "[0:v][fade]overlay=0:0[final]" // Superpone el PNG sobre la imagen de perfil
           ])
-          .map("[final]") // Mapea el resultado de la imagen con el PNG
-          .map("a:0") // Asegura que el audio esté mapeado correctamente
+          .map("[final]")
           .output(outputVideoPath)
           .duration(10) // Duración del video (10 segundos)
-          .outputOptions(["-shortest", "-preset fast"]) // Asegura que el video y el audio estén sincronizados
+          .outputOptions(["-shortest"]) // Asegura que el video no termine antes de tiempo
           .on("end", async () => {
-            try {
-              // Si el proceso termina, se envía el video con audio
-              await socket.sendMessage(remoteJid, {
-                video: { url: outputVideoPath },
-                caption: `Aquí tienes un video donde la imagen de @${userJid.split("@")[0]} se combina con el PNG y el audio.`,
-              });
-              resolve();
-            } catch (error) {
-              console.error("Error al enviar el video: ", error);
-              sendReply("Hubo un problema al enviar el video.");
-            }
+            // Ahora se asegura de que se envié el video con audio
+            await socket.sendMessage(remoteJid, {
+              video: { url: outputVideoPath },
+              caption: `Aquí tienes un video donde la imagen de @${userJid.split("@")[0]} se combina con el PNG y el audio.`,
+            });
+            resolve();
           })
           .on("error", (err) => {
-            console.error("Error al generar el video: ", err);
             sendReply("Hubo un problema al generar el video.");
             reject(err);
           })
           .run();
       });
     } catch (error) {
-      console.error("Error al procesar el comando: ", error);
       await sendReply("Hubo un error al procesar el comando.");
     }
   },
 };
-
