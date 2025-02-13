@@ -56,16 +56,18 @@ module.exports = {
           .loop(10) // Hace que la imagen PNG dure 10s
           .input(audioFilePath) // Entrada del audio
           .audioCodec("aac") // Codec de audio para asegurar la compatibilidad
+          .videoCodec("libx264")
           .complexFilter([
             "[1:v]format=rgba,fade=t=in:st=1:d=3[fade]", // Fade-in en la imagen PNG
             "[0:v][fade]overlay=0:0[final]" // Superpone el PNG sobre la imagen de perfil
           ])
-          .map("[final]")
+          .map("[final]") // Mapea el resultado de la imagen con el PNG
+          .map("a:0") // Asegura que el audio esté mapeado correctamente
           .output(outputVideoPath)
           .duration(10) // Duración del video (10 segundos)
-          .outputOptions(["-shortest"]) // Asegura que el video no termine antes de tiempo
+          .outputOptions(["-shortest", "-preset fast"]) // Asegura que el video y el audio estén sincronizados
           .on("end", async () => {
-            // Ahora se asegura de que se envié el video con audio
+            // Ahora se asegura de que se envíe el video con audio
             await socket.sendMessage(remoteJid, {
               video: { url: outputVideoPath },
               caption: `Aquí tienes un video donde la imagen de @${userJid.split("@")[0]} se combina con el PNG y el audio.`,
