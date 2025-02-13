@@ -48,30 +48,36 @@ module.exports = {
       const response = await axios({ url: profilePicUrl, responseType: "arraybuffer" });
       fs.writeFileSync(imageFilePath, response.data);
 
-      ffmpeg()
-        .input(imageFilePath)
-        .input(pngImagePath)
-        .complexFilter([
-          "[1:v]scale=iw:ih[scaled_png]",
-          "[0:v][scaled_png]overlay=0:0"
-        ])
-        .save(outputImagePath)
-        .on("end", async () => {
-          try {
-            await socket.sendMessage(remoteJid, {
-              image: { url: outputImagePath },
-              caption: `Aquí tienes la foto de perfil de @${userJid.split("@")[0]} con el PNG encima.`,
-            });
-          } catch (error) {
-            console.error(error);
-            await sendReply("⚠️ Ocurrió un error inesperado, pero la imagen se envió correctamente.");
-          }
-        })
-        .on("error", (err) => {
-          console.error("FFmpeg Error:", err);
-          sendReply("Hubo un problema al procesar la imagen.");
-        })
-        .run();
+      // Usamos una promesa para esperar que ffmpeg termine antes de enviar el mensaje
+      await new Promise((resolve, reject) => {
+        ffmpeg()
+          .input(imageFilePath)
+          .input(pngImagePath)
+          .complexFilter([
+            "[1:v]scale=iw:ih[scaled_png]",
+            "[0:v][scaled_png]overlay=0:0"
+          ])
+          .save(outputImagePath)
+          .on("end", async () => {
+            try {
+              await socket.sendMessage(remoteJid, {
+                image: { url: outputImagePath },
+                caption: `Aquí tienes la foto de perfil de @${userJid.split("@")[0]} con el PNG encima.`,
+              });
+              resolve(); // Resolvemos la promesa cuando se envía la imagen
+            } catch (error) {
+              console.error(error);
+              await sendReply("⚠️ Ocurrió un error inesperado, pero la imagen se envió correctamente.");
+              resolve(); // Resolvemos la promesa incluso si hubo un error
+            }
+          })
+          .on("error", (err) => {
+            console.error("FFmpeg Error:", err);
+            sendReply("Hubo un problema al procesar la imagen.");
+            reject(err); // Rechazamos la promesa si hay error
+          })
+          .run();
+      });
     } catch (error) {
       console.error(error);
       await sendReply("Hubo un error al procesar el comando.");
