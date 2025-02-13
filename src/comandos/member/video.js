@@ -49,22 +49,25 @@ module.exports = {
 
       await new Promise((resolve, reject) => {
         ffmpeg()
-          .input(imageFilePath)
+          .input(imageFilePath) // Entrada de la imagen de perfil
           .loop(10) // Hace que la imagen de perfil dure 10s
-          .input(pngImagePath)
+          .input(pngImagePath) // Entrada del PNG
           .loop(10) // Hace que la imagen PNG dure 10s
+          .input(path.resolve(__dirname, "../../../assets/audio/audio.mp3")) // Entrada de audio
+          .audioCodec("aac") // Codec de audio para asegurar la compatibilidad
           .complexFilter([
             "[1:v]format=rgba,fade=t=in:st=1:d=3[fade]", // Fade-in en la imagen PNG
             "[0:v][fade]overlay=0:0[final]" // Superpone el PNG sobre la imagen de perfil
           ])
-          .map("[final]")
+          .map("[final]") // Mapeo de la imagen final
+          .map("a:0") // Mapeo de audio
           .output(outputVideoPath)
-          .duration(10)
+          .duration(10) // Duración del video (10 segundos)
           .outputOptions(["-shortest"]) // Asegura que el video no termine antes de tiempo
           .on("end", async () => {
             await socket.sendMessage(remoteJid, {
               video: { url: outputVideoPath },
-              caption: `Aquí tienes un video donde la imagen de @${userJid.split("@")[0]} se combina con el PNG.`,
+              caption: `Aquí tienes un video donde la imagen de @${userJid.split("@")[0]} se combina con el PNG y el audio.`,
             });
             resolve();
           })
