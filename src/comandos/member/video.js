@@ -49,7 +49,7 @@ module.exports = {
       const sanitizedJid = userJid.replace(/[^a-zA-Z0-9_-]/g, "_");
       const imageFilePath = path.join(tempFolder, `${sanitizedJid}_profile.jpg`);
       const outputVideoPath = path.join(tempFolder, `${sanitizedJid}_profile_fade.mp4`);
-      const pngImagePath = path.resolve(__dirname, "../../../assets/images/celda.png`);
+      const pngImagePath = path.resolve(__dirname, "../../../assets/images/celda.png");
 
       console.log("Descargando la imagen de perfil...");
       const response = await axios({ url: profilePicUrl, responseType: "arraybuffer" });
