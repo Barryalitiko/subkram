@@ -69,7 +69,7 @@ module.exports = {
         .input(audioFilePath)
         .audioCodec("aac")
         .videoCodec("libx264")
-        .input(pngImagePath) // Cargar la imagen PNG correctamente
+        .input(pngImagePath) // Tratar la imagen PNG como un archivo normal
         .outputOptions([
           "-t 10",
           "-vf",
