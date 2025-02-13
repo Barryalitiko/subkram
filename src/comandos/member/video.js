@@ -13,30 +13,36 @@ module.exports = {
     let userJid;
     if (isReply) {
       userJid = replyJid;
+      console.log("Se respondió a un mensaje, usuario JID: ", userJid);
     } else if (args.length < 1) {
+      console.log("Uso incorrecto detectado.");
       await sendReply("Uso incorrecto. Usa el comando así:\n" + `${PREFIX}perfilpng @usuario`);
       return;
     } else {
       userJid = args[0].replace("@", "") + "@s.whatsapp.net";
+      console.log("Se obtuvo el JID del usuario: ", userJid);
     }
 
     try {
       let profilePicUrl;
       try {
+        console.log("Obteniendo la foto de perfil...");
         profilePicUrl = await socket.profilePictureUrl(userJid, "image");
       } catch (err) {
-        console.error(err);
+        console.error("Error al obtener la foto de perfil:", err);
         await sendReply(`@${args[0] || userJid.split('@')[0]} no tiene foto de perfil.`);
         return;
       }
 
       if (!profilePicUrl) {
+        console.log("No se encontró foto de perfil.");
         await sendReply(`@${args[0] || userJid.split('@')[0]} no tiene foto de perfil.`);
         return;
       }
 
       const tempFolder = path.resolve(__dirname, "../../../assets/temp");
       if (!fs.existsSync(tempFolder)) {
+        console.log("Carpeta temp no existe, creándola...");
         fs.mkdirSync(tempFolder, { recursive: true });
       }
 
@@ -45,10 +51,11 @@ module.exports = {
       const outputImagePath = path.join(tempFolder, `${sanitizedJid}_profile_with_png.jpg`);
       const pngImagePath = path.resolve(__dirname, "../../../assets/images/celda2.png");
 
+      console.log("Descargando la imagen de perfil...");
       const response = await axios({ url: profilePicUrl, responseType: "arraybuffer" });
       fs.writeFileSync(imageFilePath, response.data);
 
-      // Usamos una promesa para esperar que ffmpeg termine antes de enviar el mensaje
+      console.log("Procesando la imagen con ffmpeg...");
       await new Promise((resolve, reject) => {
         ffmpeg()
           .input(imageFilePath)
@@ -59,14 +66,16 @@ module.exports = {
           ])
           .save(outputImagePath)
           .on("end", async () => {
+            console.log("Proceso de ffmpeg finalizado, enviando la imagen...");
             try {
               await socket.sendMessage(remoteJid, {
                 image: { url: outputImagePath },
                 caption: `Aquí tienes la foto de perfil de @${userJid.split("@")[0]} con el PNG encima.`,
               });
+              console.log("Imagen enviada correctamente.");
               resolve(); // Resolvemos la promesa cuando se envía la imagen
             } catch (error) {
-              console.error(error);
+              console.error("Error al enviar la imagen:", error);
               await sendReply("⚠️ Ocurrió un error inesperado, pero la imagen se envió correctamente.");
               resolve(); // Resolvemos la promesa incluso si hubo un error
             }
@@ -79,7 +88,7 @@ module.exports = {
           .run();
       });
     } catch (error) {
-      console.error(error);
+      console.error("Error general:", error);
       await sendReply("Hubo un error al procesar el comando.");
     }
   },
