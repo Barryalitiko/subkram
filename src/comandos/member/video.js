@@ -56,4 +56,31 @@ module.exports = {
         .outputOptions([
           "-vf", "overlay=10:10" // Posicionamos el PNG en la parte superior izquierda
         ])
-        .out
+        .output(outputImagePath)
+        .on("end", async () => {
+          try {
+            // Enviar la imagen combinada
+            await socket.sendMessage(remoteJid, {
+              image: { url: outputImagePath },
+              caption: `Aquí tienes la foto de perfil de @${userJid.split("@")[0]} con el PNG encima.`,
+            });
+
+            // Eliminar los archivos temporales
+            fs.unlinkSync(imageFilePath);
+            fs.unlinkSync(outputImagePath);
+          } catch (error) {
+            console.error(error);
+            await sendReply("Hubo un problema al enviar la imagen.");
+          }
+        })
+        .on("error", (err) => {
+          console.error(err);
+          sendReply("Hubo un problema al procesar la imagen.");
+        })
+        .run();
+    } catch (error) {
+      console.error(error);
+      await sendReply("Hubo un error al procesar el comando.");
+    }
+  },
+};
