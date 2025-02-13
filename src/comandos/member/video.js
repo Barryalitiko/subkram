@@ -35,37 +35,46 @@ module.exports = {
         return;
       }
 
-      // Ruta temporal para guardar los archivos
-      const tempFolder = "C:/temp";
+      // Carpeta temporal segura
+      const tempFolder = path.resolve(__dirname, "../../../assets/temp");
       if (!fs.existsSync(tempFolder)) {
         fs.mkdirSync(tempFolder, { recursive: true });
       }
 
-      const sanitizedJid = userJid.replace(/[@.:]/g, "_"); // Reemplazar caracteres especiales
-      const imageFilePath = path.resolve(tempFolder, `${sanitizedJid}_profile.jpg`);
+      // Sanitizar nombre del archivo
+      const sanitizedJid = userJid.replace(/[^a-zA-Z0-9_-]/g, "_"); // Reemplazar caracteres problemáticos
+      const imageFilePath = path.join(tempFolder, `${sanitizedJid}_profile.jpg`);
+      const outputImagePath = path.join(tempFolder, `${sanitizedJid}_profile_with_png.jpg`);
+      const pngImagePath = path.resolve(__dirname, "../../../assets/images/celda.png");
+
+      // Descargar la foto de perfil
       const response = await axios({ url: profilePicUrl, responseType: "arraybuffer" });
       fs.writeFileSync(imageFilePath, response.data);
 
-      const pngImagePath = path.resolve(__dirname, "../../../assets/images/celda.png");
-      const outputImagePath = path.resolve(tempFolder, `${sanitizedJid}_profile_with_png.jpg`);
+      // Comprobación de archivos
+      if (!fs.existsSync(imageFilePath)) {
+        await sendReply("No se pudo guardar la imagen de perfil.");
+        return;
+      }
+      if (!fs.existsSync(pngImagePath)) {
+        await sendReply("El archivo PNG no existe.");
+        return;
+      }
 
-      // Usamos ffmpeg para combinar la foto de perfil con el PNG
+      // Comando FFmpeg para superponer la imagen PNG
       ffmpeg()
         .input(imageFilePath)
         .input(pngImagePath)
-        .outputOptions([
-          "-vf", "overlay=10:10" // Posicionamos el PNG en la parte superior izquierda
-        ])
-        .output(outputImagePath)
+        .complexFilter(["overlay=10:10"]) // Posición de la imagen encima
+        .save(outputImagePath)
         .on("end", async () => {
           try {
-            // Enviar la imagen combinada
             await socket.sendMessage(remoteJid, {
               image: { url: outputImagePath },
               caption: `Aquí tienes la foto de perfil de @${userJid.split("@")[0]} con el PNG encima.`,
             });
 
-            // Eliminar los archivos temporales
+            // Limpiar archivos temporales
             fs.unlinkSync(imageFilePath);
             fs.unlinkSync(outputImagePath);
           } catch (error) {
@@ -74,7 +83,7 @@ module.exports = {
           }
         })
         .on("error", (err) => {
-          console.error(err);
+          console.error("FFmpeg Error:", err);
           sendReply("Hubo un problema al procesar la imagen.");
         })
         .run();
