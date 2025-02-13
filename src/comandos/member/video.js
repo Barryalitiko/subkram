@@ -50,9 +50,9 @@ module.exports = {
 
       await new Promise((resolve, reject) => {
         ffmpeg()
-          .input(imageFilePath)
+          .input(imageFilePath) // Entrada de la imagen de perfil
           .loop(10) // Hace que la imagen de perfil dure 10s
-          .input(pngImagePath)
+          .input(pngImagePath) // Entrada del PNG
           .loop(10) // Hace que la imagen PNG dure 10s
           .input(audioFilePath) // Entrada del audio
           .audioCodec("aac") // Codec de audio para asegurar la compatibilidad
@@ -62,9 +62,10 @@ module.exports = {
           ])
           .map("[final]")
           .output(outputVideoPath)
-          .duration(10)
+          .duration(10) // Duración del video (10 segundos)
           .outputOptions(["-shortest"]) // Asegura que el video no termine antes de tiempo
           .on("end", async () => {
+            // Ahora se asegura de que se envié el video con audio
             await socket.sendMessage(remoteJid, {
               video: { url: outputVideoPath },
               caption: `Aquí tienes un video donde la imagen de @${userJid.split("@")[0]} se combina con el PNG y el audio.`,
