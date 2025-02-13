@@ -4,31 +4,20 @@ const fs = require("fs");
 const path = require("path");
 const ffmpeg = require("fluent-ffmpeg");
 
-const cooldowns = {};
-const COOLDOWN_TIME = 25 * 1000;
-
 module.exports = {
-  name: "miniVideo",
-  description: "Genera un mini video con la foto de perfil de un usuario y un audio.",
-  commands: ["minivideo", "videoPerfil"],
-  usage: `${PREFIX}minivideo @usuario`,
-  handle: async ({ args, socket, remoteJid, sendReply, sendReact, isReply, replyJid, senderJid }) => {
+  name: "perfilConPNG",
+  description: "Envía la foto de perfil del usuario con un PNG encima.",
+  commands: ["perfilpng", "fotoConPNG"],
+  usage: `${PREFIX}perfilpng @usuario`,
+  handle: async ({ args, socket, remoteJid, sendReply, isReply, replyJid, senderJid }) => {
     let userJid;
     if (isReply) {
       userJid = replyJid;
     } else if (args.length < 1) {
-      await sendReply("Uso incorrecto. Usa el comando así:\n" + `${PREFIX}minivideo @usuario`);
+      await sendReply("Uso incorrecto. Usa el comando así:\n" + `${PREFIX}perfilpng @usuario`);
       return;
     } else {
       userJid = args[0].replace("@", "") + "@s.whatsapp.net";
-    }
-
-    const lastUsed = cooldowns[senderJid] || 0;
-    const now = Date.now();
-    if (now - lastUsed < COOLDOWN_TIME) {
-      const remainingTime = ((COOLDOWN_TIME - (now - lastUsed)) / 1000).toFixed(1);
-      await sendReply(`Espera ${remainingTime} segundos antes de volver a usar el comando.`);
-      return;
     }
 
     try {
@@ -37,16 +26,16 @@ module.exports = {
         profilePicUrl = await socket.profilePictureUrl(userJid, "image");
       } catch (err) {
         console.error(err);
-        await sendReply(`@${args[0] || userJid.split('@')[0]} no tiene foto de perfil, no puedo generar el video.`);
+        await sendReply(`@${args[0] || userJid.split('@')[0]} no tiene foto de perfil.`);
         return;
       }
 
       if (!profilePicUrl) {
-        await sendReply(`@${args[0] || userJid.split('@')[0]} no tiene foto de perfil, no puedo generar el video.`);
+        await sendReply(`@${args[0] || userJid.split('@')[0]} no tiene foto de perfil.`);
         return;
       }
 
-      // Usamos una ruta más corta para evitar problemas de longitud
+      // Ruta temporal para guardar los archivos
       const tempFolder = "C:/temp";
       if (!fs.existsSync(tempFolder)) {
         fs.mkdirSync(tempFolder, { recursive: true });
@@ -57,52 +46,14 @@ module.exports = {
       const response = await axios({ url: profilePicUrl, responseType: "arraybuffer" });
       fs.writeFileSync(imageFilePath, response.data);
 
-      const audioFilePath = path.resolve(__dirname, "../../../assets/audio/audio.mp3");
-      const videoFilePath = path.resolve(tempFolder, `${sanitizedJid}_video.mp4`);
       const pngImagePath = path.resolve(__dirname, "../../../assets/images/celda.png");
+      const outputImagePath = path.resolve(tempFolder, `${sanitizedJid}_profile_with_png.jpg`);
 
-      const texto = `Hola, soy @${userJid.split("@")[0]}`; // Texto que se quiere escribir
-
+      // Usamos ffmpeg para combinar la foto de perfil con el PNG
       ffmpeg()
         .input(imageFilePath)
-        .loop(10) // Mantener la imagen estática durante el video
-        .input(audioFilePath)
-        .audioCodec("aac")
-        .videoCodec("libx264")
-        .input(pngImagePath) // Tratar la imagen PNG como un archivo normal
+        .input(pngImagePath)
         .outputOptions([
-          "-t 10",
-          "-vf",
-          `drawtext=text='${texto}':x=(w-tw)/2:y=h-(2*lh):fontsize=24:fontcolor=black:box=1:boxcolor=white:boxborderw=5,fade=t=in:st=0:d=4,overlay=x='min(t*100, 220)':y=0:format=yuv420`,
-          "-preset fast"
+          "-vf", "overlay=10:10" // Posicionamos el PNG en la parte superior izquierda
         ])
-        .output(videoFilePath)
-        .on("end", async () => {
-          try {
-            await socket.sendMessage(remoteJid, {
-              video: { url: videoFilePath },
-              caption: `Aquí está tu mini video, @${userJid.split("@")[0]}`,
-              mentions: [userJid],
-            });
-
-            // Eliminar los archivos temporales
-            fs.unlinkSync(imageFilePath);
-            fs.unlinkSync(videoFilePath);
-
-            cooldowns[senderJid] = Date.now();
-          } catch (error) {
-            console.error(error);
-            await sendReply("Hubo un problema al generar el video.");
-          }
-        })
-        .on("error", (err) => {
-          console.error(err);
-          sendReply("Hubo un problema al crear el video.");
-        })
-        .run();
-    } catch (error) {
-      console.error(error);
-      await sendReply("Hubo un error al procesar el comando.");
-    }
-  },
-};
+        .out
