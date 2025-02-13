@@ -17,7 +17,7 @@ module.exports = {
     if (isReply) {
       userJid = replyJid;
     } else if (args.length < 1) {
-      await sendReply(`Uso incorrecto. Usa el comando así:\n${PREFIX}minivideo @usuario`);
+      await sendReply("Uso incorrecto. Usa el comando así:\n" + `${PREFIX}minivideo @usuario`);
       return;
     } else {
       userJid = args[0].replace("@", "") + "@s.whatsapp.net";
@@ -37,49 +37,42 @@ module.exports = {
         profilePicUrl = await socket.profilePictureUrl(userJid, "image");
       } catch (err) {
         console.error(err);
-        await sendReply(`@${args[0] || userJid.split("@")[0]} no tiene foto de perfil, no puedo generar el video.`);
+        await sendReply(`@${args[0] || userJid.split('@')[0]} no tiene foto de perfil, no puedo generar el video.`);
         return;
       }
 
       if (!profilePicUrl) {
-        await sendReply(`@${args[0] || userJid.split("@")[0]} no tiene foto de perfil, no puedo generar el video.`);
+        await sendReply(`@${args[0] || userJid.split('@')[0]} no tiene foto de perfil, no puedo generar el video.`);
         return;
       }
 
-      const tempFolder = path.resolve(__dirname, "../../../assets/temp");
+      // Usamos una ruta más corta para evitar problemas de longitud
+      const tempFolder = "C:/temp";
       if (!fs.existsSync(tempFolder)) {
         fs.mkdirSync(tempFolder, { recursive: true });
       }
 
-      const sanitizedJid = userJid.replace(/[@.:]/g, "_"); // Reemplaza @, . y : con _
+      const sanitizedJid = userJid.replace(/[@.:]/g, "_"); // Reemplazar caracteres especiales
       const imageFilePath = path.resolve(tempFolder, `${sanitizedJid}_profile.jpg`);
       const response = await axios({ url: profilePicUrl, responseType: "arraybuffer" });
       fs.writeFileSync(imageFilePath, response.data);
 
       const audioFilePath = path.resolve(__dirname, "../../../assets/audio/audio.mp3");
       const videoFilePath = path.resolve(tempFolder, `${sanitizedJid}_video.mp4`);
-      const pngImagePath = path.resolve(__dirname, "../../../assets/images/celda.png");
 
-      // Verificar si los archivos existen antes de ejecutar FFmpeg
-      [imageFilePath, audioFilePath, pngImagePath].forEach((file) => {
-        if (!fs.existsSync(file)) {
-          console.error("Archivo no encontrado:", file);
-        }
-      });
-
-      console.log("Ruta del video de salida:", videoFilePath);
+      const texto = `Hola, soy @${userJid.split("@")[0]}`; // Texto que se quiere escribir
 
       ffmpeg()
         .input(imageFilePath)
+        .loop(10) // Mantener la imagen estática durante el video
         .input(audioFilePath)
-        .input(pngImagePath) // ✅ Corregido
         .audioCodec("aac")
         .videoCodec("libx264")
         .outputOptions([
           "-t 10",
           "-vf",
-          "fade=t=in:st=0:d=10, overlay=x='min(t*100, 220)':y=0:format=yuv420",
-          "-preset fast",
+          `drawtext=text='${texto}':x=(w-tw)/2:y=h-(2*lh):fontsize=24:fontcolor=black:box=1:boxcolor=white:boxborderw=5,fade=t=in:st=0:d=4`,
+          "-preset fast"
         ])
         .output(videoFilePath)
         .on("end", async () => {
@@ -89,8 +82,11 @@ module.exports = {
               caption: `Aquí está tu mini video, @${userJid.split("@")[0]}`,
               mentions: [userJid],
             });
+
+            // Eliminar los archivos temporales
             fs.unlinkSync(imageFilePath);
             fs.unlinkSync(videoFilePath);
+
             cooldowns[senderJid] = Date.now();
           } catch (error) {
             console.error(error);
@@ -98,7 +94,7 @@ module.exports = {
           }
         })
         .on("error", (err) => {
-          console.error("Error en FFmpeg:", err);
+          console.error(err);
           sendReply("Hubo un problema al crear el video.");
         })
         .run();
