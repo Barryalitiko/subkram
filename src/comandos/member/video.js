@@ -9,15 +9,7 @@ module.exports = {
   description: "Genera un video donde el PNG aparece gradualmente sobre la foto de perfil.",
   commands: ["perfilvideo", "videoperfil"],
   usage: `${PREFIX}perfilvideo @usuario`,
-  handle: async ({
-    args,
-    socket,
-    remoteJid,
-    sendReply,
-    isReply,
-    replyJid,
-    senderJid,
-  }) => {
+  handle: async ({ args, socket, remoteJid, sendReply, isReply, replyJid, senderJid }) => {
     let userJid;
     if (isReply) {
       userJid = replyJid;
@@ -51,7 +43,6 @@ module.exports = {
       const imageFilePath = path.join(tempFolder, `${sanitizedJid}_profile.jpg`);
       const outputVideoPath = path.join(tempFolder, `${sanitizedJid}_profile_fade.mp4`);
       const pngImagePath = path.resolve(__dirname, "../../../assets/images/celda2.png");
-      const audioFilePath = path.resolve(__dirname, "../../../assets/audio/audio.mp3");
 
       const response = await axios({ url: profilePicUrl, responseType: "arraybuffer" });
       fs.writeFileSync(imageFilePath, response.data);
@@ -59,25 +50,21 @@ module.exports = {
       await new Promise((resolve, reject) => {
         ffmpeg()
           .input(imageFilePath)
-          .loop(10)
+          .loop(10) // Hace que la imagen de perfil dure 10s
           .input(pngImagePath)
-          .loop(10)
-          .input(audioFilePath)
-          .audioCodec("aac")
+          .loop(10) // Hace que la imagen PNG dure 10s
           .complexFilter([
-            "[1:v]format=rgba,fade=t=in:st=1:d=3[fade]",
-            "[0:v][fade]overlay=0:0[final]",
+            "[1:v]format=rgba,fade=t=in:st=1:d=3[fade]", // Fade-in en la imagen PNG
+            "[0:v][fade]overlay=0:0[final]" // Superpone el PNG sobre la imagen de perfil
           ])
           .map("[final]")
-          .map("0:v")
-          .map("1:a")
           .output(outputVideoPath)
           .duration(10)
-          .outputOptions(["-shortest"])
+          .outputOptions(["-shortest"]) // Asegura que el video no termine antes de tiempo
           .on("end", async () => {
             await socket.sendMessage(remoteJid, {
               video: { url: outputVideoPath },
-              caption: `Aquí tienes un video donde la imagen de @${userJid.split("@")[0]} se combina con el PNG y el audio.`,
+              caption: `Aquí tienes un video donde la imagen de @${userJid.split("@")[0]} se combina con el PNG.`,
             });
             resolve();
           })
