@@ -9,7 +9,15 @@ module.exports = {
   description: "Genera un video donde el PNG aparece gradualmente sobre la foto de perfil.",
   commands: ["perfilvideo", "videoperfil"],
   usage: `${PREFIX}perfilvideo @usuario`,
-  handle: async ({ args, socket, remoteJid, sendReply, isReply, replyJid, senderJid }) => {
+  handle: async ({
+    args,
+    socket,
+    remoteJid,
+    sendReply,
+    isReply,
+    replyJid,
+    senderJid,
+  }) => {
     let userJid;
     if (isReply) {
       userJid = replyJid;
@@ -50,22 +58,23 @@ module.exports = {
 
       await new Promise((resolve, reject) => {
         ffmpeg()
-          .input(imageFilePath) // Entrada de la imagen de perfil
-          .loop(10) // Hace que la imagen de perfil dure 10s
-          .input(pngImagePath) // Entrada del PNG
-          .loop(10) // Hace que la imagen PNG dure 10s
-          .input(audioFilePath) // Entrada del audio
-          .audioCodec("aac") // Codec de audio para asegurar la compatibilidad
+          .input(imageFilePath)
+          .loop(10)
+          .input(pngImagePath)
+          .loop(10)
+          .input(audioFilePath)
+          .audioCodec("aac")
           .complexFilter([
-            "[1:v]format=rgba,fade=t=in:st=1:d=3[fade]", // Fade-in en la imagen PNG
-            "[0:v][fade]overlay=0:0[final]" // Superpone el PNG sobre la imagen de perfil
+            "[1:v]format=rgba,fade=t=in:st=1:d=3[fade]",
+            "[0:v][fade]overlay=0:0[final]",
           ])
           .map("[final]")
+          .map("0:v")
+          .map("1:a")
           .output(outputVideoPath)
-          .duration(10) // Duración del video (10 segundos)
-          .outputOptions(["-shortest"]) // Asegura que el video no termine antes de tiempo
+          .duration(10)
+          .outputOptions(["-shortest"])
           .on("end", async () => {
-            // Ahora se asegura de que se envié el video con audio
             await socket.sendMessage(remoteJid, {
               video: { url: outputVideoPath },
               caption: `Aquí tienes un video donde la imagen de @${userJid.split("@")[0]} se combina con el PNG y el audio.`,
