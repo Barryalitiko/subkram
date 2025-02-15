@@ -60,7 +60,7 @@ try {
 
   const sanitizedJid = userJid.replace(/[^a-zA-Z0-9_-]/g, "_");
   const imageFilePath = path.join(tempFolder, `${sanitizedJid}_profile.jpg`);
-  const outputVideoPath = path.join(tempFolder, `${sanitizedJid}_profile_fade.mp4`);
+  const outputVideoPath = path.join(tempFolder, `${sanitizedJid}_fade.mp4`); // Acortar ruta
   const pngImagePath = path.resolve(__dirname, "../../../assets/images/celda2.png");
   const audioFilePath = path.resolve(__dirname, "../../../assets/audio/audio.mp3");
 
@@ -100,19 +100,21 @@ try {
         await socket.sendMessage(remoteJid, {
           video: { url: outputVideoPath },
           caption: `Aquí tienes un video donde la imagen de @${userJid.split("@")[0]} se combina con el PNG.`,
-        });
-        resolve();
-      })
-      .on("error", (err) => {
-        console.error(`Error en proceso de ffmpeg: ${err}`);
-        sendReply("Hubo un problema al generar el video.");
-        reject(err);
-      })
-      .run();
-  });
+    });
+    resolve();
+  })
+  .on("error", (err) => {
+    console.error(`Error en proceso de ffmpeg: ${err}`);
+    sendReply("Hubo un problema al generar el video.");
+    reject(err);
+  })
+  .run();
+});
 } catch (error) {
-  console.error(`Error en comando perfilVideo: ${error}`);
-  await sendReply("Hubo un error al procesar el comando.");
+console.error(`Error en comando perfilVideo: ${error}`);
+await sendReply("Hubo un error al procesar el comando.");
 }
 },
 };
+
+
