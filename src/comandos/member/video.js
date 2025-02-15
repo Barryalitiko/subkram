@@ -14,47 +14,39 @@ args,
 socket,
 remoteJid,
 sendReply,
+sendReact,
 isReply,
 replyJid,
 senderJid,
 }) => {
-console.log("Iniciando comando perfilVideo");
-
 let userJid;
 if (isReply) {
-  userJid = replyJid;
+userJid = replyJid;
 } else if (args.length < 1) {
-  console.log("Uso incorrecto del comando");
-  await sendReply("Uso incorrecto. Usa el comando así:\n" + `${PREFIX}perfilvideo @usuario`);
-  return;
+await sendReply("Uso incorrecto. Usa el comando así:\n" + `${PREFIX}perfilvideo @usuario`);
+return;
 } else {
-  userJid = args[0].replace("@", "") + "@s.whatsapp.net";
+userJid = args[0].replace("@", "") + "@s.whatsapp.net";
 }
-
-console.log(`Usuario: ${userJid}`);
 
 try {
   let profilePicUrl;
   try {
     profilePicUrl = await socket.profilePictureUrl(userJid, "image");
-    console.log(`Foto de perfil: ${profilePicUrl}`);
   } catch (err) {
-    console.error(`Error al obtener foto de perfil: ${err}`);
     await sendReply(`@${args[0] || userJid.split('@')[0]} no tiene foto de perfil.`);
     return;
   }
 
   if (!profilePicUrl) {
-    console.log("No se encontró foto de perfil");
     await sendReply(`@${args[0] || userJid.split('@')[0]} no tiene foto de perfil.`);
     return;
   }
 
-  const tempFolder = path.resolve(__dirname, "../../../assets/temp");
-  console.log(`Carpeta temporal: ${tempFolder}`);
+  await sendReact("⏳");
 
+  const tempFolder = path.resolve(__dirname, "../../../assets/temp");
   if (!fs.existsSync(tempFolder)) {
-    console.log("Creando carpeta temporal");
     fs.mkdirSync(tempFolder, { recursive: true });
   }
 
@@ -64,19 +56,10 @@ try {
   const pngImagePath = path.resolve(__dirname, "../../../assets/images/celda2.png");
   const audioFilePath = path.resolve(__dirname, "../../../assets/audio/audio.mp3");
 
-  console.log(`Rutas de archivos:
-    - Foto de perfil: ${imageFilePath}
-    - Video de salida: ${outputVideoPath}
-    - Imagen PNG: ${pngImagePath}
-    - Audio: ${audioFilePath}
-  `);
-
   const response = await axios({ url: profilePicUrl, responseType: "arraybuffer" });
-  console.log("Descargando foto de perfil");
   fs.writeFileSync(imageFilePath, response.data);
 
   await new Promise((resolve, reject) => {
-    console.log("Iniciando proceso de ffmpeg");
     ffmpeg()
       .input(imageFilePath)
       .loop(10)
@@ -90,9 +73,6 @@ try {
       .output(outputVideoPath)
       .duration(10)
       .on("end", async () => {
-        console.log("Proceso de ffmpeg finalizado");
-
-        // Añadir música al vídeo
         const videoWithAudioPath = path.join(tempFolder, `${sanitizedJid}_video.mp4`);
         ffmpeg()
           .input(outputVideoPath)
@@ -101,7 +81,7 @@ try {
           .outputOptions(["-t 10", "-preset fast"])
           .output(videoWithAudioPath)
           .on("end", async () => {
-            console.log("Video con música creado");
+            await sendReact("🎨");
             await socket.sendMessage(remoteJid, {
               video: { url: videoWithAudioPath },
               caption: `Aquí tienes un video donde la imagen de @${userJid.split("@")[0]} se combina con el PNG.`,
@@ -109,21 +89,21 @@ try {
             resolve();
           })
           .on("error", (err) => {
-            console.error(`Error al agregar música: ${err}`);
+            console.error(err);
             sendReply("Hubo un problema al generar el video.");
             reject(err);
           })
           .run();
       })
       .on("error", (err) => {
-        console.error(`Error en proceso de ffmpeg: ${err}`);
+        console.error(err);
         sendReply("Hubo un problema al generar el video.");
         reject(err);
       })
       .run();
   });
 } catch (error) {
-  console.error(`Error en comando perfilVideo: ${error}`);
+  console.error(error);
   await sendReply("Hubo un error al procesar el comando.");
 }
 },
