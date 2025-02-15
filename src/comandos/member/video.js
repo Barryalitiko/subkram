@@ -64,11 +64,14 @@ try {
       .loop(10)
       .input(audioFilePath)
       .audioCodec("aac")
+      .audioBitrate("128k")
       .complexFilter([
         "[1:v]format=rgba,fade=t=in:st=1:d=3[fade]",
         "[0:v][fade]overlay=0:0[final]",
       ])
       .map("[final]")
+      .map("0:v")
+      .map("2:a")
       .output(outputVideoPath)
       .duration(10)
       .outputOptions(["-shortest"])
