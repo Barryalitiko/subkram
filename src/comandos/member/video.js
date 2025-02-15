@@ -60,7 +60,7 @@ try {
 
   const sanitizedJid = userJid.replace(/[^a-zA-Z0-9_-]/g, "_");
   const imageFilePath = path.join(tempFolder, `${sanitizedJid}_profile.jpg`);
-  const outputVideoPath = path.join(tempFolder, `${sanitizedJid}_fade.mp4`); // Acortar ruta
+  const outputVideoPath = path.join(tempFolder, `${sanitizedJid}_fade.mp4`);
   const pngImagePath = path.resolve(__dirname, "../../../assets/images/celda2.png");
   const audioFilePath = path.resolve(__dirname, "../../../assets/audio/audio.mp3");
 
@@ -82,39 +82,50 @@ try {
       .loop(10)
       .input(pngImagePath)
       .loop(10)
-      .input(audioFilePath)
-      .audioCodec("aac")
-      .audioBitrate("128k")
       .complexFilter([
         "[1:v]format=rgba,fade=t=in:st=1:d=3[fade]",
         "[0:v][fade]overlay=0:0[final]",
       ])
       .map("[final]")
-      .map("0:v")
-      .map("2:a")
       .output(outputVideoPath)
       .duration(10)
-      .outputOptions(["-shortest"])
       .on("end", async () => {
         console.log("Proceso de ffmpeg finalizado");
-        await socket.sendMessage(remoteJid, {
-          video: { url: outputVideoPath },
-          caption: `Aquí tienes un video donde la imagen de @${userJid.split("@")[0]} se combina con el PNG.`,
-    });
-    resolve();
-  })
-  .on("error", (err) => {
-    console.error(`Error en proceso de ffmpeg: ${err}`);
-    sendReply("Hubo un problema al generar el video.");
-    reject(err);
-  })
-  .run();
-});
+
+        // Añadir música al vídeo
+        const videoWithAudioPath = path.join(tempFolder, `${sanitizedJid}_video.mp4`);
+        ffmpeg()
+          .input(outputVideoPath)
+          .input(audioFilePath)
+          .audioCodec("aac")
+          .outputOptions(["-t 10", "-preset fast"])
+          .output(videoWithAudioPath)
+          .on("end", async () => {
+            console.log("Video con música creado");
+            await socket.sendMessage(remoteJid, {
+              video: { url: videoWithAudioPath },
+              caption: `Aquí tienes un video donde la imagen de @${userJid.split("@")[0]} se combina con el PNG.`,
+            });
+            resolve();
+          })
+          .on("error", (err) => {
+            console.error(`Error al agregar música: ${err}`);
+            sendReply("Hubo un problema al generar el video.");
+            reject(err);
+          })
+          .run();
+      })
+      .on("error", (err) => {
+        console.error(`Error en proceso de ffmpeg: ${err}`);
+        sendReply("Hubo un problema al generar el video.");
+        reject(err);
+      })
+      .run();
+  });
 } catch (error) {
-console.error(`Error en comando perfilVideo: ${error}`);
-await sendReply("Hubo un error al procesar el comando.");
+  console.error(`Error en comando perfilVideo: ${error}`);
+  await sendReply("Hubo un error al procesar el comando.");
 }
 },
 };
-
 
