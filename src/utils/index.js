@@ -239,3 +239,16 @@ exports.getRandomName = (extension) => {
 
   return `${fileName}.${extension}`;
 };
+
+exports.handleCommandResponse = async (response, sendReply) => {
+  if (typeof response === 'object') {
+    // Si la respuesta es un objeto, enviar mensaje multimedia
+    await sendReply({
+      text: response.text,
+      media: response.media,
+    });
+  } else {
+    // Si la respuesta es un texto, enviar mensaje de texto
+    await sendReply(response);
+  }
+};
