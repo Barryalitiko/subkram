@@ -1,24 +1,29 @@
 const { PREFIX } = require("../../krampus");
 
 module.exports = {
-  name: "abrir",
-  description: "Abre el grupo, permitiendo que todos los miembros puedan enviar mensajes.",
-  commands: ["abrir"],
-  usage: `${PREFIX}abrir`,
-  handle: async ({ socket, remoteJid, sendReply }) => {
+  name: "delete",
+  description: "Eliminar un mensaje en el grupo.",
+  commands: ["delete"],
+  usage: `${PREFIX}delete <id del mensaje>`,
+  handle: async ({ socket, remoteJid, sendReply, message }) => {
     try {
-      // Verificar si el comando se está ejecutando en un grupo
       if (!remoteJid.endsWith("@g.us")) {
         await sendReply("❌ Este comando solo puede usarse en grupos.");
         return;
       }
 
-      // Intentar abrir el grupo
-      await socket.groupSettingUpdate(remoteJid, "not_announcement");
-      await sendReply("🔓 El grupo ha sido abierto. Todos los miembros pueden enviar mensajes.");
+      const groupMetadata = await socket.groupMetadata(remoteJid);
+      if (!groupMetadata.participants.find((p) => p.id === socket.user.jid && p.admin)) {
+        await sendReply("❌ Solo los administradores pueden eliminar mensajes.");
+        return;
+      }
+
+      const messageId = message.quoted.messageID;
+      await socket.deleteMessage(remoteJid, messageId);
+      await sendReply("🚮 Mensaje eliminado con éxito.");
     } catch (error) {
-      console.error("Error al intentar abrir el grupo:", error);
-      await sendReply("❌ No se pudo abrir el grupo. Asegúrate de que el bot es administrador.");
+      console.error("Error al intentar eliminar el mensaje:", error);
+      await sendReply("❌ No se pudo eliminar el mensaje. Asegúrate de que el bot es administrador.");
     }
   },
 };
