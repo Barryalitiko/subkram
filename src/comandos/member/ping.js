@@ -6,13 +6,16 @@ module.exports = {
   commands: ["ping"],
   usage: `${PREFIX}ping`,
   handle: async ({ sendReply, sendReact }) => {
-    await sendReact("👻");
-    return {
-      text: "Pong!",
+    await sendReact("🏓");
+    await sendReply(`🏓 Pong!`, {
       media: {
         url: "https://chat.whatsapp.com/F7qZTWPDTNqGALF0d9VQJC",
         caption: "Previsualización del enlace",
       },
-    };
+    });
   },
 };
+
+
+
+
