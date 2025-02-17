@@ -2,6 +2,7 @@ const { PREFIX } = require("../../krampus");
 const { downloadMusic } = require("../../services/ytdpl");
 const ytSearch = require("yt-search");
 const fs = require("fs");
+const axios = require("axios");
 const cooldowns = new Map();
 
 module.exports = {
@@ -9,7 +10,6 @@ module.exports = {
   description: "Descargar y enviar música desde YouTube",
   commands: ["musica", "m", "music", "play", "audio"],
   usage: `${PREFIX}musica <nombre del video>`,
-
   handle: async ({
     socket,
     remoteJid,
@@ -46,6 +46,7 @@ module.exports = {
 
       const searchResult = await ytSearch(videoQuery);
       const video = searchResult.videos[0];
+
       if (!video) {
         await sendReply("❌ No se encontró ningún video con ese nombre.", { quoted: webMessage });
         return;
@@ -53,18 +54,32 @@ module.exports = {
 
       const videoUrl = video.url;
       const videoTitle = video.title;
-      const videoDuration = video.timestamp.split(":").slice(-2).join(":");
+      const videoAuthor = video.author.name;
+      const videoViews = video.views;
+      const videoThumbnail = video.thumbnail;
 
-      console.log(`Video encontrado: ${videoTitle}, URL: ${videoUrl}`);
+      const message = `🎶 ${videoTitle} 
+📺 Canal: ${videoAuthor} 
+👀 Visualizaciones: ${videoViews} 
+ 
+> Bot by Krampus OM Oᴘᴇʀᴀᴄɪᴏɴ Mᴀʀsʜᴀʟʟ ༴༎𝙾𝙼༎`;
 
-      const message = `1:10━━━━●───── ${videoDuration} \n\n${videoTitle} \n\n> Bot by Krampus OM Oᴘᴇʀᴀᴄɪᴏɴ Mᴀʀsʜᴀʟʟ ༴༎𝙾𝙼༎`;
       await sendReply(message, { quoted: webMessage });
+
+      const thumbnailResponse = await axios.get(videoThumbnail, { responseType: 'arraybuffer' });
+      const thumbnailBuffer = Buffer.from(thumbnailResponse.data, 'binary');
+
+      await sendMessage({
+        messageType: 'image',
+        url: thumbnailBuffer,
+        mimetype: 'image/jpeg',
+        caption: message,
+      });
 
       const musicPath = await downloadMusic(videoUrl);
       console.log(`Música descargada correctamente: ${musicPath}`);
 
       await sendMusicReact("🎵");
-
       await sendMessage({
         messageType: "audio",
         url: musicPath,
@@ -87,3 +102,5 @@ module.exports = {
     }
   },
 };
+
+
