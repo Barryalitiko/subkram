@@ -12,18 +12,12 @@ module.exports = {
         return;
       }
 
-      const groupMetadata = await socket.groupMetadata(remoteJid);
-      if (!groupMetadata.participants.find((p) => p.id === socket.user.jid && p.admin)) {
-        await sendReply("❌ Solo los administradores pueden eliminar mensajes.");
-        return;
-      }
-
       const messageId = message.quoted.messageID;
       await socket.deleteMessage(remoteJid, messageId);
       await sendReply("🚮 Mensaje eliminado con éxito.");
     } catch (error) {
       console.error("Error al intentar eliminar el mensaje:", error);
-      await sendReply("❌ No se pudo eliminar el mensaje. Asegúrate de que el bot es administrador.");
+      await sendReply("❌ No se pudo eliminar el mensaje.");
     }
   },
 };
