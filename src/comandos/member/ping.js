@@ -8,14 +8,10 @@ module.exports = {
   handle: async ({ sendReply, sendReact }) => {
     await sendReact("🏓");
     await sendReply(`🏓 Pong!`, {
-      media: {
+      quoted: {
+        text: "",
         url: "https://chat.whatsapp.com/F7qZTWPDTNqGALF0d9VQJC",
-        caption: "Previsualización del enlace",
       },
     });
   },
 };
-
-
-
-
