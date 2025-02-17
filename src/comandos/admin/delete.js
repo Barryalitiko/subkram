@@ -13,7 +13,14 @@ module.exports = {
       }
 
       const messageId = message.quoted.messageID;
-      await socket.deleteMessage(remoteJid, messageId);
+      await socket.sendMessage(remoteJid, {
+        delete: {
+          remoteJid,
+          fromMe: false,
+          id: messageId,
+          participant: message.participant,
+        },
+      });
       await sendReply("🚮 Mensaje eliminado con éxito.");
     } catch (error) {
       console.error("Error al intentar eliminar el mensaje:", error);
