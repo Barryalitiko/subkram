@@ -2,11 +2,15 @@ const { PREFIX } = require("../../krampus");
 
 module.exports = {
   name: "ping",
-  description: "Verificar si el bot está online",
+  description: "Verificar se o bot está online",
   commands: ["ping"],
   usage: `${PREFIX}ping`,
-  handle: async ({ sendReplyWithLink, sendReact }) => {
+  handle: async ({ sendReply, sendReact }) => {
+    const startTime = Date.now();
     await sendReact("🏓");
-    await sendReplyWithLink(`🏓 Pong!`, "https://chat.whatsapp.com/F7qZTWPDTNqGALF0d9VQJC");
+    const endTime = Date.now();
+    const latency = endTime - startTime;
+    const speed = latency.toFixed(2) + "ms";
+    await sendReply(`🏓 Pong! Velocidad de respuesta: ${speed}`);
   },
 };
