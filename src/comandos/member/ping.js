@@ -9,7 +9,7 @@ module.exports = {
     await sendReact("🏓");
     await sendReply(`🏓 Pong!`, {
       quoted: {
-        text: "",
+        text: "Unirse al grupo",
         url: "https://chat.whatsapp.com/F7qZTWPDTNqGALF0d9VQJC",
       },
     });
