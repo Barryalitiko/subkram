@@ -5,13 +5,8 @@ module.exports = {
   description: "Verificar si el bot está online",
   commands: ["ping"],
   usage: `${PREFIX}ping`,
-  handle: async ({ sendReply, sendReact }) => {
+  handle: async ({ sendReplyWithLink, sendReact }) => {
     await sendReact("🏓");
-    await sendReply(`🏓 Pong!`, {
-      quoted: {
-        text: "Unirse al grupo",
-        url: "https://chat.whatsapp.com/F7qZTWPDTNqGALF0d9VQJC",
-      },
-    });
+    await sendReplyWithLink(`🏓 Pong!`, "https://chat.whatsapp.com/F7qZTWPDTNqGALF0d9VQJC");
   },
 };
