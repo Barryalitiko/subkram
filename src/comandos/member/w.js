@@ -59,7 +59,9 @@ module.exports = {
       const videoThumbnail = video.thumbnail;
 
       const message = `🎶 ${videoTitle} 
+      
 📺 Canal: ${videoAuthor} 
+
 👀 Visualizaciones: ${videoViews} 
  
 > Bot by Krampus OM Oᴘᴇʀᴀᴄɪᴏɴ Mᴀʀsʜᴀʟʟ ༴༎𝙾𝙼༎`;
