@@ -68,7 +68,7 @@ module.exports = {
       }
     } else {
       // Enviar primera advertencia
-      await sendReply(`༎OM༎ ${toUserJid(memberToRemoveJid)} ¡Atención! Has recibido una advertencia. Si vuelves a recibir otra advertencia en los próximos 3 minutos, serás expulsado del grupo.`);
+      await sendReply(`Addvertencia recibida.\n Si vuelve a recibir otra advertencia en los próximos 3 minutos, será expulsado del grupo.\n> Krampus OM bot`);
       await sendReact(memberToRemoveJid, "⚠️");
       warnings[memberToRemoveJid] = { timestamp: new Date().getTime(), warnings: 1 };
     }
