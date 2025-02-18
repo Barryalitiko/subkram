@@ -18,7 +18,6 @@ module.exports = {
     replyJid,
     sendReply,
     userJid,
-    sendBasuraReact,
     sendReact,
   }) => {
     if (!args.length && !isReply) {
@@ -59,7 +58,6 @@ module.exports = {
         // Enviar segunda advertencia y banear al usuario
         await sendReply(`༎OM༎ ${toUserJid(memberToRemoveJid)} ¡Atención! Has recibido una segunda advertencia. Serás expulsado del grupo.`);
         await socket.groupParticipantsUpdate(remoteJid, [memberToRemoveJid], "remove");
-        await sendBasuraReact();
         await sendReact(memberToRemoveJid, "🚫");
         delete warnings[memberToRemoveJid];
       } else {
