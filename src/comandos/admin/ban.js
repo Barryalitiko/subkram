@@ -19,6 +19,7 @@ module.exports = {
     sendReply,
     userJid,
     sendBasuraReact,
+    sendReact,
   }) => {
     if (!args.length && !isReply) {
       throw new InvalidParameterError(
@@ -59,15 +60,18 @@ module.exports = {
         await sendReply(`༎OM༎ ${toUserJid(memberToRemoveJid)} ¡Atención! Has recibido una segunda advertencia. Serás expulsado del grupo.`);
         await socket.groupParticipantsUpdate(remoteJid, [memberToRemoveJid], "remove");
         await sendBasuraReact();
+        await sendReact(memberToRemoveJid, "🚫");
         delete warnings[memberToRemoveJid];
       } else {
         // Enviar primera advertencia
         await sendReply(`༎OM༎ ${toUserJid(memberToRemoveJid)} ¡Atención! Has recibido una advertencia. Si vuelves a recibir otra advertencia en los próximos 3 minutos, serás expulsado del grupo.`);
+        await sendReact(memberToRemoveJid, "⚠️");
         warnings[memberToRemoveJid] = { timestamp: new Date().getTime(), warnings: 1 };
       }
     } else {
       // Enviar primera advertencia
       await sendReply(`༎OM༎ ${toUserJid(memberToRemoveJid)} ¡Atención! Has recibido una advertencia. Si vuelves a recibir otra advertencia en los próximos 3 minutos, serás expulsado del grupo.`);
+      await sendReact(memberToRemoveJid, "⚠️");
       warnings[memberToRemoveJid] = { timestamp: new Date().getTime(), warnings: 1 };
     }
   },
