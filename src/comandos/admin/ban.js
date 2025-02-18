@@ -8,7 +8,7 @@ const warnings = {}; // Objeto para almacenar las advertencias
 module.exports = {
   name: "ban",
   description: "Banear",
-  commands: ["ban", "kick"],
+  commands: ["advertencia", "adv"],
   usage: `ban`,
   handle: async ({
     args,
