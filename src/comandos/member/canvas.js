@@ -1,38 +1,40 @@
-const { Canvas } = require('canvas');
-const { PREFIX } = require('../../krampus');
+const { PREFIX } = require("../../krampus");
+const { Canvas } = require("canvas");
 
 module.exports = {
-  name: 'graffiti',
-  description: 'Crea un grafiti a partir de una palabra',
-  usage: `${PREFIX}graffiti <palabra>`,
-  handle: async ({ args, sendWaitReact, sendSuccessReact, sendImageFromURL }) => {
-    if (!args.length) {
-      throw new WarningError('Debes proporcionar una palabra para crear el grafiti');
-    }
+name: "graffiti",
+description: "Crea un grafiti a partir de una palabra",
+commands: ["graffiti", "graff"],
+usage: `${PREFIX}graffiti <palabra>`,
+handle: async ({ args, sendWaitReact, sendSuccessReact, sendImageFromURL }) => {
+if (!args.length) {
+throw new WarningError("Debes proporcionar una palabra para crear el grafiti");
+}
 
-    const palabra = args.join(' ');
-    const canvas = new Canvas(800, 600);
-    const ctx = canvas.getContext('2d');
+await sendWaitReact();
 
-    ctx.font = '80px Arial';
-    ctx.fillStyle = 'white';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
+const palabra = args.join(" ");
+const canvas = new Canvas(800, 600);
+const ctx = canvas.getContext("2d");
 
-    ctx.fillText(palabra, 400, 300);
+ctx.font = "80px Arial";
+ctx.fillStyle = "white";
+ctx.textAlign = "center";
+ctx.textBaseline = "middle";
 
-    const gradient = ctx.createLinearGradient(0, 0, 800, 600);
-    gradient.addColorStop(0, 'red');
-    gradient.addColorStop(1, 'blue');
+ctx.fillText(palabra, 400, 300);
 
-    ctx.fillStyle = gradient;
-    ctx.fillText(palabra, 400, 300);
+const gradient = ctx.createLinearGradient(0, 0, 800, 600);
+gradient.addColorStop(0, "red");
+gradient.addColorStop(1, "blue");
 
-    const buffer = canvas.toBuffer('image/png');
-    const url = await uploadImage(buffer);
+ctx.fillStyle = gradient;
+ctx.fillText(palabra, 400, 300);
 
-    await sendWaitReact();
-    await sendSuccessReact();
-    await sendImageFromURL(url);
-  },
+const buffer = canvas.toBuffer("image/png");
+const url = "data:image/png;base64," + buffer.toString("base64");
+
+await sendSuccessReact();
+await sendImageFromURL(url);
+},
 };
