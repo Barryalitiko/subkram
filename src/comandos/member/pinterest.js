@@ -1,19 +1,26 @@
 const { PREFIX } = require("../../krampus");
 const { Pinterest } = require('pinterest-scraper');
+const { WarningError } = require("../../errors/WarningError");
 
 module.exports = {
-name: 'pinterest',
-description: 'Buscar imágenes en Pinterest',
+name: "pinterest",
+description: "Buscar imágenes en Pinterest",
 commands: ["pinterest", "pin"],
 usage: `${PREFIX}pinterest <palabras clave>`,
-handle: async ({ fullArgs, sendWaitReact, sendSuccessReact, sendImageFromURL }) => {
+handle: async ({
+fullArgs,
+sendWaitReact,
+sendSuccessReact,
+sendImageFromURL,
+}) => {
 if (!fullArgs.length) {
-throw new WarningError("Vaya...\nañade palabras clave para buscar imágenes en Pinterest\n> Krampus OM bot");
+throw new WarningError(
+"Vaya...\nañade palabras clave para buscar imágenes en Pinterest\n> Krampus OM bot"
+);
 }
 
-await sendWaitReact();
-
 const pinterest = new Pinterest();
+await sendWaitReact();
 const query = fullArgs.join(' ');
 const results = await pinterest.search(query);
 
@@ -24,8 +31,6 @@ if (!results || results.length === 0) {
 const imageUrl = results[0].image;
 await sendSuccessReact();
 await sendImageFromURL(imageUrl);
-
-}
+},
 };
-
 
