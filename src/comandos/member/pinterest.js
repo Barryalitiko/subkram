@@ -13,7 +13,7 @@ sendWaitReact,
 sendSuccessReact,
 sendImageFromURL,
 }) => {
-if (!fullArgs.length) {
+if (!fullArgs) {
 throw new WarningError(
 "Vaya...\nañade palabras clave para buscar imágenes en Pinterest\n> Krampus OM bot"
 );
@@ -21,8 +21,7 @@ throw new WarningError(
 
 const pinterest = new Pinterest();
 await sendWaitReact();
-const query = fullArgs.join(' ');
-const results = await pinterest.search(query);
+const results = await pinterest.search(fullArgs);
 
 if (!results || results.length === 0) {
   throw new WarningError("No se encontraron resultados");
