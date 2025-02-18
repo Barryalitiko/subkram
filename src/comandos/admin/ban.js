@@ -22,7 +22,7 @@ module.exports = {
   }) => {
     if (!args.length && !isReply) {
       throw new InvalidParameterError(
-        "Tienes que decirme a quien quieres que elimine \n> Krampus OM bot"
+        "Debes indicarme a quien quieres advertir \n> Krampus OM bot"
       );
     }
 
@@ -56,13 +56,13 @@ module.exports = {
 
       if (timeDiff < 180) { // 3 minutos
         // Enviar segunda advertencia y banear al usuario
-        await sendReply(`༎OM༎ ${toUserJid(memberToRemoveJid)} ¡Atención! Has recibido una segunda advertencia. Serás expulsado del grupo.`);
+        await sendReply(`¡Atención! Esta persona ya tenia una advertencia. La expulsare del grupo.\n> Krampus OM bot`);
         await socket.groupParticipantsUpdate(remoteJid, [memberToRemoveJid], "remove");
         await sendReact(memberToRemoveJid, "🚫");
         delete warnings[memberToRemoveJid];
       } else {
         // Enviar primera advertencia
-        await sendReply(`༎OM༎ ${toUserJid(memberToRemoveJid)} ¡Atención! Has recibido una advertencia. Si vuelves a recibir otra advertencia en los próximos 3 minutos, serás expulsado del grupo.`);
+        await sendReply(`Ya tiene la primera advertencia, a la siguiente lo expulsare!\n> Krampus OM bot`);
         await sendReact(memberToRemoveJid, "⚠️");
         warnings[memberToRemoveJid] = { timestamp: new Date().getTime(), warnings: 1 };
       }
