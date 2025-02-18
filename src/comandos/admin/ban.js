@@ -56,18 +56,18 @@ module.exports = {
 
       if (timeDiff < 180) { // 3 minutos
         // Enviar segunda advertencia y banear al usuario
-        await sendReply(`¡Atención! @${memberToRemoveJid.split('@')[0]} Has recibido una segunda advertencia. Serás expulsado del grupo.`);
+        await sendReply(`༎OM༎ ${toUserJid(memberToRemoveJid)} ¡Atención! Has recibido una segunda advertencia. Serás expulsado del grupo.`);
         await socket.groupParticipantsUpdate(remoteJid, [memberToRemoveJid], "remove");
         await sendBasuraReact();
         delete warnings[memberToRemoveJid];
       } else {
         // Enviar primera advertencia
-        await sendReply(`¡Atención! @${memberToRemoveJid.split('@')[0]} Has recibido una advertencia. Si vuelves a recibir otra advertencia en los próximos 3 minutos, serás expulsado del grupo.`);
+        await sendReply(`༎OM༎ ${toUserJid(memberToRemoveJid)} ¡Atención! Has recibido una advertencia. Si vuelves a recibir otra advertencia en los próximos 3 minutos, serás expulsado del grupo.`);
         warnings[memberToRemoveJid] = { timestamp: new Date().getTime(), warnings: 1 };
       }
     } else {
       // Enviar primera advertencia
-      await sendReply(`¡Atención! @${memberToRemoveJid.split('@')[0]} Has recibido una advertencia. Si vuelves a recibir otra advertencia en los próximos 3 minutos, serás expulsado del grupo.`);
+      await sendReply(`༎OM༎ ${toUserJid(memberToRemoveJid)} ¡Atención! Has recibido una advertencia. Si vuelves a recibir otra advertencia en los próximos 3 minutos, serás expulsado del grupo.`);
       warnings[memberToRemoveJid] = { timestamp: new Date().getTime(), warnings: 1 };
     }
   },
