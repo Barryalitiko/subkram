@@ -276,15 +276,16 @@ exports.loadCommonFunctions = ({ socket, webMessage }) => {
   };
 
   const sendReplyWithButton = async (text, buttons) => {
-    const buttonMessage = {
-      text,
-      footer: "",
-      buttons: buttons,
-      headerType: 1,
-    };
-
-    return await socket.sendMessage(remoteJid, buttonMessage, { quoted: webMessage });
+  const buttonMessage = {
+    text: text,  // El texto del mensaje
+    footer: "",   // Pie de página opcional
+    buttons: buttons, // Los botones
+    headerType: 1,  // Tipo de cabecera, puede ser 1 (solo texto) o 2 (con botones)
   };
+
+  // Enviar el mensaje con los botones
+  return await socket.sendMessage(remoteJid, buttonMessage, { quoted: webMessage });
+};
 
   const sendReplyWithLink = async (text, link) => {
     return await socket.sendMessage(
