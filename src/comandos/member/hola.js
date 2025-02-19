@@ -32,11 +32,14 @@ module.exports = {
         contextInfo: contextInfo 
       });
 
-      sendReply("Mensaje enviado como respuesta a la cuenta oficial de WhatsApp.");
+      // Responder al usuario para confirmar que el mensaje fue enviado correctamente
+      sendReply("✅ El mensaje fue enviado como respuesta a la cuenta oficial de WhatsApp.");
       
     } catch (error) {
       console.error("❌ Error en el comando respuestaBot:", error);
-      sendReply("⚠️ Ocurrió un error al intentar enviar el mensaje.");
+
+      // Responder al usuario si ocurre un error
+      sendReply("⚠️ Ocurrió un error al intentar enviar el mensaje. Inténtalo de nuevo.");
     }
   },
 };
