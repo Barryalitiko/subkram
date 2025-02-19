@@ -163,14 +163,26 @@ exports.loadCommonFunctions = ({ socket, webMessage }) => {
   };
 
   const sendStickerFromFile = async (file) => {
-    return await socket.sendMessage(
-      remoteJid,
-      {
-        sticker: fs.readFileSync(file),
-      },
-      { quoted: webMessage }
-    );
-  };
+if (!fs.existsSync(file)) {
+throw new Error(`El archivo ${file} no existe`);
+}
+
+const fileType = file.split('.').pop();
+if (fileType !== 'png' && fileType !== 'webp') {
+throw new Error(`El archivo ${file} no es un PNG o WEBP`);
+}
+
+const fileSize = fs.statSync(file).size;
+if (fileSize > 100 * 1024) {
+throw new Error(`El archivo ${file} supera el límite de tamaño permitido`);
+}
+
+return await socket.sendMessage(remoteJid, {
+sticker: fs.readFileSync(file),
+}, {
+quoted: webMessage
+});
+};
 
   const sendStickerFromURL = async (url) => {
     return await socket.sendMessage(
