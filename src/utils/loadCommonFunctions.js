@@ -103,7 +103,7 @@ exports.loadCommonFunctions = ({ socket, webMessage }) => {
   const sendReply = async (text) => {
     return await socket.sendMessage(
       remoteJid,
-      { text: `${BOT_EMOJI} ${text}` },
+      { text: `${text}` },
       { quoted: webMessage }
     );
   };
