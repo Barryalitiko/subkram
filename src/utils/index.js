@@ -47,6 +47,7 @@ exports.extractDataFromMessage = (webMessage) => {
       replyJid: null,
       userJid: null,
       messageType: null,
+      contextInfo: null, // Añadir contexto
     };
   }
 
@@ -77,6 +78,7 @@ exports.extractDataFromMessage = (webMessage) => {
       : gifMessage
       ? "gif"
       : "text",
+    contextInfo: webMessage.message?.extendedTextMessage?.contextInfo, // Añadir contexto
   };
 };
 
