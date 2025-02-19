@@ -232,8 +232,35 @@ exports.getRandomName = (extension) => {
 
 exports.handleCommandResponse = async (response, sendReply) => {
   if (typeof response === "object") {
-    await sendReply({ text: response.text, media: response.media });
+    const message = {
+      text: response.text,
+      contextInfo: response.contextInfo,
+    };
+    await exports.sendQuotedMessage(sendReply, message);
   } else {
     await sendReply(response);
   }
+};
+
+exports.sendQuotedMessage = async (remoteJid, message) => {
+const contextInfo = message.contextInfo;
+if (contextInfo) {
+const quotedMessage = contextInfo.quotedMessage;
+const quotedParticipant = contextInfo.quotedParticipant;
+const quotedExternalParticipant = contextInfo.quotedExternalParticipant;
+const quotedMessageUrl = contextInfo.quotedMessageUrl;
+
+const messageWithQuote = {
+  text: message.text,
+  contextInfo: {
+    quotedMessage,
+    quotedParticipant,
+    quotedExternalParticipant,
+    quotedMessageUrl,
+  },
+};
+await socket.sendMessage(remoteJid, messageWithQuote);
+} else {
+await socket.sendMessage(remoteJid, message);
+}
 };
