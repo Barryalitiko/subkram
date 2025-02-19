@@ -1,5 +1,4 @@
 const { PREFIX } = require("../../krampus");
-const { makeWASocket, useMultiFileAuthState, DisconnectReason } = require("@whiskeysockets/baileys");
 
 module.exports = {
   name: "respuestaBot",
