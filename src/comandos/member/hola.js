@@ -7,28 +7,28 @@ module.exports = {
   usage: `${PREFIX}respuestaBot`,
   handle: async ({ socket, remoteJid, sendReply, message }) => {
     try {
-      // Verificar si el mensaje tiene una cita (quote)
-      if (!message.quotedMessage) {
-        return sendReply("⚠️ No se ha citado ningún mensaje.");
+      // Verificar si el mensaje tiene una cita (quote) o un mensaje anterior válido
+      if (!message.quotedMessage && !message.message) {
+        return sendReply("⚠️ No se ha citado ningún mensaje o no hay mensaje previo para simular.");
       }
 
-      // Extraer el mensaje citado
-      const quotedMessage = message.quotedMessage;
+      // Si hay un mensaje citado, usarlo
+      const quotedMessage = message.quotedMessage || message.message;
 
       // Crear un objeto contextInfo para simular que es una respuesta de la cuenta oficial de WhatsApp
       const contextInfo = {
-        participant: '0@s.whatsapp.net', // ID de la cuenta oficial de WhatsApp
-        quotedMessage: quotedMessage,   // El mensaje citado
-        quotedParticipant: '0@s.whatsapp.net' // El participante que envió el mensaje, en este caso, la cuenta oficial
+        participant: '0@s.whatsapp.net',  // ID de la cuenta oficial de WhatsApp
+        quotedMessage: quotedMessage,    // El mensaje citado o el mensaje previo
+        quotedParticipant: '0@s.whatsapp.net'  // ID del participante que envió el mensaje, en este caso, la cuenta oficial
       };
 
       // El mensaje que el bot responderá
       const replyText = "Este es un mensaje de prueba, como si fuera una respuesta a la cuenta oficial de WhatsApp.";
 
-      // Enviar el mensaje como respuesta
+      // Enviar el mensaje como respuesta o reenvío
       await socket.sendMessage(remoteJid, {
         text: replyText,
-        contextInfo: contextInfo
+        contextInfo: contextInfo,  // Adjuntar el contextInfo con la cita
       });
 
       // Responder al usuario para confirmar que el mensaje fue enviado correctamente
