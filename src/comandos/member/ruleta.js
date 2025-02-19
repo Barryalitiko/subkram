@@ -35,27 +35,45 @@ module.exports = {
     }
 
     const usageStats = readData(usageStatsFilePath);
-    const userStats = usageStats.users[userJid] || { attempts: 0 };
+    const userStats = usageStats.users?.[userJid] || { attempts: 0 };
+
     if (userStats.attempts >= 3) {
       await sendReply("❌ Ya has alcanzado el límite de intentos diarios en la ruleta.");
       return;
     }
 
+    // Leer el saldo de monedas del usuario
+    let krData = readData(krFilePath);
+    let userKr = krData.find(entry => entry.userJid === userJid);
+
+    // Si el usuario no existe en kr.json, lo agregamos con 0 monedas
+    if (!userKr) {
+      userKr = { userJid, kr: 0 };
+      krData.push(userKr);
+      writeData(krFilePath, krData);
+    }
+
+    // Verificar si el usuario tiene monedas para jugar
+    if (userKr.kr <= 0) {
+      await sendReply("❌ No tienes monedas suficientes para jugar. Gana monedas antes de intentarlo.");
+      return;
+    }
+
+    // Restar un intento al usuario y guardar el nuevo estado
     userStats.attempts += 1;
+    usageStats.users = usageStats.users || {};
     usageStats.users[userJid] = userStats;
     writeData(usageStatsFilePath, usageStats);
 
     await sendReply("🎲 Probando tu suerte...");
-    await sendReply("🎲");
-
     await new Promise(resolve => setTimeout(resolve, 2000));
     await sendReply("💨");
-
     await new Promise(resolve => setTimeout(resolve, 2000));
     await sendReply("🎲");
 
     const result = Math.random();
     let amount = 0;
+
     if (result < 0.25) {
       amount = 1;
     } else if (result < 0.5) {
@@ -68,24 +86,16 @@ module.exports = {
       amount = -4;
     }
 
-    let krData = readData(krFilePath);
-    const userKr = krData.find(entry => entry.userJid === userJid);
-    if (!userKr) {
-      krData.push({ userJid, kr: 0 });
-      writeData(krFilePath, krData);
-      krData = readData(krFilePath);
-      userKr = krData.find(entry => entry.userJid === userJid);
-    }
-
     userKr.kr += amount;
-    krData = krData.map(entry => entry.userJid === userJid ? userKr : entry);
+    krData = krData.map(entry => (entry.userJid === userJid ? userKr : entry));
     writeData(krFilePath, krData);
 
     if (amount > 0) {
       await sendReply(`🎉 ¡Has ganado ${amount} monedas! 🎉`);
-    } else if (amount < 0) {
+    } else {
       await sendReply(`😢 ¡Has perdido ${Math.abs(amount)} monedas! 😢`);
     }
+
     await sendReply(`💰 Tu saldo actual es: ${userKr.kr} 𝙺𝚛`);
   },
 };
