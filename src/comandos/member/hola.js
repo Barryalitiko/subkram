@@ -15,7 +15,7 @@ text: "Este es el texto de la cita.",
 },
 quotedParticipant: "0@s.whatsapp.net",
 };
-await sendQuotedMessage(text, contextInfo);
+await sendQuotedMessage({ text, contextInfo }, { quoted: webMessage });
 } catch (error) {
 console.error("Error al enviar el mensaje con cita:", error.message);
 await sendReply("Ocurrió un error al intentar enviar el mensaje con cita.");
