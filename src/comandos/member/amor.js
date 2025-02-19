@@ -111,11 +111,10 @@ module.exports = {
       .run();
   })
   .on("error", (err) => {
-    console.error(err);
-    sendReply("Hubo un problema al generar el video.");
-    reject(err);
-  })
-  .run();
+  console.error(err);
+  sendReply("Hubo un problema al generar el video.");
+  reject(err);
+}).run();
 });
 } catch (error) {
 console.error(error);
