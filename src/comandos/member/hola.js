@@ -7,10 +7,12 @@ commands: ["pruebacita"],
 usage: `${PREFIX}pruebacita`,
 handle: async ({ socket, remoteJid, sendReply, sendReact, webMessage, sendQuotedMessage }) => {
 try {
-await sendReact("📝", webMessage.key);
+await sendReact("", webMessage.key);
 const text = "Este es un mensaje de prueba con cita.";
 const contextInfo = {
-quotedMessage: "Este es el texto de la cita.",
+quotedMessage: {
+text: "Este es el texto de la cita.",
+},
 quotedParticipant: "0@s.whatsapp.net",
 };
 await sendQuotedMessage(text, contextInfo);
