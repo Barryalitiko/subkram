@@ -14,6 +14,7 @@ module.exports = {
     isReply,
     replyJid,
     senderJid,
+    isAudio, // Agregamos la función isAudio
   }) => {
     console.log("Comando reenviar-audio ejecutado");
 
@@ -25,10 +26,15 @@ module.exports = {
 
     console.log("Se está respondiendo a un mensaje");
 
+    if (!isAudio(replyJid)) { // Verificamos si el mensaje es un audio
+      console.log("El mensaje no es un audio");
+      await sendReply("Debes responder a un mensaje de audio para reenviarlo");
+      return;
+    }
+
     try {
       const media = await socket.downloadMediaMessage(replyJid);
       console.log("Media descargada:", media);
-
       await socket.sendMessage(remoteJid, {
         audio: { url: media.path },
         caption: "Audio reenviado",
@@ -40,8 +46,3 @@ module.exports = {
     }
   },
 };
-
-
-
-
-
