@@ -9,25 +9,14 @@ module.exports = {
   description: "Genera un video donde las fotos de perfil de dos usuarios aparecen gradualmente con un efecto de celda",
   commands: ["doblepreso"],
   usage: `${PREFIX}doblepreso @usuario1 @usuario2`,
-  handle: async ({
-    args,
-    socket,
-    remoteJid,
-    sendReply,
-    sendReact,
-    isReply,
-    replyJid,
-    senderJid,
-  }) => {
+  handle: async ({ args, socket, remoteJid, sendReply, sendReact, isReply, replyJid, senderJid, }) => {
     let userJid1, userJid2;
 
     if (isReply) {
       userJid1 = replyJid;
       userJid2 = args[0].replace("@", "") + "@s.whatsapp.net";
     } else if (args.length < 2) {
-      await sendReply(
-        "Uso incorrecto. Usa el comando así:\n" + `${PREFIX}doblepreso @usuario1 @usuario2`
-      );
+      await sendReply("Uso incorrecto. Usa el comando así:\n" + `${PREFIX}doblepreso @usuario1 @usuario2`);
       return;
     } else {
       userJid1 = args[0].replace("@", "") + "@s.whatsapp.net";
@@ -68,14 +57,8 @@ module.exports = {
       const pngImagePath = path.resolve(__dirname, "../../../assets/images/celda2.png");
       const audioFilePath = path.resolve(__dirname, "../../../assets/audio/preso30.mp3");
 
-      const response1 = await axios({
-        url: profilePicUrl1,
-        responseType: "arraybuffer",
-      });
-      const response2 = await axios({
-        url: profilePicUrl2,
-        responseType: "arraybuffer",
-      });
+      const response1 = await axios({ url: profilePicUrl1, responseType: "arraybuffer" });
+      const response2 = await axios({ url: profilePicUrl2, responseType: "arraybuffer" });
 
       fs.writeFileSync(imageFilePath1, response1.data);
       fs.writeFileSync(imageFilePath2, response2.data);
@@ -126,10 +109,17 @@ module.exports = {
         reject(err);
       })
       .run();
-  });
+  })
+  .on("error", (err) => {
+    console.error(err);
+    sendReply("Hubo un problema al generar el video.");
+    reject(err);
+  })
+  .run();
+});
 } catch (error) {
-  console.error(error);
-  await sendReply("Hubo un error al procesar el comando.");
+console.error(error);
+await sendReply("Hubo un error al procesar el comando.");
 }
 },
 };
