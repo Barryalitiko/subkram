@@ -94,7 +94,7 @@ exports.loadCommonFunctions = ({ socket, webMessage }) => {
     }
 
     return await socket.sendMessage(remoteJid, {
-      text: `${BOT_EMOJI} ${text}`,
+      text: `${text}`,
       ...optionalParams,
     });
   };
@@ -258,7 +258,7 @@ exports.loadCommonFunctions = ({ socket, webMessage }) => {
       remoteJid,
       {
         image: fs.readFileSync(file),
-        caption: caption ? `${BOT_EMOJI} ${caption}` : "",
+        caption: caption ? `${caption}` : "",
       },
       { quoted: webMessage }
     );
@@ -269,7 +269,7 @@ exports.loadCommonFunctions = ({ socket, webMessage }) => {
       remoteJid,
       {
         image: { url },
-        caption: caption ? `${BOT_EMOJI} ${caption}` : "",
+        caption: caption ? `${caption}` : "",
       },
       { url, quoted: webMessage }
     );
@@ -291,7 +291,7 @@ exports.loadCommonFunctions = ({ socket, webMessage }) => {
     return await socket.sendMessage(
       remoteJid,
       {
-        text: `${BOT_EMOJI} ${text}`,
+        text: `${text}`,
         url: link,
       },
       { quoted: webMessage }
