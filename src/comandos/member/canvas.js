@@ -7,7 +7,7 @@ module.exports = {
   description: "Crea un grafiti a partir de una palabra",
   commands: ["graffiti", "graff"],
   usage: `${PREFIX}graffiti <palabra>`,
-  handle: async ({ args, sendWaitReact, sendSuccessReact, sendImage }) => {
+  handle: async ({ args, sendWaitReact, sendSuccessReact, sendImageFromFile }) => {
     if (!args.length) {
       throw new WarningError("Debes proporcionar una palabra para crear el grafiti");
     }
@@ -37,8 +37,6 @@ module.exports = {
     fs.writeFileSync(archivoTemporal, buffer);
 
     await sendSuccessReact();
-    await sendImage(archivoTemporal);
+    await sendImageFromFile(archivoTemporal);
   },
 };
-
-
