@@ -297,9 +297,15 @@ exports.loadCommonFunctions = ({ socket, webMessage }) => {
       { quoted: webMessage }
     );
   };
+  
+  const sendQuotedMessage = async (text, contextInfo) => {
+return await socket.sendMessage(remoteJid, { text, contextInfo }, { quoted: webMessage });
+};
+
 
   return {
     args,
+    sendQuotedMessage,
     commandName,
     downloadImage,
     downloadSticker,
