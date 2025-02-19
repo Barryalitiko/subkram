@@ -5,13 +5,12 @@ const { PREFIX } = require("../../krampus");
 const commandStatusFilePath = path.resolve(process.cwd(), "assets/monedas.json");
 const usageStatsFilePath = path.resolve(process.cwd(), "assets/usageStats.json");
 const krFilePath = path.resolve(process.cwd(), "assets/kr.json");
-const jobsFilePath = path.resolve(process.cwd(), "assets/trabajos.json");
 
 const readData = (filePath) => {
   try {
     return JSON.parse(fs.readFileSync(filePath, "utf-8"));
   } catch {
-    return {};
+    return [];
   }
 };
 
@@ -23,94 +22,76 @@ const writeData = (filePath, data) => {
   }
 };
 
-// Lista de trabajos disponibles
-const trabajos = {
-  abogado: "Defendiendo casos en la corte.",
-  chef: "Preparando deliciosos platillos.",
-  taxista: "Llevando pasajeros a su destino.",
-  programador: "Escribiendo código sin descanso.",
-  limpiador: "Dejando todo reluciente.",
-  cantante: "Dando un concierto increíble.",
-  mecanico: "Reparando autos en el taller.",
-  artista: "Pintando una obra maestra.",
-  fotografo: "Tomando fotos profesionales.",
-  carpintero: "Construyendo muebles resistentes.",
-};
-
 module.exports = {
   name: "trabajo",
-  description: "Selecciona un trabajo y recibe un pago después de 10 minutos.",
+  description: "Elige un trabajo y gana monedas en 10 segundos.",
   commands: ["trabajo"],
-  usage: `${PREFIX}trabajo [nombre del trabajo]`,
-
+  usage: `${PREFIX}trabajo`,
   handle: async ({ sendReply, userJid, args }) => {
-    const commandStatus = readData(commandStatusFilePath);
-    if (commandStatus.commandStatus !== "on") {
+    const trabajoStatus = readData(commandStatusFilePath);
+    if (trabajoStatus.commandStatus !== "on") {
       await sendReply("❌ El sistema de trabajos está desactivado.");
       return;
     }
 
-    let trabajosActivos = readData(jobsFilePath);
+    const trabajoStats = readData(usageStatsFilePath);
+    const userStats = trabajoStats.users?.[userJid] || { trabajo: null };
 
-    // Si el usuario no especificó un trabajo, mostrar la lista
-    if (args.length === 0) {
-      let lista = "📋 *Trabajos disponibles:*\n";
-      for (const trabajo in trabajos) {
-        lista += `➤ *${trabajo}* – ${trabajos[trabajo]}\n`;
-      }
-      await sendReply(lista);
+    if (userStats.trabajo) {
+      await sendReply("❌ Ya estás trabajando en una profesión, termina tu trabajo actual.");
       return;
     }
 
-    const trabajoSeleccionado = args[0].toLowerCase();
+    const trabajos = [
+      { nombre: "Abogado", pago: [8, 10, 15] },
+      { nombre: "Programador", pago: [8, 10, 15] },
+      { nombre: "Ingeniero", pago: [8, 10, 15] },
+      { nombre: "Carpintero", pago: [8, 10, 15] },
+      { nombre: "Chef", pago: [8, 10, 15] },
+      { nombre: "Doctor", pago: [8, 10, 15] },
+      { nombre: "Abogado", pago: [8, 10, 15] },
+      { nombre: "Profesor", pago: [8, 10, 15] },
+      { nombre: "Pintor", pago: [8, 10, 15] },
+      { nombre: "Policía", pago: [8, 10, 15] }
+    ];
 
-    // Verificar si el trabajo existe
-    if (!trabajos[trabajoSeleccionado]) {
-      await sendReply("❌ Ese trabajo no existe. Usa *#trabajo* para ver la lista.");
+    const trabajoElegido = trabajos.find(t => t.nombre.toLowerCase() === args.join(" ").toLowerCase());
+    if (!trabajoElegido) {
+      await sendReply("❌ Profesión no válida. Usa el comando #trabajo para ver las profesiones disponibles.");
       return;
     }
 
-    // Verificar si el usuario ya tiene un trabajo activo
-    if (trabajosActivos[userJid]) {
-      await sendReply("❌ Ya tienes un trabajo en curso. Espera a que termine para elegir otro.");
-      return;
-    }
+    userStats.trabajo = trabajoElegido.nombre;
+    trabajoStats.users = trabajoStats.users || {};
+    trabajoStats.users[userJid] = userStats;
+    writeData(usageStatsFilePath, trabajoStats);
 
-    // Guardar el trabajo en el registro
-    trabajosActivos[userJid] = {
-      trabajo: trabajoSeleccionado,
-      tiempoInicio: Date.now(),
-    };
-    writeData(jobsFilePath, trabajosActivos);
+    await sendReply(`💼 Has comenzado tu trabajo como **${trabajoElegido.nombre}**. ¡Te pagarán en breve!`);
 
-    await sendReply(`✅ Ahora eres *${trabajoSeleccionado}*. ${trabajos[trabajoSeleccionado]}.\n⌛ Tu pago llegará en 10 minutos.`);
-
-    // Esperar 10 minutos (600,000 ms)
     setTimeout(async () => {
-      // Leer nuevamente los datos en caso de cambios
-      trabajosActivos = readData(jobsFilePath);
-      
-      // Si el usuario sigue en el trabajo, pagarle
-      if (trabajosActivos[userJid]) {
-        const pago = [8, 10, 15][Math.floor(Math.random() * 3)]; // Pago aleatorio
-        let krData = readData(krFilePath);
-        let userKr = krData.find(entry => entry.userJid === userJid);
+      const pago = trabajoElegido.pago[Math.floor(Math.random() * trabajoElegido.pago.length)];
 
-        if (!userKr) {
-          userKr = { userJid, kr: 0 };
-          krData.push(userKr);
-        }
+      let krData = readData(krFilePath);
+      let userKr = krData.find(entry => entry.userJid === userJid);
 
-        userKr.kr += pago;
-        krData = krData.map(entry => (entry.userJid === userJid ? userKr : entry));
+      // Si el usuario no existe en kr.json, lo agregamos con 0 monedas
+      if (!userKr) {
+        userKr = { userJid, kr: 0 };
+        krData.push(userKr);
         writeData(krFilePath, krData);
-
-        // Eliminar el trabajo del usuario
-        delete trabajosActivos[userJid];
-        writeData(jobsFilePath, trabajosActivos);
-
-        await sendReply(`✅ *Tu trabajo como ${trabajoSeleccionado} ha terminado.*\n💰 *Recibiste ${pago} monedas.*`);
       }
-    }, 600000);
+
+      userKr.kr += pago;
+      krData = krData.map(entry => (entry.userJid === userJid ? userKr : entry));
+      writeData(krFilePath, krData);
+
+      await sendReply(`🛠️ Tu trabajo como **${trabajoElegido.nombre}** ha terminado. Tu pago es de **${pago} monedas**.`);
+      await sendReply(`💰 Tu saldo actual es: ${userKr.kr} 𝙺𝚛`);
+
+      // Limpiar trabajo del usuario después de completar
+      userStats.trabajo = null;
+      trabajoStats.users[userJid] = userStats;
+      writeData(usageStatsFilePath, trabajoStats);
+    }, 10000); // 10 segundos (10000 ms)
   },
 };
