@@ -46,16 +46,16 @@ module.exports = {
     }
 
     // Propuesta de matrimonio
-    await sendReply(`@${mentionedJid} ¿Aceptas la propuesta de matrimonio? Responde con #si o #no. Tienes 3 minutos.`);
+    await sendReply(`@${mentionedJid} ¿Aceptas la propuesta de matrimonio? Responde con ${PREFIX}si o ${PREFIX}no. Tienes 3 minutos.`);
     
     // Crear un timeout de 3 minutos para la respuesta
     const timeout = setTimeout(() => {
       sendReply(`La propuesta de matrimonio a @${mentionedJid} ha sido rechazada por falta de respuesta.`);
     }, 180000); // 3 minutos en milisegundos
 
-    // Manejo de la respuesta con #si o #no
+    // Manejo de la respuesta con ${PREFIX}si o ${PREFIX}no
     const onResponse = async (message) => {
-      if (message.includes("#si")) {
+      if (message.body.includes(`${PREFIX}si`)) {
         // Confirmación de matrimonio
         const marriageEntry = {
           userJid: userJid,
@@ -73,7 +73,7 @@ module.exports = {
         writeData(userItemsFilePath, userItems);
 
         await sendReply(`¡Felicidades! @${userJid} y @${mentionedJid} están ahora casados. 💍`);
-      } else if (message.includes("#no")) {
+      } else if (message.body.includes(`${PREFIX}no`)) {
         // Rechazo de la propuesta
         await sendReply(`@${mentionedJid} ha rechazado la propuesta de matrimonio. ❌`);
       }
