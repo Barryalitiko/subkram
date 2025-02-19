@@ -115,7 +115,6 @@ module.exports = {
   sendReply("Hubo un problema al generar el video.");
   reject(err);
 }).run();
-});
 } catch (error) {
 console.error(error);
 await sendReply("Hubo un error al procesar el comando.");
