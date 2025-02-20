@@ -26,7 +26,7 @@ module.exports = {
   description: "Proponer matrimonio a alguien.",
   commands: ["boda"],
   usage: `${PREFIX}boda 💍 @usuario`,
-  handle: async ({ sendReply, userJid, args, isReply, replyJid, mentionedJid }) => {
+  handle: async ({ socket, sendReply, userJid, args, isReply, replyJid, mentionedJid, remoteJid }) => {
     let targetJid;
 
     // Obtener el JID del destinatario de la propuesta
@@ -64,11 +64,12 @@ module.exports = {
       return;
     }
 
-    // Enviar propuesta de matrimonio con etiqueta correcta
-    await sendReply(`💍 @${userJid.split("@")[0]} quiere casarse contigo, @${targetJid.split("@")[0]}!  
+    // Enviar propuesta de matrimonio con etiquetado correcto
+    await socket.sendMessage(remoteJid, {
+      text: `💍 *@${userJid.split("@")[0]}* quiere casarse contigo, *@${targetJid.split("@")[0]}*!  
 Responde con *#r si* para aceptar o *#r no* para rechazar.  
-Tienes 3 minutos para decidir.`, {
-      mentions: [userJid, targetJid],
+Tienes 3 minutos para decidir.`,
+      mentions: [userJid, targetJid]
     });
   },
 };
