@@ -2,10 +2,9 @@ const fs = require("fs");
 const path = require("path");
 const { PREFIX } = require("../../krampus");
 
-const marriageFilePath = path.resolve(process.cwd(), "assets/marriage.json");
-const inventoryFilePath = path.resolve(process.cwd(), "assets/inventory.json");
+const MARRIAGE_FILE_PATH = path.resolve(process.cwd(), "assets/marriage.json");
+const USER_ITEMS_FILE_PATH = path.resolve(process.cwd(), "assets/userItems.json");
 
-// Funciones para leer y escribir los datos JSON
 const readData = (filePath) => {
   try {
     return JSON.parse(fs.readFileSync(filePath, "utf-8"));
@@ -15,7 +14,11 @@ const readData = (filePath) => {
 };
 
 const writeData = (filePath, data) => {
-  fs.writeFileSync(filePath, JSON.stringify(data, null, 2), "utf-8");
+  try {
+    fs.writeFileSync(filePath, JSON.stringify(data, null, 2), "utf-8");
+  } catch (error) {
+    console.error(`Error al escribir en el archivo ${filePath}: ${error.message}`);
+  }
 };
 
 module.exports = {
@@ -23,9 +26,9 @@ module.exports = {
   description: "Divorciarte de tu pareja actual con un papel de divorcio.",
   commands: ["divorce"],
   usage: `${PREFIX}divorce`,
-  handle: async ({ sendReply, userJid }) => {
-    const marriageData = readData(marriageFilePath);
-    const inventoryData = readData(inventoryFilePath);
+  handle: async ({ sendReply, socket, userJid, remoteJid }) => {
+    const marriageData = readData(MARRIAGE_FILE_PATH);
+    const userItems = readData(USER_ITEMS_FILE_PATH);
 
     // Verificar si el usuario está casado
     const marriageIndex = marriageData.findIndex(
@@ -38,21 +41,26 @@ module.exports = {
     }
 
     // Verificar si el usuario tiene un papel de divorcio
-    const userInventory = inventoryData.find((entry) => entry.userJid === userJid);
-    if (!userInventory || userInventory.divorcePapers < 1) {
+    const userItem = userItems.find((entry) => entry.userJid === userJid);
+    if (!userItem || userItem.items.divorcePapers < 1) {
       await sendReply("❌ No tienes un papel de divorcio. Compra uno para poder divorciarte.");
       return;
     }
 
     // Reducir el número de papeles de divorcio en el inventario
-    userInventory.divorcePapers -= 1;
-    writeData(inventoryFilePath, inventoryData);
+    userItem.items.divorcePapers -= 1;
+    writeData(USER_ITEMS_FILE_PATH, userItems);
 
     // Procesar divorcio
     const { userJid: partner1, partnerJid: partner2 } = marriageData[marriageIndex];
     marriageData.splice(marriageIndex, 1); // Eliminar matrimonio
-    writeData(marriageFilePath, marriageData);
+    writeData(MARRIAGE_FILE_PATH, marriageData);
 
-    await sendReply(`📄 @${partner1.split("@")[0]} y @${partner2.split("@")[0]} ahora están divorciados.`);
+    // Enviar mensaje con menciones
+    await socket.sendMessage(remoteJid, {
+      text: `📄 *¡Divorcio confirmado!*  
+@${partner1.split("@")[0]} y @${partner2.split("@")[0]} ahora están oficialmente divorciados. 💔`,
+      mentions: [partner1, partner2]
+    });
   },
 };
