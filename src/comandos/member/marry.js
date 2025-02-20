@@ -26,9 +26,17 @@ module.exports = {
   description: "Proponer matrimonio a alguien.",
   commands: ["boda"],
   usage: `${PREFIX}boda 💍 @usuario`,
-  handle: async ({ sendReply, userJid, mentionedJid, message, client }) => {
-    if (!mentionedJid || !userJid) {
-      await sendReply("Debes mencionar a alguien para proponer matrimonio.");
+  handle: async ({ sendReply, userJid, args, isReply, replyJid, socket, remoteJid }) => {
+    let targetJid;
+
+    if (isReply) {
+      targetJid = replyJid;
+    } else if (args && args.length > 0) {
+      targetJid = args[0].replace("@", "") + "@s.whatsapp.net";
+    }
+
+    if (!targetJid) {
+      await sendReply("❌ Debes etiquetar o responder a un usuario para proponer matrimonio.");
       return;
     }
 
@@ -42,7 +50,7 @@ module.exports = {
 
     const marriageData = readData(MARRIAGE_FILE_PATH);
     const existingMarriage = marriageData.find(
-      (entry) => entry.userJid === mentionedJid || entry.partnerJid === mentionedJid
+      (entry) => entry.userJid === targetJid || entry.partnerJid === targetJid
     );
 
     if (existingMarriage) {
@@ -50,11 +58,10 @@ module.exports = {
       return;
     }
 
-    await sendReply(`@${mentionedJid} ¿Aceptas la propuesta de matrimonio? Responde con "#r si" o "#r no". Tienes 3 minutos.`);
+    await sendReply(`@${targetJid} ¿Aceptas la propuesta de matrimonio? Responde con "#r si" o "#r no". Tienes 3 minutos.`);
 
     const timeout = setTimeout(() => {
-      sendReply(`La propuesta de matrimonio a @${mentionedJid} ha sido rechazada por falta de respuesta.`);
-      client.removeListener("message", onResponse);
+      sendReply(`La propuesta de matrimonio a @${targetJid} ha sido rechazada por falta de respuesta.`);
     }, 180000);
 
     const onResponse = async (msg) => {
@@ -63,12 +70,12 @@ module.exports = {
 
       if (!response.startsWith("#r")) return;
 
-      if (senderJid !== mentionedJid) return;
+      if (senderJid !== targetJid) return;
 
       if (response === "#r si") {
         const marriageEntry = {
           userJid: userJid,
-          partnerJid: mentionedJid,
+          partnerJid: targetJid,
           date: new Date().toISOString(),
           groupId: "groupId12345",
           dailyLove: 0,
@@ -80,18 +87,17 @@ module.exports = {
         userItem.items.anillos -= 1;
         writeData(USER_ITEMS_FILE_PATH, userItems);
 
-        await sendReply(`¡Felicidades! @${userJid} y @${mentionedJid} están ahora casados. 💍`);
+        await sendReply(`¡Felicidades! @${userJid} y @${targetJid} están ahora casados. 💍`);
       } else if (response === "#r no") {
-        await sendReply(`@${mentionedJid} ha rechazado la propuesta de matrimonio. ❌`);
+        await sendReply(`@${targetJid} ha rechazado la propuesta de matrimonio. ❌`);
       } else {
-        await sendReply(`@${mentionedJid}, debes responder con "#r si" o "#r no".`);
+        await sendReply(`@${targetJid}, debes responder con "#r si" o "#r no".`);
         return;
       }
 
       clearTimeout(timeout);
-      client.removeListener("message", onResponse);
     };
 
-    client.on("message", onResponse);
+    socket.on("message", onResponse);
   },
 };
