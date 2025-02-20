@@ -2,8 +2,8 @@ const fs = require("fs");
 const path = require("path");
 const { PREFIX } = require("../../krampus");
 
-const marriageFilePath = path.resolve(process.cwd(), "assets/marriage.json");
-const userItemsFilePath = path.resolve(process.cwd(), "assets/userItems.json");
+const MARRIAGE_FILE_PATH = path.resolve(process.cwd(), "assets/marriage.json");
+const USER_ITEMS_FILE_PATH = path.resolve(process.cwd(), "assets/userItems.json");
 
 const readData = (filePath) => {
   try {
@@ -27,77 +27,71 @@ module.exports = {
   commands: ["boda"],
   usage: `${PREFIX}boda 💍 @usuario`,
   handle: async ({ sendReply, userJid, mentionedJid, message, client }) => {
-    const userItems = readData(userItemsFilePath);
-    const userItem = userItems.find(entry => entry.userJid === userJid);
+    if (!mentionedJid || !userJid) {
+      await sendReply("Debes mencionar a alguien para proponer matrimonio.");
+      return;
+    }
 
-    // Verificar si el usuario tiene un anillo
+    const userItems = readData(USER_ITEMS_FILE_PATH);
+    const userItem = userItems.find((entry) => entry.userJid === userJid);
+
     if (!userItem || userItem.items.anillos <= 0) {
       await sendReply("¿Y el anillo pa' cuando?");
       return;
     }
 
-    // Verificar si el usuario propuesto ya está casado
-    const marriageData = readData(marriageFilePath);
-    const existingMarriage = marriageData.find(entry => entry.userJid === mentionedJid || entry.partnerJid === mentionedJid);
-    
+    const marriageData = readData(MARRIAGE_FILE_PATH);
+    const existingMarriage = marriageData.find(
+      (entry) => entry.userJid === mentionedJid || entry.partnerJid === mentionedJid
+    );
+
     if (existingMarriage) {
       await sendReply("Cuernero, ya estás casado.");
       return;
     }
 
-    // Propuesta de matrimonio
     await sendReply(`@${mentionedJid} ¿Aceptas la propuesta de matrimonio? Responde con "#r si" o "#r no". Tienes 3 minutos.`);
 
-    // Crear un timeout de 3 minutos para la respuesta
     const timeout = setTimeout(() => {
       sendReply(`La propuesta de matrimonio a @${mentionedJid} ha sido rechazada por falta de respuesta.`);
       client.removeListener("message", onResponse);
-    }, 180000); // 3 minutos en milisegundos
+    }, 180000);
 
-    // Manejo de la respuesta con "#r si" o "#r no"
     const onResponse = async (msg) => {
       const senderJid = msg.sender;
       const response = msg.body.trim().toLowerCase();
 
-      // Ignorar si el mensaje no empieza con "#r"
       if (!response.startsWith("#r")) return;
 
-      // Si quien responde no es la persona mencionada, ignoramos
       if (senderJid !== mentionedJid) return;
 
-      // Verificar respuesta válida
       if (response === "#r si") {
-        // Confirmación de matrimonio
         const marriageEntry = {
           userJid: userJid,
           partnerJid: mentionedJid,
           date: new Date().toISOString(),
-          groupId: "groupId12345", // Esto debería ser obtenido de algún lugar
-          dailyLove: 0
+          groupId: "groupId12345",
+          dailyLove: 0,
         };
 
         marriageData.push(marriageEntry);
-        writeData(marriageFilePath, marriageData);
+        writeData(MARRIAGE_FILE_PATH, marriageData);
 
-        // Descontar el anillo del inventario del usuario
         userItem.items.anillos -= 1;
-        writeData(userItemsFilePath, userItems);
+        writeData(USER_ITEMS_FILE_PATH, userItems);
 
         await sendReply(`¡Felicidades! @${userJid} y @${mentionedJid} están ahora casados. 💍`);
       } else if (response === "#r no") {
-        // Rechazo de la propuesta
         await sendReply(`@${mentionedJid} ha rechazado la propuesta de matrimonio. ❌`);
       } else {
-        // Si responde "#r" sin más o algo inválido
         await sendReply(`@${mentionedJid}, debes responder con "#r si" o "#r no".`);
-        return; // No limpiar el timeout ni remover el listener aún
+        return;
       }
 
       clearTimeout(timeout);
       client.removeListener("message", onResponse);
     };
 
-    // Escuchar la respuesta
     client.on("message", onResponse);
-  }
+  },
 };
