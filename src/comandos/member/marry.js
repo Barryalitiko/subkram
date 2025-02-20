@@ -62,7 +62,6 @@ module.exports = {
 
     const timeout = setTimeout(() => {
       sendReply(`La propuesta de matrimonio a @${targetJid.split("@")[0]} ha sido rechazada por falta de respuesta.`);
-      client.removeListener("message", onResponse);
     }, 180000);
 
     const onResponse = async (msg) => {
@@ -97,9 +96,9 @@ module.exports = {
       }
 
       clearTimeout(timeout);
-      client.removeListener("message", onResponse);
+      client.offMessage(onResponse);
     };
 
-    client.on("message", onResponse);
+    client.onMessage(onResponse);
   },
 };
