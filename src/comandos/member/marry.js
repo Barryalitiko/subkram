@@ -26,7 +26,7 @@ module.exports = {
   description: "Proponer matrimonio a alguien.",
   commands: ["boda"],
   usage: `${PREFIX}boda 💍 @usuario`,
-  handle: async ({ sendReply, userJid, args, isReply, replyJid, client, remoteJid }) => {
+  handle: async ({ sendReply, userJid, args, isReply, replyJid, client, remoteJid, mentionedJid }) => {
     let targetJid;
 
     if (isReply) {
@@ -59,46 +59,7 @@ module.exports = {
     }
 
     await sendReply(`@${targetJid.split("@")[0]} ¿Aceptas la propuesta de matrimonio? Responde con "#r si" o "#r no". Tienes 3 minutos.`);
-
-    const timeout = setTimeout(() => {
-      sendReply(`La propuesta de matrimonio a @${targetJid.split("@")[0]} ha sido rechazada por falta de respuesta.`);
-    }, 180000);
-
-    const onResponse = async (msg) => {
-      const senderJid = msg.sender;
-      const response = msg.body.trim().toLowerCase();
-
-      if (!response.startsWith("#r")) return;
-
-      if (senderJid !== targetJid) return;
-
-      if (response === "#r si") {
-        const marriageEntry = {
-          userJid: userJid,
-          partnerJid: targetJid,
-          date: new Date().toISOString(),
-          groupId: "groupId12345",
-          dailyLove: 0,
-        };
-
-        marriageData.push(marriageEntry);
-        writeData(MARRIAGE_FILE_PATH, marriageData);
-
-        userItem.items.anillos -= 1;
-        writeData(USER_ITEMS_FILE_PATH, userItems);
-
-        await sendReply(`¡Felicidades! @${userJid.split("@")[0]} y @${targetJid.split("@")[0]} están ahora casados. 💍`);
-      } else if (response === "#r no") {
-        await sendReply(`@${targetJid.split("@")[0]} ha rechazado la propuesta de matrimonio. ❌`);
-      } else {
-        await sendReply(`@${targetJid.split("@")[0]}, debes responder con "#r si" o "#r no".`);
-        return;
-      }
-
-      clearTimeout(timeout);
-      client.offMessage(onResponse);
-    };
-
-    client.onMessage(onResponse);
   },
 };
+
+
