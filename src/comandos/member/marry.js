@@ -4,6 +4,7 @@ const { PREFIX } = require("../../krampus");
 
 const MARRIAGE_FILE_PATH = path.resolve(process.cwd(), "assets/marriage.json");
 const USER_ITEMS_FILE_PATH = path.resolve(process.cwd(), "assets/userItems.json");
+const PENDING_MARRIAGES_FILE = path.resolve(process.cwd(), "assets/pending_marriages.json");
 
 const readData = (filePath) => {
   try {
@@ -33,18 +34,16 @@ module.exports = {
     if (isReply) {
       targetJid = replyJid;
     } else if (mentionedJid && mentionedJid.length > 0) {
-      targetJid = mentionedJid[0]; // Tomar el primer usuario mencionado
+      targetJid = mentionedJid[0];
     } else if (args && args.length > 0) {
       targetJid = args[0].replace("@", "") + "@s.whatsapp.net";
     }
 
-    // Si no hay destinatario válido, mostrar mensaje de error
     if (!targetJid) {
       await sendReply("❌ Debes etiquetar o responder a un usuario para proponer matrimonio.");
       return;
     }
 
-    // Verificar si el usuario tiene anillos
     const userItems = readData(USER_ITEMS_FILE_PATH);
     const userItem = userItems.find((entry) => entry.userJid === userJid);
 
@@ -53,7 +52,6 @@ module.exports = {
       return;
     }
 
-    // Verificar si el destinatario ya está casado
     const marriageData = readData(MARRIAGE_FILE_PATH);
     const existingMarriage = marriageData.find(
       (entry) => entry.userJid === targetJid || entry.partnerJid === targetJid
@@ -64,11 +62,23 @@ module.exports = {
       return;
     }
 
-    // Enviar propuesta de matrimonio con etiquetado correcto
+    // Guardar la propuesta de matrimonio en pending_marriages.json
+    let pendingMarriages = readData(PENDING_MARRIAGES_FILE);
+    pendingMarriages = pendingMarriages.filter(entry => Date.now() - entry.timestamp < 60000); // Eliminar propuestas expiradas
+
+    pendingMarriages.push({
+      proposer: userJid,
+      proposedTo: targetJid,
+      timestamp: Date.now()
+    });
+
+    writeData(PENDING_MARRIAGES_FILE, pendingMarriages);
+
+    // Enviar la propuesta de matrimonio
     await socket.sendMessage(remoteJid, {
       text: `💍 *@${userJid.split("@")[0]}* quiere casarse contigo, *@${targetJid.split("@")[0]}*!  
 Responde con *#r si* para aceptar o *#r no* para rechazar.  
-Tienes 3 minutos para decidir.`,
+⏳ *Tienes 1 minuto para decidir.*`,
       mentions: [userJid, targetJid]
     });
   },
