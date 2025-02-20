@@ -26,7 +26,7 @@ module.exports = {
   description: "Proponer matrimonio a alguien.",
   commands: ["boda"],
   usage: `${PREFIX}boda 💍 @usuario`,
-  handle: async ({ sendReply, userJid, args, isReply, replyJid, socket, remoteJid }) => {
+  handle: async ({ sendReply, userJid, args, isReply, replyJid, client, remoteJid }) => {
     let targetJid;
 
     if (isReply) {
@@ -58,10 +58,11 @@ module.exports = {
       return;
     }
 
-    await sendReply(`@${targetJid} ¿Aceptas la propuesta de matrimonio? Responde con "#r si" o "#r no". Tienes 3 minutos.`);
+    await sendReply(`@${targetJid.split("@")[0]} ¿Aceptas la propuesta de matrimonio? Responde con "#r si" o "#r no". Tienes 3 minutos.`);
 
     const timeout = setTimeout(() => {
-      sendReply(`La propuesta de matrimonio a @${targetJid} ha sido rechazada por falta de respuesta.`);
+      sendReply(`La propuesta de matrimonio a @${targetJid.split("@")[0]} ha sido rechazada por falta de respuesta.`);
+      client.removeListener("message", onResponse);
     }, 180000);
 
     const onResponse = async (msg) => {
@@ -87,17 +88,18 @@ module.exports = {
         userItem.items.anillos -= 1;
         writeData(USER_ITEMS_FILE_PATH, userItems);
 
-        await sendReply(`¡Felicidades! @${userJid} y @${targetJid} están ahora casados. 💍`);
+        await sendReply(`¡Felicidades! @${userJid.split("@")[0]} y @${targetJid.split("@")[0]} están ahora casados. 💍`);
       } else if (response === "#r no") {
-        await sendReply(`@${targetJid} ha rechazado la propuesta de matrimonio. ❌`);
+        await sendReply(`@${targetJid.split("@")[0]} ha rechazado la propuesta de matrimonio. ❌`);
       } else {
-        await sendReply(`@${targetJid}, debes responder con "#r si" o "#r no".`);
+        await sendReply(`@${targetJid.split("@")[0]}, debes responder con "#r si" o "#r no".`);
         return;
       }
 
       clearTimeout(timeout);
+      client.removeListener("message", onResponse);
     };
 
-    socket.on("message", onResponse);
+    client.on("message", onResponse);
   },
 };
