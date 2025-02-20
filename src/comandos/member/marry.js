@@ -26,41 +26,49 @@ module.exports = {
   description: "Proponer matrimonio a alguien.",
   commands: ["boda"],
   usage: `${PREFIX}boda 💍 @usuario`,
-  handle: async ({ sendReply, userJid, args, isReply, replyJid, client, remoteJid, mentionedJid }) => {
-    console.log("mentionedJid:", mentionedJid);
+  handle: async ({ sendReply, userJid, args, isReply, replyJid, mentionedJid }) => {
     let targetJid;
 
+    // Obtener el JID del destinatario de la propuesta
     if (isReply) {
       targetJid = replyJid;
+    } else if (mentionedJid && mentionedJid.length > 0) {
+      targetJid = mentionedJid[0]; // Tomar el primer usuario mencionado
     } else if (args && args.length > 0) {
       targetJid = args[0].replace("@", "") + "@s.whatsapp.net";
     }
 
+    // Si no hay destinatario válido, mostrar mensaje de error
     if (!targetJid) {
       await sendReply("❌ Debes etiquetar o responder a un usuario para proponer matrimonio.");
       return;
     }
 
+    // Verificar si el usuario tiene anillos
     const userItems = readData(USER_ITEMS_FILE_PATH);
     const userItem = userItems.find((entry) => entry.userJid === userJid);
 
     if (!userItem || userItem.items.anillos <= 0) {
-      await sendReply("¿Y el anillo pa' cuando?");
+      await sendReply("💍 ¿Y el anillo pa' cuando?");
       return;
     }
 
+    // Verificar si el destinatario ya está casado
     const marriageData = readData(MARRIAGE_FILE_PATH);
     const existingMarriage = marriageData.find(
       (entry) => entry.userJid === targetJid || entry.partnerJid === targetJid
     );
 
     if (existingMarriage) {
-      await sendReply("Cuernero, ya estás casado.");
+      await sendReply("💔 Esa persona ya está casada.");
       return;
     }
 
-    await sendReply(`@${mentionedJid ? mentionedJid.split("@")[0] : targetJid.split("@")[0]} ¿Aceptas la propuesta de matrimonio? Responde con "#r si" o "#r no". Tienes 3 minutos.`, {
-      mentions: [mentionedJid || targetJid],
+    // Enviar propuesta de matrimonio con etiqueta correcta
+    await sendReply(`💍 @${userJid.split("@")[0]} quiere casarse contigo, @${targetJid.split("@")[0]}!  
+Responde con *#r si* para aceptar o *#r no* para rechazar.  
+Tienes 3 minutos para decidir.`, {
+      mentions: [userJid, targetJid],
     });
   },
 };
