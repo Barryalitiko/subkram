@@ -27,6 +27,7 @@ module.exports = {
   commands: ["boda"],
   usage: `${PREFIX}boda 💍 @usuario`,
   handle: async ({ sendReply, userJid, args, isReply, replyJid, client, remoteJid, mentionedJid }) => {
+    console.log("mentionedJid:", mentionedJid);
     let targetJid;
 
     if (isReply) {
@@ -58,8 +59,8 @@ module.exports = {
       return;
     }
 
-    await sendReply(`@${mentionedJid.split("@")[0]} ¿Aceptas la propuesta de matrimonio? Responde con "#r si" o "#r no". Tienes 3 minutos.`, {
-      mentions: [mentionedJid],
+    await sendReply(`@${mentionedJid ? mentionedJid.split("@")[0] : targetJid.split("@")[0]} ¿Aceptas la propuesta de matrimonio? Responde con "#r si" o "#r no". Tienes 3 minutos.`, {
+      mentions: [mentionedJid || targetJid],
     });
   },
 };
