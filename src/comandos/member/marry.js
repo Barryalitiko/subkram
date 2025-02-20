@@ -58,8 +58,6 @@ module.exports = {
       return;
     }
 
-    await sendReply(`@${targetJid.split("@")[0]} ¿Aceptas la propuesta de matrimonio? Responde con "#r si" o "#r no". Tienes 3 minutos.`);
+    await sendReply(`@${mentionedJid.split("@")[0]} ¿Aceptas la propuesta de matrimonio? Responde con "#r si" o "#r no". Tienes 3 minutos.`);
   },
 };
-
-
