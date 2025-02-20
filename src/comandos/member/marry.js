@@ -26,7 +26,7 @@ module.exports = {
   description: "Proponer matrimonio a alguien.",
   commands: ["boda"],
   usage: `${PREFIX}boda 💍 @usuario`,
-  handle: async ({ sendReply, userJid, mentionedJid }) => {
+  handle: async ({ sendReply, userJid, mentionedJid, message }) => {
     const userItems = readData(userItemsFilePath);
     const userItem = userItems.find(entry => entry.userJid === userJid);
 
@@ -46,42 +46,45 @@ module.exports = {
     }
 
     // Propuesta de matrimonio
-    await sendReply(`@${mentionedJid} ¿Aceptas la propuesta de matrimonio? Responde con ${PREFIX}si o ${PREFIX}no. Tienes 3 minutos.`);
+    await sendReply(`@${mentionedJid} ¿Aceptas la propuesta de matrimonio? Responde con "#r si" o "#r no". Tienes 3 minutos.`);
     
     // Crear un timeout de 3 minutos para la respuesta
     const timeout = setTimeout(() => {
       sendReply(`La propuesta de matrimonio a @${mentionedJid} ha sido rechazada por falta de respuesta.`);
     }, 180000); // 3 minutos en milisegundos
 
-    // Manejo de la respuesta con ${PREFIX}si o ${PREFIX}no
+    // Manejo de la respuesta con "#r si" o "#r no"
     const onResponse = async (message) => {
-      if (message.body.includes(`${PREFIX}si`)) {
-        // Confirmación de matrimonio
-        const marriageEntry = {
-          userJid: userJid,
-          partnerJid: mentionedJid,
-          date: new Date().toISOString(),
-          groupId: "groupId12345", // Esto debería ser obtenido de algún lugar
-          dailyLove: 0
-        };
+      // Solo acepta respuesta de la persona mencionada
+      if (message.body.startsWith("#r ") && message.sender === mentionedJid) {
+        if (message.body.includes("si")) {
+          // Confirmación de matrimonio
+          const marriageEntry = {
+            userJid: userJid,
+            partnerJid: mentionedJid,
+            date: new Date().toISOString(),
+            groupId: "groupId12345", // Esto debería ser obtenido de algún lugar
+            dailyLove: 0
+          };
 
-        marriageData.push(marriageEntry);
-        writeData(marriageFilePath, marriageData);
+          marriageData.push(marriageEntry);
+          writeData(marriageFilePath, marriageData);
 
-        // Descontar el anillo del inventario del usuario
-        userItem.items.anillos -= 1;
-        writeData(userItemsFilePath, userItems);
+          // Descontar el anillo del inventario del usuario
+          userItem.items.anillos -= 1;
+          writeData(userItemsFilePath, userItems);
 
-        await sendReply(`¡Felicidades! @${userJid} y @${mentionedJid} están ahora casados. 💍`);
-      } else if (message.body.includes(`${PREFIX}no`)) {
-        // Rechazo de la propuesta
-        await sendReply(`@${mentionedJid} ha rechazado la propuesta de matrimonio. ❌`);
+          await sendReply(`¡Felicidades! @${userJid} y @${mentionedJid} están ahora casados. 💍`);
+        } else if (message.body.includes("no")) {
+          // Rechazo de la propuesta
+          await sendReply(`@${mentionedJid} ha rechazado la propuesta de matrimonio. ❌`);
+        }
+
+        clearTimeout(timeout);
       }
-
-      clearTimeout(timeout);
     };
 
-    // Esperar la respuesta
-    setTimeout(onResponse, 3000); // Verificar la respuesta en 3 segundos (para pruebas)
+    // Escuchar la respuesta
+    message.client.on('message', onResponse);
   }
 };
