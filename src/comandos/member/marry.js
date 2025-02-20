@@ -26,7 +26,7 @@ module.exports = {
   description: "Proponer matrimonio a alguien.",
   commands: ["boda"],
   usage: `${PREFIX}boda 💍 @usuario`,
-  handle: async ({ sendReply, userJid, mentionedJid, message }) => {
+  handle: async ({ sendReply, userJid, mentionedJid, message, client }) => {
     const userItems = readData(userItemsFilePath);
     const userItem = userItems.find(entry => entry.userJid === userJid);
 
@@ -47,44 +47,57 @@ module.exports = {
 
     // Propuesta de matrimonio
     await sendReply(`@${mentionedJid} ¿Aceptas la propuesta de matrimonio? Responde con "#r si" o "#r no". Tienes 3 minutos.`);
-    
+
     // Crear un timeout de 3 minutos para la respuesta
     const timeout = setTimeout(() => {
       sendReply(`La propuesta de matrimonio a @${mentionedJid} ha sido rechazada por falta de respuesta.`);
+      client.removeListener("message", onResponse);
     }, 180000); // 3 minutos en milisegundos
 
     // Manejo de la respuesta con "#r si" o "#r no"
-    const onResponse = async (message) => {
-      // Solo acepta respuesta de la persona mencionada
-      if (message.body.startsWith("#r ") && message.sender === mentionedJid) {
-        if (message.body.includes("si")) {
-          // Confirmación de matrimonio
-          const marriageEntry = {
-            userJid: userJid,
-            partnerJid: mentionedJid,
-            date: new Date().toISOString(),
-            groupId: "groupId12345", // Esto debería ser obtenido de algún lugar
-            dailyLove: 0
-          };
+    const onResponse = async (msg) => {
+      const senderJid = msg.sender;
+      const response = msg.body.trim().toLowerCase();
 
-          marriageData.push(marriageEntry);
-          writeData(marriageFilePath, marriageData);
+      // Ignorar si el mensaje no empieza con "#r"
+      if (!response.startsWith("#r")) return;
 
-          // Descontar el anillo del inventario del usuario
-          userItem.items.anillos -= 1;
-          writeData(userItemsFilePath, userItems);
+      // Si quien responde no es la persona mencionada, ignoramos
+      if (senderJid !== mentionedJid) return;
 
-          await sendReply(`¡Felicidades! @${userJid} y @${mentionedJid} están ahora casados. 💍`);
-        } else if (message.body.includes("no")) {
-          // Rechazo de la propuesta
-          await sendReply(`@${mentionedJid} ha rechazado la propuesta de matrimonio. ❌`);
-        }
+      // Verificar respuesta válida
+      if (response === "#r si") {
+        // Confirmación de matrimonio
+        const marriageEntry = {
+          userJid: userJid,
+          partnerJid: mentionedJid,
+          date: new Date().toISOString(),
+          groupId: "groupId12345", // Esto debería ser obtenido de algún lugar
+          dailyLove: 0
+        };
 
-        clearTimeout(timeout);
+        marriageData.push(marriageEntry);
+        writeData(marriageFilePath, marriageData);
+
+        // Descontar el anillo del inventario del usuario
+        userItem.items.anillos -= 1;
+        writeData(userItemsFilePath, userItems);
+
+        await sendReply(`¡Felicidades! @${userJid} y @${mentionedJid} están ahora casados. 💍`);
+      } else if (response === "#r no") {
+        // Rechazo de la propuesta
+        await sendReply(`@${mentionedJid} ha rechazado la propuesta de matrimonio. ❌`);
+      } else {
+        // Si responde "#r" sin más o algo inválido
+        await sendReply(`@${mentionedJid}, debes responder con "#r si" o "#r no".`);
+        return; // No limpiar el timeout ni remover el listener aún
       }
+
+      clearTimeout(timeout);
+      client.removeListener("message", onResponse);
     };
 
     // Escuchar la respuesta
-    message.client.on('message', onResponse);
+    client.on("message", onResponse);
   }
 };
