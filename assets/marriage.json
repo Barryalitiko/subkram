@@ -4,6 +4,8 @@
     "partnerJid": "user2@s.whatsapp.net",
     "date": "2025-01-01T10:00:00Z",
     "groupId": "groupId12345@s.whatsapp.net",
-    "dailyLove": 0
+    "dailyLove": 0,
+    "loveStreak": 0,
+    "lastLoveDate": "2025-01-01"
   }
 ]
