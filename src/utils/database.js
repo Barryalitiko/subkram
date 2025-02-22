@@ -8,6 +8,7 @@ const ANTI_LINK_GROUPS_FILE = "anti-link-groups";
 const WELCOME_GROUPS_FILE = "welcome-groups";
 const GOODBYE_GROUPS_FILE = "goodbye-groups"; // Archivo para gestionar la despedida
 const SPAM_DETECTION_FILE = "spam-detection";
+const MUTE_GROUPS_FILE = "mute-groups";
 
 // Crear las carpetas necesarias si no existen
 function createIfNotExists(fullPath) {
@@ -180,4 +181,36 @@ exports.deactivateSpamDetection = (groupId) => {
 exports.isSpamDetectionActive = (groupId) => {
     const spamDetection = readJSON(SPAM_DETECTION_FILE);
     return !!spamDetection[groupId];
+};
+
+// Agregar usuario a la lista de muteados
+exports.muteUser = (groupId, userId, expirationTime) => {
+    const muteGroups = readJSON(MUTE_GROUPS_FILE);
+    if (!muteGroups[groupId]) {
+        muteGroups[groupId] = {};
+    }
+    muteGroups[groupId][userId] = expirationTime;
+    writeJSON(MUTE_GROUPS_FILE, muteGroups);
+};
+
+// Eliminar usuario de la lista de muteados
+exports.unmuteUser = (groupId, userId) => {
+    const muteGroups = readJSON(MUTE_GROUPS_FILE);
+    if (muteGroups[groupId] && muteGroups[groupId][userId]) {
+        delete muteGroups[groupId][userId];
+        writeJSON(MUTE_GROUPS_FILE, muteGroups);
+    }
+};
+
+// Verificar si un usuario está muteado y si el muteo sigue activo
+exports.isUserMuted = (groupId, userId) => {
+    const muteGroups = readJSON(MUTE_GROUPS_FILE);
+    const userMute = muteGroups[groupId] && muteGroups[groupId][userId];
+    return userMute && userMute > Date.now(); // Verifica si el muteo sigue activo
+};
+
+// Obtener el tiempo de expiración del muteo
+exports.getMuteExpiration = (groupId, userId) => {
+    const muteGroups = readJSON(MUTE_GROUPS_FILE);
+    return muteGroups[groupId] ? muteGroups[groupId][userId] : null;
 };
