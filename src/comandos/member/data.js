@@ -79,7 +79,7 @@ module.exports = {
 ╰──────────────────╯`;
     } else {
       const { partnerJid, date, groupId, dailyLove } = marriage;
-      const partnerName = partnerJid.split("@")[0];
+      const partnerName = partnerJid === userJid ? 'Tú' : partnerJid.split("@")[0]; // Si es el mismo user, muestra "Tú"
       const marriageDate = new Date(date);
       const currentDate = new Date();
       const daysMarried = Math.floor((currentDate - marriageDate) / (1000 * 60 * 60 * 24));
