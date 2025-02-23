@@ -5,54 +5,73 @@ const { muteUser, unmuteUser } = require("../../utils/database");
 const { toUserJid, onlyNumbers } = require("../../utils");
 
 module.exports = {
-  name: "mute",
-  description: "Mutea/desmutea a un usuario en el grupo.",
-  commands: ["mute", "unmute"],
-  usage: `${PREFIX}mute @usuario tiempo (para muteo)\n${PREFIX}unmute @usuario (para desmuteo)`,
-  handle: async ({
-    args,
-    isReply,
-    socket,
-    remoteJid,
-    replyJid,
-    sendReply,
-    userJid,
-    sendSuccessReact,
-  }) => {
-    if (!args.length && !isReply) {
-      throw new InvalidParameterError(
-        "Tienes que decirme a quien quieres que mutee o desmutee"
-      );
-    }
+name: "mute",
+description: "Mutea/desmutea a un usuario en el grupo.",
+commands: ["mute", "unmute"],
+usage: `${PREFIX}mute @usuario tiempo (para muteo)\n${PREFIX}unmute @usuario (para desmuteo)`,
+handle: async ({
+args,
+isReply,
+socket,
+remoteJid,
+replyJid,
+sendReply,
+userJid,
+sendSuccessReact,
+}) => {
+console.log("Comando mute/unmute ejecutado");
+console.log(`args: ${args}`);
+console.log(`isReply: ${isReply}`);
 
-    const command = args[0].toLowerCase();
-    const memberToMuteJid = isReply ? replyJid : toUserJid(args[1]);
-    const memberToMuteNumber = onlyNumbers(memberToMuteJid);
+if (!args.length && !isReply) {
+  console.log("No se proporcionaron argumentos");
+  throw new InvalidParameterError(
+    "Tienes que decirme a quien quieres que mutee o desmutee"
+  );
+}
 
-    if (memberToMuteNumber.length < 7 || memberToMuteNumber.length > 15) {
-      throw new InvalidParameterError("Número inválido");
-    }
+const command = args[0].toLowerCase();
+console.log(`Comando: ${command}`);
 
-    if (memberToMuteJid === userJid) {
-      throw new DangerError("No puedes mutearte a ti mismo");
-    }
+const memberToMuteJid = isReply ? replyJid : toUserJid(args[1]);
+console.log(`Usuario a mutear: ${memberToMuteJid}`);
 
-    if (command === "mute") {
-      const muteTime = parseInt(args[2]);
-      if (isNaN(muteTime) || muteTime > 15) {
-        throw new InvalidParameterError("Debes especificar un tiempo válido (máximo 15 minutos)");
-      }
+const memberToMuteNumber = onlyNumbers(memberToMuteJid);
+console.log(`Número del usuario: ${memberToMuteNumber}`);
 
-      const expiration = Date.now() + muteTime * 60 * 1000;
-      muteUser(remoteJid, memberToMuteJid, expiration);
-      await sendSuccessReact();
-      await sendReply(`El usuario @${memberToMuteJid} ha sido muteado por ${muteTime} minutos`);
-    } else if (command === "unmute") {
-      unmuteUser(remoteJid, memberToMuteJid);
-      await sendSuccessReact();
-      await sendReply(`El usuario @${memberToMuteJid} ha sido desmuteado`);
-    } else {
-      throw new InvalidParameterError("Usa 'mute' o 'unmute' para silenciar o quitar el muteo a un usuario");
-    }
-  },
+if (memberToMuteNumber.length < 7 || memberToMuteNumber.length > 15) {
+  console.log("Número inválido");
+  throw new InvalidParameterError("Número inválido");
+}
+
+if (memberToMuteJid === userJid) {
+  console.log("No puedes mutearte a ti mismo");
+  throw new DangerError("No puedes mutearte a ti mismo");
+}
+
+if (command === "mute") {
+  console.log("Muteando usuario");
+  const muteTime = parseInt(args[2]);
+  console.log(`Tiempo de muteo: ${muteTime}`);
+
+  if (isNaN(muteTime) || muteTime > 15) {
+    console.log("Tiempo de muteo inválido");
+    throw new InvalidParameterError("Debes especificar un tiempo válido (máximo 15 minutos)");
+  }
+
+  const expiration = Date.now() + muteTime * 60 * 1000;
+  muteUser(remoteJid, memberToMuteJid, expiration);
+  await sendSuccessReact();
+  await sendReply(`El usuario @${memberToMuteJid} ha sido muteado por ${muteTime} minutos`);
+} else if (command === "unmute") {
+  console.log("Desmuteando usuario");
+  unmuteUser(remoteJid, memberToMuteJid);
+  await sendSuccessReact();
+  await sendReply(`El usuario @${memberToMuteJid} ha sido desmuteado`);
+} else {
+  console.log("Comando inválido");
+  throw new InvalidParameterError("Usa 'mute' o 'unmute' para silenciar o quitar el muteo a un usuario");
+}
+},
 };
+
