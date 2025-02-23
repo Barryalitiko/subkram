@@ -31,7 +31,7 @@ module.exports = {
       const inputPath = await downloadImage(webMessage, "input");
 
       exec(
-        `ffmpeg -i "${inputPath}" -vf scale=512:512 "${outputPath}"`,
+        `ffmpeg -i ${inputPath} -vf "scale='min(512,iw)':'min(512,ih)'" ${outputPath}`,
         async (error) => {
           if (error) {
             console.log(error);
@@ -40,7 +40,6 @@ module.exports = {
           }
 
           await sendSuccessReact();
-
           await sendStickerFromFile(outputPath);
 
           fs.unlinkSync(inputPath);
@@ -70,7 +69,7 @@ Envia un video más corto!`);
       }
 
       exec(
-        `ffmpeg -i "${inputPath}" -y -vcodec libwebp -fs 0.99M -filter_complex "[0:v] scale=512:512,fps=12,pad=512:512:-1:-1:color=white@0.0,split[a][b];[a]palettegen=reserve_transparent=on:transparency_color=ffffff[p];[b][p]paletteuse" -f webp "${outputPath}"`,
+        `ffmpeg -i ${inputPath} -y -vcodec libwebp -fs 0.99M -filter_complex "[0:v] scale='if(gt(iw,ih),512,-2)':'if(gt(ih,iw),512,-2)',fps=12,pad=ceil(iw/2)*2:ceil(ih/2)*2:-1:-1:color=white@0.0,split[a][b];[a]palettegen=reserve_transparent=on:transparency_color=ffffff[p];[b][p]paletteuse" -f webp ${outputPath}`,
         async (error) => {
           if (error) {
             console.log(error);
