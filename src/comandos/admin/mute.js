@@ -18,6 +18,7 @@ replyJid,
 sendReply,
 userJid,
 sendSuccessReact,
+message,
 }) => {
 console.log("Comando mute/unmute ejecutado");
 console.log(`args: ${args}`);
@@ -30,10 +31,16 @@ if (!args.length && !isReply) {
   );
 }
 
-const command = args[0].toLowerCase();
+let command;
+if (isReply) {
+  command = "mute";
+} else {
+  command = message.toLowerCase().startsWith(`${PREFIX}mute`) ? "mute" : message.toLowerCase().startsWith(`${PREFIX}unmute`) ? "unmute" : null;
+}
+
 console.log(`Comando: ${command}`);
 
-const memberToMuteJid = isReply ? replyJid : toUserJid(args[1]);
+const memberToMuteJid = isReply ? replyJid : toUserJid(args[0]);
 console.log(`Usuario a mutear: ${memberToMuteJid}`);
 
 const memberToMuteNumber = onlyNumbers(memberToMuteJid);
@@ -51,7 +58,7 @@ if (memberToMuteJid === userJid) {
 
 if (command === "mute") {
   console.log("Muteando usuario");
-  const muteTime = parseInt(args[2]);
+  const muteTime = parseInt(args[1]);
   console.log(`Tiempo de muteo: ${muteTime}`);
 
   if (isNaN(muteTime) || muteTime > 15) {
