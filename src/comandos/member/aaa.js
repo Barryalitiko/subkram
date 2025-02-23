@@ -2,16 +2,17 @@ const { PREFIX } = require("../../krampus");
 
 module.exports = {
   name: "hide-tag",
-  description: "Envia un texto con un enlace como previsualización",
+  description: "Envía un texto con un enlace como previsualización",
   commands: ["tag", "c"],
   usage: `${PREFIX}hidetag motivo`,
   handle: async ({ fullArgs, sendReact, socket, jid }) => {
-    const hiddenLink = "https://wa.me/1234567890"; // Enlace visible en el texto
-    const messageText = `<${hiddenLink}> ${fullArgs}`;
+    const hiddenLink = "https://www.example.com"; // Cambia esto por el enlace real
 
     await sendReact("📎"); // Reacciona con un emoji
 
-    // Enviar el mensaje usando socket.sendMessage
-    await socket.sendMessage(jid, { text: messageText });
+    await socket.sendMessage(jid, {
+      text: `${fullArgs} ${hiddenLink}`,
+      linkPreview: true, // Asegura que se intente generar una vista previa
+    });
   },
 };
