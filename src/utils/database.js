@@ -9,6 +9,7 @@ const WELCOME_GROUPS_FILE = "welcome-groups";
 const GOODBYE_GROUPS_FILE = "goodbye-groups"; // Archivo para gestionar la despedida
 const SPAM_DETECTION_FILE = "spam-detection";
 const MUTE_GROUPS_FILE = "mute-groups";
+const ONLY_ADMIN_GROUPS_FILE = "only-admin-groups"; // Archivo para manejar los grupos con solo administradores
 
 // Crear las carpetas necesarias si no existen
 function createIfNotExists(fullPath) {
@@ -213,4 +214,22 @@ exports.isUserMuted = (groupId, userId) => {
 exports.getMuteExpiration = (groupId, userId) => {
     const muteGroups = readJSON(MUTE_GROUPS_FILE);
     return muteGroups[groupId] ? muteGroups[groupId][userId] : null;
+};
+
+// Crear las funciones para activar y desactivar el modo solo admin
+exports.setOnlyAdmin = (groupId) => {
+    const onlyAdminGroups = readJSON(ONLY_ADMIN_GROUPS_FILE);
+    onlyAdminGroups[groupId] = true;
+    writeJSON(ONLY_ADMIN_GROUPS_FILE, onlyAdminGroups);
+};
+
+exports.removeOnlyAdmin = (groupId) => {
+    const onlyAdminGroups = readJSON(ONLY_ADMIN_GROUPS_FILE);
+    delete onlyAdminGroups[groupId];
+    writeJSON(ONLY_ADMIN_GROUPS_FILE, onlyAdminGroups);
+};
+
+exports.isOnlyAdminGroup = (groupId) => {
+    const onlyAdminGroups = readJSON(ONLY_ADMIN_GROUPS_FILE);
+    return !!onlyAdminGroups[groupId]; // Retorna true si el grupo tiene activado el modo solo admin
 };
