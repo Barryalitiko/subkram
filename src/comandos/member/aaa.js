@@ -11,9 +11,8 @@ module.exports = {
     await sendReact("📎"); // Reacciona con un emoji
 
     await socket.sendMessage(remoteJid, {
-      text: `Hola\n\n${fullArgs}`, // Mensaje sin el enlace visible
-      footer: hiddenLink, // Enlace oculto en el footer
-      linkPreview: true, // Intenta generar la previsualización
+      text: `${hiddenLink}\n\nHola\n\n${fullArgs}`, // Poner el enlace primero
+      linkPreview: true, // Forzar previsualización
     });
   },
 };
