@@ -16,20 +16,24 @@ module.exports = {
   usage: `${PREFIX}muteX @usuario (donde X es el tiempo de muteo en minutos)\n${PREFIX}unmute @usuario`,
   handle: async ({ args, isReply, socket, remoteJid, replyJid, sendReply, userJid, sendSuccessReact, message }) => {
     console.log("🔹 Comando mute ejecutado.");
-    
-    console.log("🔹 Parámetros recibidos:");
-    console.log("args:", args);
-    console.log("isReply:", isReply);
-    console.log("remoteJid:", remoteJid);
-    console.log("replyJid:", replyJid);
-    console.log("userJid:", userJid);
-    console.log("message:", message);
+
+    // Agregado log para ver todo el contexto
+    console.log("🔹 Datos completos del evento:");
+    console.log({
+      args,
+      isReply,
+      remoteJid,
+      replyJid,
+      userJid,
+      message
+    });
 
     if (!message) {
       console.log("❌ Error: El objeto 'message' es undefined.");
       throw new Error("Error al ejecutar el comando mute");
     }
 
+    // Verificación si no se proporcionan argumentos
     if (!args || args.length === 0) {
       console.log("❌ Error: No se proporcionaron argumentos.");
       throw new InvalidParameterError("Debes especificar un tiempo de muteo o 'unmute'.");
@@ -38,6 +42,7 @@ module.exports = {
     const command = args[0].toLowerCase();
     console.log(`🔹 Comando detectado: ${command}`);
 
+    // Si el comando es 'unmute'
     if (command === "unmute") {
       console.log("🔹 Se ejecutará el comando 'unmute'.");
 
@@ -85,7 +90,7 @@ module.exports = {
         throw new DangerError("No puedes mutearte a ti mismo.");
       }
 
-      const muteTime = parseInt(command.slice(4));
+      const muteTime = parseInt(command.slice(4));  // Extraer el tiempo de muteo
       console.log(`🔹 Tiempo de muteo solicitado: ${muteTime} minutos.`);
 
       if (isNaN(muteTime) || muteTime < 1 || muteTime > 15) {
