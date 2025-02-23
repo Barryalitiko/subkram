@@ -37,11 +37,6 @@ module.exports = {
       throw new DangerError("No puedes mutearte a ti mismo");
     }
 
-    const botJid = toUserJid(BOT_NUMBER);
-    if (memberToMuteJid === botJid) {
-      throw new DangerError("No puedes mutearme");
-    }
-
     if (command === "mute") {
       const muteTime = parseInt(args[2]);
       if (isNaN(muteTime) || muteTime > 15) {
