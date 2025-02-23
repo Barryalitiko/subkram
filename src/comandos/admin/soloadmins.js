@@ -7,7 +7,7 @@ module.exports = {
   commands: ["soloadmin"],
   usage: `${PREFIX}soloadmin [on/off]`,
   
-  handle: async ({ sendSuccessReply, remoteJid, args, sender, socket }) => {
+  handle: async ({ sendSuccessReply, remoteJid, args, socket }) => {
     if (!remoteJid.endsWith("@g.us")) {
       return sendSuccessReply("Este comando solo puede usarse en grupos.");
     }
@@ -22,17 +22,6 @@ module.exports = {
     }
 
     try {
-      // Obtener los detalles del grupo y filtrar los administradores
-      const groupMetadata = await socket.groupMetadata(remoteJid);
-      const admins = groupMetadata.participants
-        .filter((participant) => ["admin", "superadmin"].includes(participant.admin))
-        .map((admin) => admin.id);
-
-      // Verificar si el usuario que ejecutó el comando es admin
-      if (!admins.includes(sender)) {
-        return sendSuccessReply("❌ Solo los administradores pueden usar este comando.");
-      }
-
       // Activar o desactivar el modo "solo admin"
       if (option === "on") {
         await setOnlyAdmin(remoteJid);
