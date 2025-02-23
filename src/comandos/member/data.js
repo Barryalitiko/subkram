@@ -5,6 +5,7 @@ const { PREFIX } = require("../../krampus");
 const MARRIAGE_FILE_PATH = path.resolve(process.cwd(), "assets/marriage.json");
 const KR_FILE_PATH = path.resolve(process.cwd(), "assets/kr.json");
 const USER_ITEMS_FILE_PATH = path.resolve(process.cwd(), "assets/userItems.json");
+const HEARTS_FILE_PATH = path.resolve(process.cwd(), "assets/hearts.json");
 
 const readData = (filePath) => {
   try {
@@ -30,6 +31,14 @@ const assignInitialKr = (userJid) => {
   }
 };
 
+const assignInitialHearts = (userJid) => {
+  const heartsData = readData(HEARTS_FILE_PATH);
+  if (!heartsData.find(entry => entry.userJid === userJid)) {
+    heartsData.push({ userJid, hearts: 0, streak: 0, lastUsed: null });
+    writeData(HEARTS_FILE_PATH, heartsData);
+  }
+};
+
 module.exports = {
   name: "data",
   description: "Ver tu información matrimonial y estado actual.",
@@ -37,12 +46,18 @@ module.exports = {
   usage: `${PREFIX}data`,
   handle: async ({ socket, remoteJid, userJid }) => {
     assignInitialKr(userJid);
+    assignInitialHearts(userJid);
     const marriageData = readData(MARRIAGE_FILE_PATH);
     const krData = readData(KR_FILE_PATH);
     const userItems = readData(USER_ITEMS_FILE_PATH);
+    const heartsData = readData(HEARTS_FILE_PATH);
 
     const userKr = krData.find(entry => entry.userJid === userJid);
     const userKrBalance = userKr ? userKr.kr : 0;
+
+    const userHearts = heartsData.find(entry => entry.userJid === userJid);
+    const hearts = userHearts ? userHearts.hearts : 0;
+    const streak = userHearts ? userHearts.streak : 0;
 
     const marriage = marriageData.find(entry => entry.userJid === userJid || entry.partnerJid === userJid);
     const userItem = userItems.find(entry => entry.userJid === userJid) || { items: {} };
@@ -59,6 +74,8 @@ module.exports = {
 ┃ 🎁 *Objetos:*  
 ┃    💍 Anillos: *${anillos}*  
 ┃    📜 Papeles: *${papeles}*  
+┃ ❤️ *Corazones:* *${hearts}*  
+┃ 💖 *Racha de Amor:* *${streak} días*  
 ╰──────────────────╯`;
     } else {
       const { partnerJid, date, groupId, dailyLove } = marriage;
@@ -79,6 +96,8 @@ module.exports = {
 ┃ 🎁 *Objetos:*  
 ┃    💍 Anillos: *${anillos}*  
 ┃    📜 Papeles: *${papeles}*  
+┃ ❤️ *Corazones:* *${hearts}*  
+┃ 💖 *Racha de Amor:* *${streak} días*  
 ╰────────────────────╯`;
     }
 
