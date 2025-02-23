@@ -54,10 +54,19 @@ module.exports = {
 
     const marriageData = readData(MARRIAGE_FILE_PATH);
     const existingMarriage = marriageData.find(
-      (entry) => entry.userJid === targetJid || entry.partnerJid === targetJid
+      (entry) => entry.userJid === userJid || entry.partnerJid === userJid
     );
 
     if (existingMarriage) {
+      await sendReply("💔 Ya estás casado, no puedes proponer matrimonio hasta que te divorcies.");
+      return;
+    }
+
+    const targetMarriage = marriageData.find(
+      (entry) => entry.userJid === targetJid || entry.partnerJid === targetJid
+    );
+
+    if (targetMarriage) {
       await sendReply("💔 Esa persona ya está casada.");
       return;
     }
