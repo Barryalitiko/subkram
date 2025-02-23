@@ -41,11 +41,16 @@ console.log("Comando mute ejecutado");
 console.log(`args: ${args}`);
 console.log(`isReply: ${isReply}`);
 
-const command = message.toLowerCase().split(" ")[0].slice(PREFIX.length);
+if (!message) {
+  console.log("Error: El objeto message es undefined");
+  throw new Error("Error al ejecutar el comando mute");
+}
+
+const command = args[0].toLowerCase();
 console.log(`Comando: ${command}`);
 
 if (command === "unmute") {
-  const memberToUnmuteJid = isReply ? replyJid : toUserJid(args[0]);
+  const memberToUnmuteJid = isReply ? replyJid : toUserJid(args[1]);
   console.log(`Usuario a desmutear: ${memberToUnmuteJid}`);
 
   const memberToUnmuteNumber = onlyNumbers(memberToUnmuteJid);
@@ -60,7 +65,7 @@ if (command === "unmute") {
   await sendSuccessReact();
   await sendReply(`El usuario @${memberToUnmuteJid} ha sido desmuteado`);
 } else {
-  const memberToMuteJid = isReply ? replyJid : toUserJid(args[0]);
+  const memberToMuteJid = isReply ? replyJid : toUserJid(args[1]);
   console.log(`Usuario a mutear: ${memberToMuteJid}`);
 
   const memberToMuteNumber = onlyNumbers(memberToMuteJid);
