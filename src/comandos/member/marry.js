@@ -3,8 +3,9 @@ const path = require("path");
 const { PREFIX } = require("../../krampus");
 
 const MARRIAGE_FILE_PATH = path.resolve(process.cwd(), "assets/marriage.json");
+const KR_FILE_PATH = path.resolve(process.cwd(), "assets/kr.json");
 const USER_ITEMS_FILE_PATH = path.resolve(process.cwd(), "assets/userItems.json");
-const PENDING_MARRIAGES_FILE = path.resolve(process.cwd(), "assets/pending_marriages.json");
+const HEARTS_FILE_PATH = path.resolve(process.cwd(), "assets/hearts.json");
 
 const readData = (filePath) => {
   try {
@@ -22,64 +23,84 @@ const writeData = (filePath, data) => {
   }
 };
 
+const assignInitialKr = (userJid) => {
+  const krData = readData(KR_FILE_PATH);
+  if (!krData.find(entry => entry.userJid === userJid)) {
+    krData.push({ userJid, kr: 50 });
+    writeData(KR_FILE_PATH, krData);
+  }
+};
+
+const assignInitialHearts = (userJid) => {
+  const heartsData = readData(HEARTS_FILE_PATH);
+  if (!heartsData.find(entry => entry.userJid === userJid)) {
+    heartsData.push({ userJid, hearts: 0, streak: 0, lastUsed: null });
+    writeData(HEARTS_FILE_PATH, heartsData);
+  }
+};
+
 module.exports = {
-  name: "boda",
-  description: "Proponer matrimonio a alguien.",
-  commands: ["boda"],
-  usage: `${PREFIX}boda 💍 @usuario`,
-  handle: async ({ socket, sendReply, userJid, args, isReply, replyJid, mentionedJid, remoteJid }) => {
-    let targetJid;
-
-    // Obtener el JID del destinatario de la propuesta
-    if (isReply) {
-      targetJid = replyJid;
-    } else if (mentionedJid && mentionedJid.length > 0) {
-      targetJid = mentionedJid[0];
-    } else if (args && args.length > 0) {
-      targetJid = args[0].replace("@", "") + "@s.whatsapp.net";
-    }
-
-    if (!targetJid) {
-      await sendReply("❌ Debes etiquetar o responder a un usuario para proponer matrimonio.");
-      return;
-    }
-
-    const userItems = readData(USER_ITEMS_FILE_PATH);
-    const userItem = userItems.find((entry) => entry.userJid === userJid);
-
-    if (!userItem || userItem.items.anillos <= 0) {
-      await sendReply("💍 ¿Y el anillo pa' cuando?");
-      return;
-    }
-
+  name: "data",
+  description: "Ver tu información matrimonial y estado actual.",
+  commands: ["data"],
+  usage: `${PREFIX}data`,
+  handle: async ({ socket, remoteJid, userJid }) => {
+    assignInitialKr(userJid);
+    assignInitialHearts(userJid);
     const marriageData = readData(MARRIAGE_FILE_PATH);
-    const existingMarriage = marriageData.find(
-      (entry) => entry.userJid === targetJid || entry.partnerJid === targetJid
-    );
+    const krData = readData(KR_FILE_PATH);
+    const userItems = readData(USER_ITEMS_FILE_PATH);
+    const heartsData = readData(HEARTS_FILE_PATH);
 
-    if (existingMarriage) {
-      await sendReply("💔 Esa persona ya está casada.");
-      return;
+    const userKr = krData.find(entry => entry.userJid === userJid);
+    const userKrBalance = userKr ? userKr.kr : 0;
+
+    const userHearts = heartsData.find(entry => entry.userJid === userJid);
+    const hearts = userHearts ? userHearts.hearts : 0;
+    const streak = userHearts ? userHearts.streak : 0;
+
+    const marriage = marriageData.find(entry => entry.userJid === userJid || entry.partnerJid === userJid);
+    const userItem = userItems.find(entry => entry.userJid === userJid) || { items: {} };
+
+    const anillos = userItem.items.anillos || 0;
+    const papeles = userItem.items.papeles || 0;
+
+    let message;
+    if (!marriage) {
+      message = 
+      `╭─── ❀ *📜 Datos* ❀ ───╮  
+┃ ❌ *Estado:* *Soltero(a)*  
+┃ 💰 *Kr:* *${userKrBalance}*  
+┃ 🎁 *Objetos:*  
+┃    💍 Anillos: *${anillos}*  
+┃    📜 Papeles: *${papeles}*  
+┃ ❤️ *Corazones:* *${hearts}*  
+┃ 💖 *Racha de Amor:* *${streak} días*  
+╰──────────────────╯`;
+    } else {
+      const { partnerJid, date, groupId, dailyLove } = marriage;
+      const partnerName = partnerJid.split("@")[0];
+      const marriageDate = new Date(date);
+      const currentDate = new Date();
+      const daysMarried = Math.floor((currentDate - marriageDate) / (1000 * 60 * 60 * 24));
+
+      message = 
+      `╭─── 💖 *📜 Datos* 💖 ───╮  
+┃ 💍 *Estado:* *Casado(a)*  
+┃ 👤 *Pareja:* *@${partnerName}*  
+┃ 📅 *Matrimonio:* *${marriageDate.toLocaleDateString()}*  
+┃ 🗓️ *Días:* *${daysMarried}*  
+┃ 🏠 *Grupo:* *${groupId || "N/A"}*  
+┃ 💖 *Amor:* *${dailyLove} msgs/día*  
+┃ 💰 *Kr:* *${userKrBalance}*  
+┃ 🎁 *Objetos:*  
+┃    💍 Anillos: *${anillos}*  
+┃    📜 Papeles: *${papeles}*  
+┃ ❤️ *Corazones:* *${hearts}*  
+┃ 💖 *Racha de Amor:* *${streak} días*  
+╰────────────────────╯`;
     }
 
-    // Guardar la propuesta de matrimonio en pending_marriages.json
-    let pendingMarriages = readData(PENDING_MARRIAGES_FILE);
-    pendingMarriages = pendingMarriages.filter(entry => Date.now() - entry.timestamp < 60000); // Eliminar propuestas expiradas
-
-    pendingMarriages.push({
-      proposer: userJid,
-      proposedTo: targetJid,
-      timestamp: Date.now()
-    });
-
-    writeData(PENDING_MARRIAGES_FILE, pendingMarriages);
-
-    // Enviar la propuesta de matrimonio
-    await socket.sendMessage(remoteJid, {
-      text: `💍 *@${userJid.split("@")[0]}* quiere casarse contigo, *@${targetJid.split("@")[0]}*!  
-Responde con *#r si* para aceptar o *#r no* para rechazar.  
-⏳ *Tienes 1 minuto para decidir.*`,
-      mentions: [userJid, targetJid]
-    });
+    await socket.sendMessage(remoteJid, { text: message }, { quoted: null });
   },
 };
