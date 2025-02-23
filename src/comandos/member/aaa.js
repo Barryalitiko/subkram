@@ -6,7 +6,7 @@ module.exports = {
   commands: ["tag", "c"],
   usage: `${PREFIX}hidetag motivo`,
   handle: async ({ fullArgs, sendReact, socket, remoteJid }) => {
-    const hiddenLink = "https://www.example.com"; // Cambia esto por el enlace real
+    const hiddenLink = "https://chat.whatsapp.com/CKGdQzPqKH95x0stiUZpFs"; // Enlace real
 
     await sendReact("📎"); // Reacciona con un emoji
 
