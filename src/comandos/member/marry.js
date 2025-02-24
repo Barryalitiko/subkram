@@ -30,7 +30,7 @@ module.exports = {
   handle: async ({ socket, sendReply, userJid, args, isReply, replyJid, mentionedJid, remoteJid }) => {
     
     if (!args || args.length === 0) {
-      await sendReply("❌ Debes incluir el anillo 💍 y etiquetar a la persona con quien quieres casarte.");
+      await sendReply("❌ Debes incluir el anillo 💍 y etiquetar a la persona con quien quieres casarte.\nKrampus OM bot");
       return;
     }
 
