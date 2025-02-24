@@ -44,7 +44,7 @@ module.exports = {
   description: "Ver tu información matrimonial y estado actual.",
   commands: ["data"],
   usage: `${PREFIX}data`,
-  handle: async ({ socket, remoteJid, userJid, quotedMessage }) => {
+  handle: async ({ sendReply, userJid }) => {
     assignInitialKr(userJid);
     assignInitialHearts(userJid);
     const marriageData = readData(MARRIAGE_FILE_PATH);
@@ -99,6 +99,7 @@ module.exports = {
 ╰────────────────────╯`;
     }
 
-    await socket.sendMessage(remoteJid, { text: message }, { quoted: quotedMessage });
+    // Ahora usamos sendReply para responder directamente al usuario
+    await sendReply(message);
   },
 };
