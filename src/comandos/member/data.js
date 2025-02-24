@@ -56,7 +56,7 @@ module.exports = {
   description: "Ver tu información matrimonial y estado actual.",
   commands: ["data"],
   usage: `${PREFIX}data`,
-  handle: async ({ socket, remoteJid, userJid }) => {
+  handle: async ({ socket, remoteJid, userJid, msg }) => {
     assignInitialKr(userJid);
     assignInitialHearts(userJid);
     const marriageData = readData(MARRIAGE_FILE_PATH);
@@ -72,8 +72,8 @@ module.exports = {
     const streak = userHearts ? userHearts.streak : 0;
 
     const marriage = marriageData.find(entry => entry.userJid === userJid || entry.partnerJid === userJid);
-
     const userItem = userItems.find(entry => entry.userJid === userJid) || { items: {} };
+
     const anillos = userItem.items.anillos || 0;
     const papeles = userItem.items.papeles || 0;
 
@@ -119,6 +119,7 @@ module.exports = {
 ╰────────────────────╯`;
     }
 
-    await socket.sendMessage(remoteJid, { text: message }, { quoted: null });
+    // Ahora responde al usuario que ejecutó el comando
+    await socket.sendMessage(remoteJid, { text: message }, { quoted: msg });
   },
 };
