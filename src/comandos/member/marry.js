@@ -28,15 +28,24 @@ module.exports = {
   commands: ["boda"],
   usage: `${PREFIX}boda 💍 @usuario`,
   handle: async ({ socket, sendReply, userJid, args, isReply, replyJid, mentionedJid, remoteJid }) => {
-    let targetJid;
+    
+    if (!args || args.length === 0) {
+      await sendReply("❌ Debes incluir el anillo 💍 y etiquetar a la persona con quien quieres casarte.");
+      return;
+    }
 
-    // Obtener el JID del destinatario de la propuesta
+    if (!args.includes("💍")) {
+      await sendReply("❌ Debes usar el anillo 💍 en tu propuesta de matrimonio.");
+      return;
+    }
+
+    let targetJid;
     if (isReply) {
       targetJid = replyJid;
     } else if (mentionedJid && mentionedJid.length > 0) {
       targetJid = mentionedJid[0];
-    } else if (args && args.length > 0) {
-      targetJid = args[0].replace("@", "") + "@s.whatsapp.net";
+    } else if (args.length > 1) {
+      targetJid = args[1].replace("@", "") + "@s.whatsapp.net";
     }
 
     if (!targetJid) {
@@ -44,11 +53,16 @@ module.exports = {
       return;
     }
 
+    if (targetJid === userJid) {
+      await sendReply("💍 No puedes casarte contigo mismo, busca a alguien especial.");
+      return;
+    }
+
     const userItems = readData(USER_ITEMS_FILE_PATH);
     const userItem = userItems.find((entry) => entry.userJid === userJid);
 
     if (!userItem || userItem.items.anillos <= 0) {
-      await sendReply("💍 ¿Y el anillo pa' cuando?");
+      await sendReply("💍 ¿Y el anillo pa' cuando? No tienes anillos para proponer matrimonio.");
       return;
     }
 
@@ -58,7 +72,7 @@ module.exports = {
     );
 
     if (existingMarriage) {
-      await sendReply("💔 Ya estás casado, no puedes proponer matrimonio hasta que te divorcies.");
+      await sendReply("💔 Ya estás casado. No puedes proponer matrimonio hasta que te divorcies.");
       return;
     }
 
@@ -67,13 +81,21 @@ module.exports = {
     );
 
     if (targetMarriage) {
-      await sendReply("💔 Esa persona ya está casada.");
+      await sendReply("💔 Esa persona ya está casada. No puedes proponerle matrimonio.");
       return;
     }
 
-    // Guardar la propuesta de matrimonio en pending_marriages.json
     let pendingMarriages = readData(PENDING_MARRIAGES_FILE);
-    pendingMarriages = pendingMarriages.filter(entry => Date.now() - entry.timestamp < 60000); // Eliminar propuestas expiradas
+    pendingMarriages = pendingMarriages.filter(entry => Date.now() - entry.timestamp < 60000);
+
+    const alreadyProposed = pendingMarriages.find(
+      (entry) => entry.proposer === userJid && entry.proposedTo === targetJid
+    );
+
+    if (alreadyProposed) {
+      await sendReply("⏳ Ya has hecho una propuesta de matrimonio a esta persona. Espera a que responda.");
+      return;
+    }
 
     pendingMarriages.push({
       proposer: userJid,
@@ -83,7 +105,6 @@ module.exports = {
 
     writeData(PENDING_MARRIAGES_FILE, pendingMarriages);
 
-    // Enviar la propuesta de matrimonio
     await socket.sendMessage(remoteJid, {
       text: `💍 *@${userJid.split("@")[0]}* quiere casarse contigo, *@${targetJid.split("@")[0]}*!  
 Responde con *#r si* para aceptar o *#r no* para rechazar.  
