@@ -76,7 +76,7 @@ module.exports = {
 ┃    ✏️ Lapices: *${papeles}*  
 ┃ ❤️ *Corazones:* *${hearts}*  
 ┃ 💖 *Racha de Amor:* *${streak} días*  
-╰──────────────────╯`;
+╰─────────────╯`;
     } else {
       const { date, groupId, dailyLove } = marriage;
       const marriageDate = new Date(date);
@@ -96,7 +96,7 @@ module.exports = {
 ┃    ✏️ Lapices: *${papeles}*  
 ┃ ❤️ *Corazones:* *${hearts}*  
 ┃ 💖 *Racha de Amor:* *${streak} días*  
-╰────────────────────╯`;
+╰─────────────╯`;
     }
 
     // Ahora usamos sendReply para responder directamente al usuario
