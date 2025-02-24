@@ -36,14 +36,14 @@ module.exports = {
     );
 
     if (marriageIndex === -1) {
-      await sendReply("❌ No estás casado actualmente.");
+      await sendReply("❌ No estás casado actualmente.\n> Krampus OM bot");
       return;
     }
 
     // Verificar si el usuario tiene un papel de divorcio
     const userItem = userItems.find((entry) => entry.userJid === userJid);
     if (!userItem || userItem.items.divorcePapers < 1) {
-      await sendReply("❌ No tienes un papel de divorcio. Compra uno para poder divorciarte.");
+      await sendReply("❌ No tienes un lapiz para firmar 🫣\nCompra uno para poder divorciarte.\n> Usa #tienda para comprarlo");
       return;
     }
 
