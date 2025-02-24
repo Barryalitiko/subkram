@@ -32,7 +32,7 @@ module.exports = {
 
     const precios = {
       "💍": 6,
-      "📜": 7,
+      "✏️": 7,
     };
 
     const objeto = args[0]?.toLowerCase();
@@ -41,13 +41,13 @@ module.exports = {
       for (const [item, precio] of Object.entries(precios)) {
         listaPrecios += `- ${item}: ${precio} monedas\n`;
       }
-      listaPrecios += `\nUsa *${PREFIX}tienda <objeto>* para comprar.`;
+      listaPrecios += `\nUsa *${PREFIX}tienda <emoji>* para comprar.`;
       await sendReply(listaPrecios);
       return;
     }
 
     if (!precios[objeto]) {
-      await sendReply("❌ Objeto inválido. Usa el comando sin argumentos para ver la lista de precios.");
+      await sendReply("❌ Objeto inválido.\nUsa el comando sin emojis para ver la lista de objetos");
       return;
     }
 
@@ -58,7 +58,7 @@ module.exports = {
     const userKr = krData.find(entry => entry.userJid === userJid).kr;
 
     if (userKr < precios[objeto]) {
-      await sendReply(`❌ No tienes suficientes monedas. Necesitas ${precios[objeto]} monedas para comprar ${objeto}.`);
+      await sendReply(`❌ No tienes suficientes monedas\nNecesitas ${precios[objeto]} monedas para comprar ${objeto}.`);
       return;
     }
 
@@ -73,7 +73,7 @@ module.exports = {
 
     if (objeto === "💍") {
       userItem.items.anillos += 1;
-    } else if (objeto === "📜") {
+    } else if (objeto === "✏️") {
       userItem.items.papeles += 1;
     }
 
@@ -84,6 +84,6 @@ module.exports = {
     writeData(userItemsFilePath, userItems);
     writeData(krFilePath, krData);
 
-    await sendReply(`✅ ¡Has comprado ${objeto}! Ahora tienes ${userKrBalance} monedas y:\n- 💍: ${userItem.items.anillos}\n- 📜: ${userItem.items.papeles}`);
+    await sendReply(`✅ ¡Has comprado ${objeto}!\nAhora tienes ${userKrBalance} monedas y:\n- 💍: ${userItem.items.anillos}\n- 📜: ${userItem.items.papeles}`);
   },
 };
