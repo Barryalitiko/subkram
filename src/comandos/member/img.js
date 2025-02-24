@@ -4,7 +4,7 @@ const { WarningError } = require("../../errors/WarningError");
 
 module.exports = {
   name: "imagen",
-  description: "Genera imagenes",
+  description: "Genera imágenes",
   commands: ["jpg", "img", "imagen"],
   usage: `${PREFIX}imagen <descripcion>`,
   handle: async ({
@@ -15,26 +15,35 @@ module.exports = {
   }) => {
     if (!fullArgs.length) {
       throw new WarningError(
-        "Vaya...\nañade una descripcion para generar la imagen\n> Krampus OM bot"
+        "Vaya...\nAñade una descripción para generar la imagen\n> Krampus OM bot"
       );
     }
 
     const herc = new Hercai();
-
     await sendWaitReact();
 
-    const response = await herc.drawImage({
-      model: "simurg",
-      prompt: `Generate a realistic image, 
-without deviating from the proposed theme below (attention, it may come in Portuguese, 
-translate it into English first):
-      
-${fullArgs}`,
-      negative_prompt: "nude, explicit, adult, nsfw",
-    });
+    try {
+      const response = await herc.drawImage({
+        model: "simurg",
+        prompt: `Generate a realistic image, 
+        without deviating from the proposed theme below (attention, it may come in Portuguese, 
+        translate it into English first):
+        
+        ${fullArgs}`,
+        negative_prompt: "nude, explicit, adult, nsfw",
+      });
 
-    await sendSuccessReact();
+      console.log("Respuesta de Hercai:", response);
 
-    await sendImageFromURL(response.url);
+      if (!response || !response.url) {
+        throw new WarningError("No se pudo obtener la imagen. Intenta con otra descripción.");
+      }
+
+      await sendSuccessReact();
+      await sendImageFromURL(response.url);
+    } catch (error) {
+      console.error("Error en la generación de imagen:", error);
+      throw new WarningError(`Error generando la imagen: ${error.message}`);
+    }
   },
 };
