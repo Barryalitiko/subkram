@@ -90,17 +90,22 @@ module.exports = {
 ┃ 💖 *Racha de Amor:* *${streak} días*  
 ╰──────────────────╯`;
     } else {
-      const { partnerJid, date, groupId, dailyLove } = marriage;
+      let { partnerJid, date, groupId, dailyLove, surname } = marriage;
       const marriageDate = new Date(date);
       const currentDate = new Date();
       const daysMarried = Math.floor((currentDate - marriageDate) / (1000 * 60 * 60 * 24));
 
-      const marriageSurname = generateMarriageSurname(userJid, partnerJid);
+      // Si no tiene apellido de la relación, generarlo y guardarlo
+      if (!surname) {
+        surname = generateMarriageSurname(userJid, partnerJid);
+        marriage.surname = surname;
+        writeData(MARRIAGE_FILE_PATH, marriageData);
+      }
 
       message = 
       `╭─── 💖 *📜 Datos* 💖 ───╮  
 ┃ 💍 *Estado:* *Casado(a)*  
-┃ 🏷️ *Apellido de la relación:* *${marriageSurname}*  
+┃ 🏷️ *Apellido de la relación:* *${surname}*  
 ┃ 📅 *Matrimonio:* *${marriageDate.toLocaleDateString()}*  
 ┃ 🗓️ *Días:* *${daysMarried}*  
 ┃ 🏠 *Grupo:* *${groupId || "N/A"}*  
