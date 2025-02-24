@@ -41,7 +41,7 @@ module.exports = {
       for (const [item, precio] of Object.entries(precios)) {
         listaPrecios += `- ${item}: ${precio} monedas\n`;
       }
-      listaPrecios += `\nUsa *${PREFIX}tienda <emoji>* para comprar.`;
+      listaPrecios += `\nUsa *${PREFIX}tienda <emoji>* para comprar.\n> Por ejemplo #tienda 💍`;
       await sendReply(listaPrecios);
       return;
     }
