@@ -39,6 +39,18 @@ const assignInitialHearts = (userJid) => {
   }
 };
 
+const surnames = [
+  "González", "Rodríguez", "Fernández", "López", "Martínez", "Pérez", "Gómez", "Díaz", "Sánchez", "Ramírez",
+  "Torres", "Flores", "Álvarez", "Ruiz", "Moreno", "Jiménez", "Vásquez", "Molina", "Ortega", "Delgado",
+  "Castro", "Ortiz", "Guerrero", "Ramos", "Reyes", "Cruz", "Méndez", "Chávez", "Silva", "Fuentes"
+];
+
+const generateMarriageSurname = (userJid, partnerJid) => {
+  const extractNumbers = (jid) => jid.replace(/\D/g, "").slice(-3);
+  const randomSurname = surnames[Math.floor(Math.random() * surnames.length)];
+  return `${randomSurname}-${extractNumbers(userJid)}-${extractNumbers(partnerJid)}`;
+};
+
 module.exports = {
   name: "data",
   description: "Ver tu información matrimonial y estado actual.",
@@ -60,8 +72,8 @@ module.exports = {
     const streak = userHearts ? userHearts.streak : 0;
 
     const marriage = marriageData.find(entry => entry.userJid === userJid || entry.partnerJid === userJid);
-    const userItem = userItems.find(entry => entry.userJid === userJid) || { items: {} };
 
+    const userItem = userItems.find(entry => entry.userJid === userJid) || { items: {} };
     const anillos = userItem.items.anillos || 0;
     const papeles = userItem.items.papeles || 0;
 
@@ -79,15 +91,16 @@ module.exports = {
 ╰──────────────────╯`;
     } else {
       const { partnerJid, date, groupId, dailyLove } = marriage;
-      const partnerName = partnerJid === userJid ? 'Tú' : partnerJid.split("@")[0]; // Si es el mismo user, muestra "Tú"
       const marriageDate = new Date(date);
       const currentDate = new Date();
       const daysMarried = Math.floor((currentDate - marriageDate) / (1000 * 60 * 60 * 24));
 
+      const marriageSurname = generateMarriageSurname(userJid, partnerJid);
+
       message = 
       `╭─── 💖 *📜 Datos* 💖 ───╮  
 ┃ 💍 *Estado:* *Casado(a)*  
-┃ 👤 *Pareja:* *@${partnerName}*  
+┃ 🏷️ *Apellido de la relación:* *${marriageSurname}*  
 ┃ 📅 *Matrimonio:* *${marriageDate.toLocaleDateString()}*  
 ┃ 🗓️ *Días:* *${daysMarried}*  
 ┃ 🏠 *Grupo:* *${groupId || "N/A"}*  
