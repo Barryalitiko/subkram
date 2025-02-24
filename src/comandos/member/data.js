@@ -73,7 +73,7 @@ module.exports = {
 ┃ 💰 *Kr:* *${userKrBalance}*  
 ┃ 🎁 *Objetos:*  
 ┃    💍 Anillos: *${anillos}*  
-┃    📜 Papeles: *${papeles}*  
+┃    ✏️ Lapices: *${papeles}*  
 ┃ ❤️ *Corazones:* *${hearts}*  
 ┃ 💖 *Racha de Amor:* *${streak} días*  
 ╰──────────────────╯`;
@@ -93,7 +93,7 @@ module.exports = {
 ┃ 💰 *Kr:* *${userKrBalance}*  
 ┃ 🎁 *Objetos:*  
 ┃    💍 Anillos: *${anillos}*  
-┃    📜 Papeles: *${papeles}*  
+┃    ✏️ Lapices: *${papeles}*  
 ┃ ❤️ *Corazones:* *${hearts}*  
 ┃ 💖 *Racha de Amor:* *${streak} días*  
 ╰────────────────────╯`;
