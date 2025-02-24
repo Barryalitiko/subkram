@@ -13,29 +13,25 @@ module.exports = {
     sendSuccessReact,
     sendImageFromURL,
   }) => {
-    if (!fullArgs.length) {
-      throw new WarningError(
-        "Vaya...\nAñade una descripción para generar la imagen\n> Krampus OM bot"
-      );
+    if (!fullArgs.trim()) {
+      throw new WarningError("Por favor, proporciona una descripción válida para generar la imagen.");
     }
 
     const herc = new Hercai();
     await sendWaitReact();
 
     try {
+      console.log("Prompt enviado a Hercai:", fullArgs);
+
       const response = await herc.drawImage({
-        model: "simurg",
-        prompt: `Generate a realistic image, 
-        without deviating from the proposed theme below (attention, it may come in Portuguese, 
-        translate it into English first):
-        
-        ${fullArgs}`,
+        model: "simurg", // Cambia este modelo si sigue fallando
+        prompt: fullArgs,
         negative_prompt: "nude, explicit, adult, nsfw",
       });
 
       console.log("Respuesta de Hercai:", response);
 
-      if (!response || !response.url) {
+      if (!response || response.status !== 200 || !response.url) {
         throw new WarningError("No se pudo obtener la imagen. Intenta con otra descripción.");
       }
 
