@@ -38,7 +38,7 @@ module.exports = {
     const proposal = pendingMarriages.find(entry => entry.proposedTo === userJid);
 
     if (!proposal) {
-      await sendReply("❌ No tienes ninguna propuesta de matrimonio pendiente.");
+      await sendReply("❌ No tienes ninguna propuesta de matrimonio pendiente.\n> Krampus OM bot");
       return;
     }
 
@@ -57,12 +57,12 @@ module.exports = {
       writeData(MARRIAGE_FILE_PATH, marriages);
 
       await socket.sendMessage(remoteJid, {
-        text: `🎉 ¡Felicidades! *@${proposal.proposer.split("@")[0]}* y *@${userJid.split("@")[0]}* ahora están casados. 💍`,
+        text: `🎉 ¡Felicidades!\n\n*@${proposal.proposer.split("@")[0]}* y *@${userJid.split("@")[0]}* ahora están casados. 💍\n\n> Krampus OM bot`,
         mentions: [proposal.proposer, userJid]
       });
     } else {
       await socket.sendMessage(remoteJid, {
-        text: `💔 *@${userJid.split("@")[0]}* ha rechazado la propuesta de *@${proposal.proposer.split("@")[0]}*.`,
+        text: `💔 *@${userJid.split("@")[0]}* ha rechazado la propuesta de *@${proposal.proposer.split("@")[0]}*.\Krampus OM bot`,
         mentions: [proposal.proposer, userJid]
       });
     }
