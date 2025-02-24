@@ -54,7 +54,7 @@ module.exports = {
     }
 
     if (targetJid === userJid) {
-      await sendReply("💍 No puedes casarte contigo mismo, busca a alguien especial.");
+      await sendReply("💍 No puedes casarte contigo mismo, busca a alguien especial.\n> Krampus OM bot");
       return;
     }
 
@@ -62,7 +62,7 @@ module.exports = {
     const userItem = userItems.find((entry) => entry.userJid === userJid);
 
     if (!userItem || userItem.items.anillos <= 0) {
-      await sendReply("💍 ¿Y el anillo pa' cuando? No tienes anillos para proponer matrimonio.");
+      await sendReply("💍 ¿Y el anillo pa' cuando?\nNo tienes anillos para proponer matrimonio.\n\n> Usa #tienda y compra uno");
       return;
     }
 
@@ -72,7 +72,7 @@ module.exports = {
     );
 
     if (existingMarriage) {
-      await sendReply("💔 Ya estás casado. No puedes proponer matrimonio hasta que te divorcies.");
+      await sendReply("💔 Ya estás casado!!\nNo le pongas los cuernos a tu pareja 😞");
       return;
     }
 
@@ -81,7 +81,7 @@ module.exports = {
     );
 
     if (targetMarriage) {
-      await sendReply("💔 Esa persona ya está casada. No puedes proponerle matrimonio.");
+      await sendReply("💔 Esa persona ya está casada\n> Krampus OM bot");
       return;
     }
 
@@ -93,7 +93,7 @@ module.exports = {
     );
 
     if (alreadyProposed) {
-      await sendReply("⏳ Ya has hecho una propuesta de matrimonio a esta persona. Espera a que responda.");
+      await sendReply("> Cual es la prisa?\n⏳ Ya le has hecho la propuesta, espera a que responda...");
       return;
     }
 
@@ -106,9 +106,11 @@ module.exports = {
     writeData(PENDING_MARRIAGES_FILE, pendingMarriages);
 
     await socket.sendMessage(remoteJid, {
-      text: `💍 *@${userJid.split("@")[0]}* quiere casarse contigo, *@${targetJid.split("@")[0]}*!  
+      text: `💍 *@${userJid.split("@")[0]}* te propuso matrimonio ❤️ *@${targetJid.split("@")[0]}*!  
+      
 Responde con *#r si* para aceptar o *#r no* para rechazar.  
-⏳ *Tienes 1 minuto para decidir.*`,
+
+> ⏳ *Tienes 1 minuto para decidir.*`,
       mentions: [userJid, targetJid]
     });
   },
