@@ -39,24 +39,12 @@ const assignInitialHearts = (userJid) => {
   }
 };
 
-const surnames = [
-  "González", "Rodríguez", "Fernández", "López", "Martínez", "Pérez", "Gómez", "Díaz", "Sánchez", "Ramírez",
-  "Torres", "Flores", "Álvarez", "Ruiz", "Moreno", "Jiménez", "Vásquez", "Molina", "Ortega", "Delgado",
-  "Castro", "Ortiz", "Guerrero", "Ramos", "Reyes", "Cruz", "Méndez", "Chávez", "Silva", "Fuentes"
-];
-
-const generateMarriageSurname = (userJid, partnerJid) => {
-  const extractNumbers = (jid) => jid.replace(/\D/g, "").slice(-3);
-  const randomSurname = surnames[Math.floor(Math.random() * surnames.length)];
-  return `${randomSurname}-${extractNumbers(userJid)}-${extractNumbers(partnerJid)}`;
-};
-
 module.exports = {
   name: "data",
   description: "Ver tu información matrimonial y estado actual.",
   commands: ["data"],
   usage: `${PREFIX}data`,
-  handle: async ({ socket, remoteJid, userJid, msg }) => {
+  handle: async ({ socket, remoteJid, userJid, quotedMessage }) => {
     assignInitialKr(userJid);
     assignInitialHearts(userJid);
     const marriageData = readData(MARRIAGE_FILE_PATH);
@@ -90,22 +78,14 @@ module.exports = {
 ┃ 💖 *Racha de Amor:* *${streak} días*  
 ╰──────────────────╯`;
     } else {
-      let { partnerJid, date, groupId, dailyLove, surname } = marriage;
+      const { date, groupId, dailyLove } = marriage;
       const marriageDate = new Date(date);
       const currentDate = new Date();
       const daysMarried = Math.floor((currentDate - marriageDate) / (1000 * 60 * 60 * 24));
 
-      // Si no tiene apellido de la relación, generarlo y guardarlo
-      if (!surname) {
-        surname = generateMarriageSurname(userJid, partnerJid);
-        marriage.surname = surname;
-        writeData(MARRIAGE_FILE_PATH, marriageData);
-      }
-
       message = 
       `╭─── 💖 *📜 Datos* 💖 ───╮  
 ┃ 💍 *Estado:* *Casado(a)*  
-┃ 🏷️ *Apellido de la relación:* *${surname}*  
 ┃ 📅 *Matrimonio:* *${marriageDate.toLocaleDateString()}*  
 ┃ 🗓️ *Días:* *${daysMarried}*  
 ┃ 🏠 *Grupo:* *${groupId || "N/A"}*  
@@ -119,7 +99,6 @@ module.exports = {
 ╰────────────────────╯`;
     }
 
-    // Ahora responde al usuario que ejecutó el comando
-    await socket.sendMessage(remoteJid, { text: message }, { quoted: msg });
+    await socket.sendMessage(remoteJid, { text: message }, { quoted: quotedMessage });
   },
 };
