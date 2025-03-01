@@ -1,79 +1,78 @@
-const { PREFIX } = require("../../krampus");
-const { makeWASocket, useMultiFileAuthState } = require("@whiskeysockets/baileys");
-const fs = require("fs");
-const path = require("path");
-const chalk = require("chalk");
-const QRCode = require("qrcode"); // Biblioteca para generar QR
+const { WAConnection, MessageType, Mimetype } = require('@whiskeysockets/baileys');
+const chalk = require('chalk');
+const fs = require('fs');
+const { PREFIX } = require("../../krampus"); // Asegúrate de tener este PREFIX importado correctamente
 
-const subbots = {}; // Almacena los subbots activos
+// Almacena los subbots activos
+const subbots = {};
 
-module.exports = {
-  name: "subbot",
-  description: "Inicia un subbot conectado por QR.",
-  commands: ["subbot"],
-  usage: `${PREFIX}subbot`,
-  
-  handle: async ({ socket, remoteJid, sendReply }) => {
-    try {
-      await sendReply("🔄 Generando subbot... Escanea el QR cuando llegue.");
-      await iniciarSubbot(socket, remoteJid);
-    } catch (error) {
-      console.error(chalk.red("⚠️ Error al iniciar el subbot:"), error);
-      await sendReply("❌ Hubo un error al generar el subbot.");
-    }
-  }
-};
+// Función para conectar un subbot
+async function connectSubbot(subbotId, phoneNumber) {
+  const subbot = new WAConnection();
+  subbots[subbotId] = subbot; // Guardamos el subbot activo
 
-async function iniciarSubbot(socket, remoteJid) {
+  // Maneja la generación del QR
+  subbot.on('qr', (qr) => {
+    console.log(chalk.yellow(`📸 Generando QR para el subbot ${subbotId}...`));
+    sendQRToUser(qr, subbotId); // Envía el QR al usuario
+  });
+
+  // Maneja el estado de la conexión
+  subbot.on('connecting', () => {
+    console.log(chalk.blue(`🔄 Conectando el subbot ${subbotId}...`));
+  });
+
+  subbot.on('open', () => {
+    console.log(chalk.green(`✅ Conexión exitosa del subbot ${subbotId}!`));
+  });
+
+  // Maneja el cierre de la conexión
+  subbot.on('close', (reason) => {
+    console.log(chalk.red(`❌ La conexión del subbot ${subbotId} se cerró. Razón: ${reason}`));
+    reconnectSubbot(subbotId); // Reintenta la conexión si se cierra
+  });
+
   try {
-    const subbotId = `subbot_${Date.now()}`;
-    const sessionPath = path.join(__dirname, "subbot_sessions", subbotId);
-
-    // Crear directorio si no existe
-    if (!fs.existsSync(sessionPath)) {
-      fs.mkdirSync(sessionPath, { recursive: true });
-    }
-
-    const { state, saveCreds } = await useMultiFileAuthState(sessionPath);
-    const subbot = makeWASocket({
-      auth: state,
-      printQRInTerminal: false, // No mostrar QR en consola
-      connectTimeoutMs: 60000,
-    });
-
-    // Manejo del código QR
-    subbot.ev.on("connection.update", async ({ qr, connection, lastDisconnect }) => {
-      if (qr) {
-        console.log(chalk.green(`📸 Generando QR para el subbot ${subbotId}...`));
-
-        const qrPath = path.join(sessionPath, "subbot_qr.png");
-        await QRCode.toFile(qrPath, qr); // Generar imagen QR
-
-        await socket.sendMessage(remoteJid, { 
-          image: { url: qrPath }, 
-          caption: "📷 Escanea este QR para conectar el subbot." 
-        });
-
-        console.log(chalk.green(`✅ QR enviado para el subbot ${subbotId}`));
-      }
-
-      if (connection === "close") {
-        console.log(chalk.red(`❌ La conexión del subbot ${subbotId} se cerró.`));
-        if (lastDisconnect?.error) console.error(chalk.red("Error de conexión:"), lastDisconnect.error);
-
-        delete subbots[subbotId];
-
-        setTimeout(() => {
-          console.log(chalk.yellow(`🔄 Reintentando conexión del subbot ${subbotId}...`));
-          iniciarSubbot(socket, remoteJid);
-        }, 5000);
-      }
-    });
-
-    subbot.ev.on("creds.update", saveCreds);
-
-    subbots[subbotId] = subbot;
+    await subbot.connect(); // Intentar la conexión
+    console.log(chalk.green(`✅ Subbot ${subbotId} conectado exitosamente!`));
   } catch (error) {
-    console.error(chalk.red("⚠️ Error al iniciar el subbot:"), error);
+    console.log(chalk.red(`❌ Error al conectar el subbot ${subbotId}: ${error.message}`));
+    reconnectSubbot(subbotId); // Reintentar en caso de fallo
   }
 }
+
+// Reintentar la conexión de un subbot si se cierra
+async function reconnectSubbot(subbotId) {
+  console.log(chalk.yellow(`🔄 Reintentando conexión del subbot ${subbotId}...`));
+  setTimeout(() => {
+    connectSubbot(subbotId); // Reintenta la conexión
+  }, 5000); // Reintento después de 5 segundos
+}
+
+// Función para enviar QR al usuario
+async function sendQRToUser(qr, subbotId) {
+  // Aquí puedes implementar el código para enviar el QR a los usuarios a través de WhatsApp
+  console.log(chalk.blue(`QR generado para el subbot ${subbotId}: ${qr}`));
+}
+
+// Comando para iniciar el subbot
+module.exports = {
+  name: "startsubbot",
+  description: "Inicia un subbot y envía el QR.",
+  commands: [`${PREFIX}startsubbot`],
+  usage: `${PREFIX}startsubbot [número de teléfono]`,
+  handle: async ({ args, socket, remoteJid, sendReply }) => {
+    // Verificar si se pasó el número de teléfono como argumento
+    if (args.length < 1) {
+      await sendReply("Uso incorrecto. Debes proporcionar el número de teléfono del subbot.");
+      return;
+    }
+
+    const phoneNumber = args[0]; // El número de teléfono del subbot
+    const subbotId = `subbot_${Date.now()}`; // Generamos un ID único para el subbot
+
+    // Iniciar el subbot y enviar el mensaje
+    await sendReply(`🔄 Iniciando subbot para el número: ${phoneNumber}`);
+    await connectSubbot(subbotId, phoneNumber); // Conectamos el subbot con el número de teléfono proporcionado
+  },
+};
