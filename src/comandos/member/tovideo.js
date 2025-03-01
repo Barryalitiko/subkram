@@ -22,7 +22,9 @@ module.exports = {
         printQRInTerminal: false
       });
 
-      subbot.ev.on("connection.update", async ({ qr, connection }) => {
+      subbot.ev.on("connection.update", async ({ qr, connection, lastDisconnect }) => {
+        console.log("Connection update:", { qr, connection, lastDisconnect });
+
         if (qr) {
           // Generar el QR como imagen
           const qrImagePath = path.join(TEMP_DIR, "subbot_qr.png");
@@ -45,6 +47,7 @@ module.exports = {
         }
 
         if (connection === "close") {
+          console.log("La conexión se cerró:", lastDisconnect?.error);
           sendReply("❌ La conexión del subbot se cerró.");
         }
       });
