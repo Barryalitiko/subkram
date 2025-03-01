@@ -10,7 +10,7 @@ module.exports = {
   description: "Genera un QR para conectar un subbot.",
   commands: ["subbot"],
   usage: `${PREFIX}subbot`,
-  handle: async ({ socket, remoteJid, sendReply }) => {
+  handle: async ({ socket, remoteJid, sendReply, sendReact }) => {
     try {
       sendReply("⏳ Generando QR para conectar el subbot...");
 
@@ -29,9 +29,11 @@ module.exports = {
           await qrcode.toFile(qrImagePath, qr);
 
           // Enviar el QR como imagen
+          await sendReply("📲 Escanea este QR para conectar el subbot.");
+          await sendReact("📸");
           await socket.sendMessage(remoteJid, {
             image: { url: qrImagePath },
-            caption: "📲 Escanea este QR para conectar el subbot."
+            caption: "QR generado para conectar el subbot."
           });
 
           // Limpiar el archivo de imagen después de enviarlo
