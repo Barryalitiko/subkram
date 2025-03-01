@@ -1,7 +1,8 @@
 const { PREFIX, TEMP_DIR } = require("../../krampus");
 const makeWASocket = require("@whiskeysockets/baileys").default;
 const { useMultiFileAuthState } = require("@whiskeysockets/baileys");
-const qrcode = require("qrcode-terminal");
+const qrcode = require("qrcode");
+const fs = require("fs");
 const path = require("path");
 
 module.exports = {
@@ -9,7 +10,7 @@ module.exports = {
   description: "Genera un QR para conectar un subbot.",
   commands: ["subbot"],
   usage: `${PREFIX}subbot`,
-  handle: async ({ sendReply }) => {
+  handle: async ({ socket, remoteJid, sendReply }) => {
     try {
       sendReply("⏳ Generando QR para conectar el subbot...");
 
@@ -21,10 +22,20 @@ module.exports = {
         printQRInTerminal: false
       });
 
-      subbot.ev.on("connection.update", ({ qr, connection }) => {
+      subbot.ev.on("connection.update", async ({ qr, connection }) => {
         if (qr) {
-          qrcode.generate(qr, { small: true });
-          sendReply("📲 Escanea este QR para conectar el subbot.");
+          // Generar el QR como imagen
+          const qrImagePath = path.join(TEMP_DIR, "subbot_qr.png");
+          await qrcode.toFile(qrImagePath, qr);
+
+          // Enviar el QR como imagen
+          await socket.sendMessage(remoteJid, {
+            image: { url: qrImagePath },
+            caption: "📲 Escanea este QR para conectar el subbot."
+          });
+
+          // Limpiar el archivo de imagen después de enviarlo
+          fs.unlinkSync(qrImagePath);
         }
 
         if (connection === "open") {
