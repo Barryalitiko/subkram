@@ -1,78 +1,78 @@
 const { PREFIX } = require("../../krampus");
-const makeWASocket = require("@whiskeysockets/baileys").default;
-const { useMultiFileAuthState } = require("@whiskeysockets/baileys");
+const { makeWASocket, useMultiFileAuthState } = require("@whiskeysockets/baileys");
 const fs = require("fs");
 const path = require("path");
-const qrcode = require("qrcode");
 const chalk = require("chalk");
 
-// Almacén de subbots activos
-const subbots = {};
+const subbots = {}; // Objeto para almacenar los subbots activos
 
 module.exports = {
   name: "subbot",
-  description: "Conecta un subbot mediante QR.",
+  description: "Inicia un subbot conectado por QR.",
   commands: ["subbot"],
   usage: `${PREFIX}subbot`,
+  
   handle: async ({ socket, remoteJid, sendReply }) => {
     try {
-      // Generar un ID único para cada subbot
-      const subbotId = `subbot_${Date.now()}`;
-      const sessionPath = path.join(__dirname, `../../subbot_sessions/${subbotId}`);
+      await sendReply("🔄 Generando subbot... Escanea el QR cuando llegue.");
+      await iniciarSubbot(socket, remoteJid);
+    } catch (error) {
+      console.error(chalk.red("⚠️ Error al iniciar el subbot:"), error);
+      await sendReply("❌ Hubo un error al generar el subbot.");
+    }
+  }
+};
 
-      if (!fs.existsSync(sessionPath)) {
-        fs.mkdirSync(sessionPath, { recursive: true });
+async function iniciarSubbot(socket, remoteJid) {
+  try {
+    const subbotId = `subbot_${Date.now()}`;
+    const sessionPath = path.join(__dirname, "subbot_sessions", subbotId);
+
+    // Asegurar que el directorio de sesiones existe
+    if (!fs.existsSync(sessionPath)) {
+      fs.mkdirSync(sessionPath, { recursive: true });
+    }
+
+    const { state, saveCreds } = await useMultiFileAuthState(sessionPath);
+    const subbot = makeWASocket({
+      auth: state,
+      printQRInTerminal: false, // No mostrar QR en consola
+      connectTimeoutMs: 60000,  // Timeout de conexión de 60s
+    });
+
+    // Manejo del código QR
+    subbot.ev.on("connection.update", async ({ qr, connection, lastDisconnect }) => {
+      if (qr) {
+        console.log(chalk.green(`📸 Generando QR para el subbot ${subbotId}...`));
+
+        const qrPath = path.join(sessionPath, "subbot_qr.png");
+        fs.writeFileSync(qrPath, qr); // Guardar QR en archivo
+
+        await socket.sendMessage(remoteJid, { 
+          image: { url: qrPath }, 
+          caption: "📷 Escanea este QR para conectar el subbot." 
+        });
+
+        console.log(chalk.green(`✅ QR enviado para el subbot ${subbotId}`));
       }
 
-      const { state, saveCreds } = await useMultiFileAuthState(sessionPath);
+      if (connection === "close") {
+        console.log(chalk.red(`❌ La conexión del subbot ${subbotId} se cerró.`));
+        if (lastDisconnect?.error) console.error(chalk.red("Error de conexión:"), lastDisconnect.error);
 
-      // Crear el nuevo subbot
-      const subbot = makeWASocket({
-        auth: state,
-        printQRInTerminal: false, // No mostrar el QR en la terminal
-      });
+        delete subbots[subbotId]; // Eliminar de la memoria
 
-      subbots[subbotId] = subbot; // Guardar el subbot en memoria
+        setTimeout(() => {
+          console.log(chalk.yellow(`🔄 Reintentando conexión del subbot ${subbotId}...`));
+          iniciarSubbot(socket, remoteJid);
+        }, 5000); // Reintentar tras 5 segundos
+      }
+    });
 
-      // Manejar eventos del subbot
-      subbot.ev.on("connection.update", async (update) => {
-        const { connection, lastDisconnect, qr } = update;
+    subbot.ev.on("creds.update", saveCreds);
 
-        if (qr) {
-          const qrPath = path.join(__dirname, `../../subbot_sessions/${subbotId}.png`);
-          await qrcode.toFile(qrPath, qr);
-
-          if (fs.existsSync(qrPath)) {
-            await socket.sendMessage(remoteJid, {
-              image: { url: qrPath },
-              caption: "📲 Escanea este QR para conectar el subbot.",
-            });
-
-            // Borrar el QR después de 30 segundos
-            setTimeout(() => fs.unlinkSync(qrPath), 30000);
-          } else {
-            await sendReply("❌ No se pudo generar el código QR.");
-          }
-        }
-
-        if (connection === "open") {
-          console.log(chalk.green(`✅ Subbot conectado: ${subbotId}`));
-          await sendReply(`✅ Subbot conectado exitosamente.`);
-        } else if (connection === "close") {
-          console.log(chalk.red(`❌ La conexión del subbot ${subbotId} se cerró.`));
-
-          if (lastDisconnect?.error) {
-            console.error(chalk.red("Error de conexión:"), lastDisconnect.error);
-          }
-
-          delete subbots[subbotId]; // Eliminar el subbot de la memoria
-        }
-      });
-
-      subbot.ev.on("creds.update", saveCreds);
-    } catch (error) {
-      console.error(chalk.red("❌ Error al iniciar el subbot:"), error);
-      await sendReply("❌ Hubo un error al iniciar el subbot.");
-    }
-  },
-};
+    subbots[subbotId] = subbot;
+  } catch (error) {
+    console.error(chalk.red("⚠️ Error al iniciar el subbot:"), error);
+  }
+}
