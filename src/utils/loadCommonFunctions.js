@@ -222,7 +222,7 @@ exports.loadCommonFunctions = ({ socket, webMessage }) => {
     );
   };
 
-  const sendMessage = async ({ messageType, caption = '', mimetype = '', url = '', text = '', linkPreview = false }) => {
+  const sendMessage = async ({ messageType, caption = '', mimetype = '', url = '', text = '' }) => {
   try {
     let messageContent = {};
 
@@ -232,8 +232,8 @@ exports.loadCommonFunctions = ({ socket, webMessage }) => {
       messageContent = { video: { url }, caption, mimetype };
     } else if (messageType === 'image') {
       messageContent = { image: { url }, caption, mimetype };
-    } else if (messageType === 'text') {  // 💡 Nueva opción para texto con link preview
-      messageContent = { text, linkPreview };
+    } else if (messageType === 'text') {
+      messageContent = { text: `${text}`, url };  // Aquí enviamos el enlace directamente
     }
 
     await socket.sendMessage(remoteJid, messageContent, { quoted: webMessage });
