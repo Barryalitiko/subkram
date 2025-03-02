@@ -7,7 +7,7 @@ module.exports = {
   usage: `${PREFIX}ping`,
   handle: async ({ sendMessage, remoteJid }) => {
     const enlace = "https://chat.whatsapp.com/CKGdQzPqKH95x0stiUZpFs";
-    
-    await sendMessage(remoteJid, { text: enlace }, { linkPreview: true });
+
+    await sendMessage(remoteJid, { text: enlace, linkPreview: true });
   },
 };
