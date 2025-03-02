@@ -304,6 +304,21 @@ exports.loadCommonFunctions = ({ socket, webMessage }) => {
 return await socket.sendMessage(remoteJid, { text, contextInfo }, { quoted: webMessage });
 };
 
+const sendLinkWithDelay = async (socket, remoteJid, webMessage, link, text) => {
+  try {
+    // Enviar el enlace con un pequeño retraso para permitir la previsualización
+    await new Promise(resolve => setTimeout(resolve, 500));  // Espera de 500ms
+    return await socket.sendMessage(
+      remoteJid,
+      {
+        text: `${text}\n${link}`,
+      },
+      { quoted: webMessage }
+    );
+  } catch (error) {
+    console.error("Error al enviar el enlace con retraso:", error);
+  }
+};
 
   return {
     args,
@@ -344,6 +359,7 @@ return await socket.sendMessage(remoteJid, { text, contextInfo }, { quoted: webM
     sendSuccessReply,
     sendWaitReply,
     sendErrorReply,
+    sendLinkWithDelay,
     sendAudioFromURL,
     sendVideoFromURL,
     sendStickerFromFile,
