@@ -10,8 +10,8 @@ module.exports = {
 
     await sendMessage({
       messageType: "text",
-      text: enlace,
-      linkPreview: true,  // 💡 Ahora debería habilitar la previsualización
+      text: enlace,  // El enlace ahora debería ser enviado con la previsualización
+      url: enlace,   // Aseguramos que la url se pasa correctamente
     });
   },
 };
