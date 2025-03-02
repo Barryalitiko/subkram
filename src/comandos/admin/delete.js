@@ -2,29 +2,30 @@ const { PREFIX } = require("../../krampus");
 
 module.exports = {
   name: "delete",
-  description: "Eliminar un mensaje en el grupo.",
-  commands: ["delete"],
-  usage: `${PREFIX}delete <id del mensaje>`,
-  handle: async ({ socket, remoteJid, sendReply, message }) => {
+  description: "Elimina un mensaje para todos.",
+  commands: ["del"],
+  usage: `${PREFIX}del (responde a un mensaje)`,
+  handle: async ({ socket, remoteJid, sendReply, webMessage }) => {
     try {
-      if (!remoteJid.endsWith("@g.us")) {
-        await sendReply("❌ Este comando solo puede usarse en grupos.");
-        return;
+      // Verificar si el usuario respondió a un mensaje
+      if (!webMessage.message.extendedTextMessage) {
+        return sendReply("Debes responder a un mensaje para eliminarlo.");
       }
 
-      const messageId = message.quoted.messageID;
-      await socket.sendMessage(remoteJid, {
-        delete: {
-          remoteJid,
-          fromMe: false,
-          id: messageId,
-          participant: message.participant,
-        },
-      });
-      await sendReply("🚮 Mensaje eliminado con éxito.");
+      // Obtener el mensaje a eliminar
+      const msgKey = webMessage.message.extendedTextMessage.contextInfo.stanzaId;
+      const senderJid = webMessage.message.extendedTextMessage.contextInfo.participant;
+
+      if (!msgKey || !senderJid) {
+        return sendReply("No se pudo identificar el mensaje a eliminar.");
+      }
+
+      // Eliminar el mensaje
+      await socket.sendMessage(remoteJid, { delete: { id: msgKey, remoteJid, fromMe: false } });
+
     } catch (error) {
-      console.error("Error al intentar eliminar el mensaje:", error);
-      await sendReply("❌ No se pudo eliminar el mensaje.");
+      console.error("Error al eliminar el mensaje:", error.message);
+      await sendReply("Ocurrió un error al intentar eliminar el mensaje.");
     }
   },
 };
