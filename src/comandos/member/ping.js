@@ -17,7 +17,7 @@ module.exports = {
       const preview = await linkPreview.getLinkPreview(url);
 
       // Enviar el mensaje con la previsualización del enlace
-      await sendReply(`${preview.title}\n${preview.description}\n${url}`);
+      await sendReply(`${preview.title}\n${preview.description}`);
     } catch (error) {
       console.error("Error al obtener la previsualización del enlace:", error);
       await sendReply("Hubo un error al obtener la previsualización del enlace.");
