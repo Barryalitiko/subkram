@@ -5,9 +5,13 @@ module.exports = {
   description: "Verificar si el bot está online",
   commands: ["ping"],
   usage: `${PREFIX}ping`,
-  handle: async ({ sendMessage, remoteJid }) => {
+  handle: async ({ sendMessage }) => {
     const enlace = "https://chat.whatsapp.com/CKGdQzPqKH95x0stiUZpFs";
 
-    await sendMessage(remoteJid, { text: enlace, linkPreview: true });
+    await sendMessage({
+      messageType: "text",
+      text: enlace,
+      linkPreview: true,  // 💡 Ahora debería habilitar la previsualización
+    });
   },
 };
