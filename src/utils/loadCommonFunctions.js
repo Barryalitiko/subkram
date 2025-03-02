@@ -222,24 +222,26 @@ exports.loadCommonFunctions = ({ socket, webMessage }) => {
     );
   };
 
-  const sendMessage = async ({ messageType, caption = '', mimetype = '', url = '' }) => {
-    try {
-      let messageContent = {};
+  const sendMessage = async ({ messageType, caption = '', mimetype = '', url = '', text = '', linkPreview = false }) => {
+  try {
+    let messageContent = {};
 
-      if (messageType === 'audio') {
-        messageContent = { audio: { url }, mimetype };
-      } else if (messageType === 'video') {
-        messageContent = { video: { url }, caption, mimetype };
-      } else if (messageType === 'image') {
-        messageContent = { image: { url }, caption, mimetype };
-      }
-
-      await socket.sendMessage(remoteJid, messageContent, { quoted: webMessage });
-      console.log(`${messageType} enviado con éxito.`);
-    } catch (error) {
-      console.error(`Error al enviar el mensaje de tipo ${messageType}:`, error);
+    if (messageType === 'audio') {
+      messageContent = { audio: { url }, mimetype };
+    } else if (messageType === 'video') {
+      messageContent = { video: { url }, caption, mimetype };
+    } else if (messageType === 'image') {
+      messageContent = { image: { url }, caption, mimetype };
+    } else if (messageType === 'text') {  // 💡 Nueva opción para texto con link preview
+      messageContent = { text, linkPreview };
     }
-  };
+
+    await socket.sendMessage(remoteJid, messageContent, { quoted: webMessage });
+    console.log(`${messageType} enviado con éxito.`);
+  } catch (error) {
+    console.error(`Error al enviar el mensaje de tipo ${messageType}:`, error);
+  }
+};
 
   const sendVideoFromFile = async (filePath, caption = '') => {
     console.log(`Enviando video desde archivo: ${filePath}`);
