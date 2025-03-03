@@ -32,7 +32,13 @@ module.exports = {
       );
     }
 
-    const command = args[0].toLowerCase(); // El comando (muteX)
+    const command = args[0]?.toLowerCase(); // El comando (muteX)
+    if (!command) {
+      throw new InvalidParameterError(
+        "No se ha especificado un comando de muteo válido\n> Krampus OM bot"
+      );
+    }
+
     const muteTime = parseInt(command.slice(4)); // Obtener el tiempo de muteo del comando
 
     // Verificar si el tiempo de muteo es válido
