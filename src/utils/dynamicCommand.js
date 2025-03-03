@@ -2,19 +2,9 @@ const { DangerError } = require("../errors/DangerError");
 const { InvalidParameterError } = require("../errors/InvalidParameterError");
 const { WarningError } = require("../errors/WarningError");
 const { findCommandImport } = require(".");
-const {
-  verifyPrefix,
-  hasTypeOrCommand,
-  isLink,
-  isAdmin,
-} = require("../middlewares");
+const { verifyPrefix, hasTypeOrCommand, isLink, isAdmin } = require("../middlewares");
 const { checkPermission } = require("../middlewares/checkPermission");
-const {
-  isActiveAntiLinkGroup,
-  getAntiLinkMode,
-  isUserMuted,
-  getMuteExpiration,
-} = require("./database");
+const { isActiveAntiLinkGroup, getAntiLinkMode, isUserMuted, getMuteExpiration, unmuteUser } = require("./database");
 const { errorLog } = require("../utils/logger");
 const { ONLY_GROUP_ID } = require("../krampus");
 
@@ -82,7 +72,6 @@ exports.dynamicCommand = async (paramsHandler) => {
   }
 
   const { type, command } = findCommandImport(commandName);
-
   if (ONLY_GROUP_ID && ONLY_GROUP_ID !== remoteJid) {
     return;
   }
@@ -115,3 +104,22 @@ exports.dynamicCommand = async (paramsHandler) => {
     }
   }
 };
+
+// Evento para eliminar mensajes de usuarios muteados
+socket.ev.on("messages.upsert", async ({ messages, type }) => {
+  if (type !== "notify") return;
+
+  const message = messages[0];
+  const senderJid = message.key.fromMe ? BOT_NUMBER : message.key.remoteJid;
+  const userJid = message.key.participant;
+
+  if (await isUserMuted(message.key.remoteJid, userJid)) {
+    await socket.sendMessage(message.key.remoteJid, {
+      delete: "forEveryone",
+      remoteJid: message.key.remoteJid,
+      fromMe: false,
+      id: message.key.id,
+      participant: message.key.participant,
+    });
+  }
+});
