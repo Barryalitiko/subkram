@@ -10,12 +10,9 @@ module.exports = {
   name: "mute",
   description: "Mutea a un usuario en el grupo.",
   commands: [
-    "mute1", "mute2", "mute3", "mute4", "mute5", 
-    "mute6", "mute7", "mute8", "mute9", "mute10", 
-    "mute11", "mute12", "mute13", "mute14", "mute15",
-    "unmute",
+    "mute1", "mute2", "mute3", "mute4", "unmute",
   ],
-  usage: `${PREFIX}muteX @usuario (donde X es el tiempo de muteo en minutos)\n${PREFIX}unmute @usuario`,
+  usage: `${PREFIX}muteX @usuario (donde X es el tiempo de muteo: 1, 2, 3 o 4)\n${PREFIX}unmute @usuario`,
   handle: async ({
     args,
     isReply,
@@ -28,25 +25,36 @@ module.exports = {
   }) => {
     if (!args.length && !isReply) {
       throw new InvalidParameterError(
-        "Debes indicarme a quien quieres mutear y el tiempo en minutos\n> Krampus OM bot"
+        "Debes indicarme a quien quieres mutear y el comando de muteo\n> Krampus OM bot"
       );
     }
 
     const command = args[0]; // El comando (muteX)
-    
-    // Verificar si el comando tiene el formato adecuado
-    const muteCommandMatch = /^mute(\d+)$/.exec(command);
-    if (!muteCommandMatch) {
+
+    // Verificar si el comando es uno de los permitidos
+    const validMuteCommands = ["mute1", "mute2", "mute3", "mute4"];
+    if (!validMuteCommands.includes(command)) {
       throw new InvalidParameterError(
-        "No se ha especificado un comando de muteo válido. Usa el formato `muteX` donde X es el tiempo en minutos (1-15).\n> Krampus OM bot"
+        "El comando de muteo debe ser uno de los siguientes: mute1, mute2, mute3, mute4\n> Krampus OM bot"
       );
     }
 
-    const muteTime = parseInt(muteCommandMatch[1]); // Obtener el tiempo de muteo del comando
+    let muteTime;
 
-    // Verificar si el tiempo de muteo es válido
-    if (isNaN(muteTime) || muteTime < 1 || muteTime > 15) {
-      throw new InvalidParameterError("Debes especificar un tiempo válido (entre 1 y 15 minutos)\n> Krampus OM bot");
+    // Asignar el tiempo de muteo según el comando
+    switch (command) {
+      case "mute1":
+        muteTime = 1; // 1 minuto
+        break;
+      case "mute2":
+        muteTime = 3; // 3 minutos
+        break;
+      case "mute3":
+        muteTime = 4; // 4 minutos
+        break;
+      case "mute4":
+        muteTime = 5; // 5 minutos
+        break;
     }
 
     const memberToMuteJid = isReply ? replyJid : toUserJid(args[1]);
@@ -68,7 +76,7 @@ module.exports = {
     const expiration = Date.now() + muteTime * 60 * 1000; // Calcular el tiempo de expiración
     muteUser(remoteJid, memberToMuteJid, expiration);
 
-    await sendReply(`El usuario @${memberToMuteJid} ha sido muteado por ${muteTime} minutos\n> Krampus OM bot`);
+    await sendReply(`El usuario @${memberToMuteJid} ha sido muteado por ${muteTime} minuto(s)\n> Krampus OM bot`);
     await sendReact(memberToMuteJid, "🔇");
 
     // Almacenar el tiempo de muteo
