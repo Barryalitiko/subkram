@@ -29,7 +29,7 @@ module.exports = {
       );
     }
 
-    const command = args[0]; // El comando (muteX)
+    const command = args[0].toLowerCase(); // El comando (muteX)
 
     // Verificar si el comando es uno de los permitidos
     const validMuteCommands = ["mute1", "mute2", "mute3", "mute4"];
