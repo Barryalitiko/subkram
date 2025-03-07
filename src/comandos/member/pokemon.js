@@ -9,7 +9,7 @@ const readData = (filePath) => {
   try {
     return JSON.parse(fs.readFileSync(filePath, "utf-8"));
   } catch {
-    return [];
+    return {};  // Si hay un error, devolvemos un objeto vacío o arreglo vacío según sea el caso
   }
 };
 
@@ -17,24 +17,27 @@ const writeData = (filePath, data) => {
   fs.writeFileSync(filePath, JSON.stringify(data, null, 2), "utf-8");
 };
 
-const preciosPokemones = {
-  "pikachu": 50,
-  "bulbasaur": 40,
-  "charmander": 60,
-  // Agrega más Pokémon aquí...
-};
-
-const preciosEvolucion = 100; // Precio del objeto de evolución 🍄
-
 module.exports = {
   name: "tienda-pokemon",
-  description: "Compra y evoluciona Pokémon con tus monedas.",
-  commands: ["tienda-pokemon", "comprar-pokemon", "evolucionar"],
+  description: "Compra un pokemon.",
+  commands: ["tienda-pokemon"],
   usage: `${PREFIX}tienda-pokemon <pokemon>`,
   handle: async ({ sendReply, args, userJid }) => {
+    const precios = {
+      "pikachu": 50,
+      "bulbasaur": 45,
+      "charmander": 60,
+      // Aquí puedes agregar más pokemones con sus respectivos precios
+    };
+
     const pokemon = args[0]?.toLowerCase();
     if (!pokemon) {
-      await sendReply("❌ Debes especificar un Pokémon para comprar o evolucionar.");
+      await sendReply(`❌ Debes especificar un Pokémon para comprar. Ejemplo: *${PREFIX}tienda-pokemon pikachu*`);
+      return;
+    }
+
+    if (!precios[pokemon]) {
+      await sendReply(`❌ Pokémon no disponible en la tienda.`);
       return;
     }
 
@@ -44,76 +47,28 @@ module.exports = {
     if (!userKrEntry) {
       userKrEntry = { userJid, kr: 0 };
       krData.push(userKrEntry);
-      writeData(krFilePath, krData);
     }
 
-    const precioPokemon = preciosPokemones[pokemon];
-
-    if (args[0] === "evolucionar") {
-      const userItems = readData(userItemsFilePath);
-      const userItemEntry = userItems.find(entry => entry.userJid === userJid);
-
-      if (!userItemEntry || userItemEntry.items["🍄"] < 1) {
-        await sendReply("❌ No tienes el objeto necesario para evolucionar un Pokémon. Compra un 🍄 en la tienda.");
-        return;
-      }
-
-      if (userKrEntry.kr < preciosEvolucion) {
-        await sendReply(`❌ Necesitas ${preciosEvolucion} monedas para evolucionar.`);
-        return;
-      }
-
-      // Resta monedas y elimina el objeto de evolución
-      userKrEntry.kr -= preciosEvolucion;
-      userItemEntry.items["🍄"] -= 1;
-
-      writeData(krFilePath, krData);
-      writeData(userItemsFilePath, userItems);
-
-      await sendReply(`✅ ¡Tu Pokémon ha evolucionado! Te quedan ${userKrEntry.kr} monedas.`);
+    if (userKrEntry.kr < precios[pokemon]) {
+      await sendReply(`❌ No tienes suficientes monedas para comprar ${pokemon}. Necesitas ${precios[pokemon]} monedas.`);
       return;
     }
 
-    if (!precioPokemon) {
-      await sendReply("❌ Este Pokémon no está disponible en la tienda.");
-      return;
-    }
-
-    if (userKrEntry.kr < precioPokemon) {
-      await sendReply(`❌ No tienes suficientes monedas. Necesitas ${precioPokemon} monedas para comprar ${pokemon}.`);
-      return;
-    }
-
-    // Comprar el Pokémon
-    userKrEntry.kr -= precioPokemon;
-    writeData(krFilePath, krData);
-
-    // Almacenar el Pokémon en el inventario del usuario
     let userItems = readData(userItemsFilePath);
-    let userItemEntry = userItems.find(entry => entry.userJid === userJid);
+    let userItemEntry = userItems[userJid];  // Accedemos directamente a la clave con el userJid
 
     if (!userItemEntry) {
-      userItemEntry = { userJid, items: {}, pokemons: [] };
-      userItems.push(userItemEntry);
+      userItemEntry = { pokemones: [] };  // Inicializamos el objeto si no existe
+      userItems[userJid] = userItemEntry;
     }
 
-    // Agregar Pokémon al inventario
-    userItemEntry.pokemons.push({ name: pokemon, capturedAt: Date.now() });
-    writeData(userItemsFilePath, userItems);
+    userItemEntry.pokemones.push(pokemon);  // Añadimos el nuevo Pokémon al arreglo
 
-    // Obtener la imagen del Pokémon
-    try {
-      const response = await axios.get(`https://pokeapi.co/api/v2/pokemon/${pokemon}`);
-      const pokemonData = response.data;
-      const imageUrl = pokemonData.sprites.front_default;
+    userKrEntry.kr -= precios[pokemon];  // Restamos las monedas
 
-      // Enviar mensaje de éxito con la imagen del Pokémon
-      await sendReply(`✅ ¡Has comprado a ${pokemon}!\nTe quedan ${userKrEntry.kr} monedas.`);
-      await sendReply({ url: imageUrl });
+    writeData(userItemsFilePath, userItems);  // Guardamos los objetos del usuario
+    writeData(krFilePath, krData);  // Guardamos las monedas
 
-    } catch (error) {
-      console.error(error);
-      await sendReply("❌ Hubo un error al obtener la imagen del Pokémon.");
-    }
+    await sendReply(`✅ ¡Has comprado a ${pokemon}!\nAhora tienes ${userKrEntry.kr} monedas.`);
   },
 };
