@@ -43,7 +43,8 @@ module.exports = {
     let userPokemons = readData(userPokemonsFilePath);
 
     // Verificar si el usuario ha comprado el Pokémon (normal o shiny)
-    if (!userPokemons[userJid] || (!userPokemons[userJid].includes(pokemon) && !userPokemons[userJid].includes(`${pokemon}_shiny`))) {
+    if (!userPokemons[userJid] || 
+        (!userPokemons[userJid].includes(pokemon) && !userPokemons[userJid].includes(`${pokemon}_shiny`))) {
       await sendReply(`❌ No tienes a *${pokemon}* en tu colección. ¿Seguro que lo compraste?`);
       return;
     }
@@ -51,21 +52,19 @@ module.exports = {
     let imagenURL;
     let esShiny = false;
 
-    // Comprobar si el Pokémon es shiny
     if (userPokemons[userJid].includes(`${pokemon}_shiny`)) {
-      imagenURL = pokemonShinyImagenes[pokemon];
+      imagenURL = pokemonShinyImagenes[pokemon]; // Obtener imagen shiny
       esShiny = true;
     } else if (userPokemons[userJid].includes(pokemon)) {
-      imagenURL = pokemonImagenes[pokemon];
+      imagenURL = pokemonImagenes[pokemon]; // Obtener imagen normal
     } else {
       await sendReply(`❌ Pokémon no reconocido.`);
       return;
     }
 
-    // Verificar si la URL de la imagen es válida
+    // Verificar si la URL de la imagen está definida
     if (!imagenURL) {
-      console.error(`No se encontró la imagen para el Pokémon ${pokemon} shiny.`);
-      await sendReply(`❌ No se encontró la imagen para el Pokémon ${pokemon}.`);
+      await sendReply(`❌ No se pudo encontrar la imagen del Pokémon *${pokemon}*.`);
       return;
     }
 
