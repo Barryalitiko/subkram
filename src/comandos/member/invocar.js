@@ -2,8 +2,15 @@ const fs = require("fs");
 const path = require("path");
 const { PREFIX } = require("../../krampus");
 
-const krFilePath = path.resolve(process.cwd(), "assets/kr.json");
-const userItemsFilePath = path.resolve(process.cwd(), "assets/userItems.json");
+const userPokemonsFilePath = path.resolve(process.cwd(), "assets/userPokemons.json");
+
+const pokemonImagenes = {
+  "pikachu": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/25.png",
+  "bulbasaur": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/1.png",
+  "charmander": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/4.png",
+  "squirtle": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/7.png",
+  "eevee": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/133.png",
+};
 
 const readData = (filePath) => {
   try {
@@ -13,36 +20,23 @@ const readData = (filePath) => {
   }
 };
 
-const writeData = (filePath, data) => {
-  fs.writeFileSync(filePath, JSON.stringify(data, null, 2), "utf-8");
-};
-
 module.exports = {
   name: "invocar",
   description: "Invoca un Pokémon que has comprado.",
   commands: ["invocar"],
   usage: `${PREFIX}invocar <pokemon>`,
   handle: async ({ sendReply, args, userJid, socket }) => {
-    const pokemonImagenes = {
-      "pikachu": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/25.png", // Imagen de Pikachu
-      "bulbasaur": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/1.png",  // Imagen de Bulbasaur
-      "charmander": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/4.png", // Imagen de Charmander
-      "squirtle": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/7.png",   // Imagen de Squirtle
-      "eevee": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/133.png",  // Imagen de Eevee
-      // Puedes agregar más Pokémon aquí con su URL correspondiente
-    };
-
     const pokemon = args[0]?.toLowerCase();
     if (!pokemon) {
       await sendReply(`❌ Debes especificar un Pokémon para invocar. Ejemplo: *${PREFIX}invocar pikachu*`);
       return;
     }
 
-    let userItems = readData(userItemsFilePath);
-    let userItemEntry = userItems[userJid];  // Accedemos al usuario directamente por su JID
+    let userPokemons = readData(userPokemonsFilePath);
 
-    if (!userItemEntry || !userItemEntry.pokemones || !userItemEntry.pokemones.includes(pokemon)) {
-      await sendReply(`❌ No tienes a *${pokemon}* en tu colección.`);
+    // Verificar si el usuario ha comprado el Pokémon
+    if (!userPokemons[userJid] || !userPokemons[userJid].includes(pokemon)) {
+      await sendReply(`❌ No tienes a *${pokemon}* en tu colección. ¿Seguro que lo compraste?`);
       return;
     }
 
@@ -51,18 +45,16 @@ module.exports = {
       return;
     }
 
-    // Si el Pokémon está en la lista, enviamos la imagen correspondiente
+    // Enviar la imagen correspondiente del Pokémon
     const pokemonImagen = pokemonImagenes[pokemon];
 
-    // Enviar la imagen usando Baileys
     try {
       await socket.sendMessage(
         userJid,
         {
-          image: { url: pokemonImagen }, // Usamos la URL de la imagen para enviarla
-          caption: `🎉 ¡Has invocado a *${pokemon}*!`, // Mensaje que acompañará la imagen
-        },
-        { quoted: { jid: remoteJid } }
+          image: { url: pokemonImagen },
+          caption: `🎉 ¡Has invocado a *${pokemon}*!`,
+        }
       );
     } catch (error) {
       console.error("Error al enviar la imagen:", error);
