@@ -1,7 +1,9 @@
 const fs = require("fs");
 const path = require("path");
 const { PREFIX } = require("../../krampus");
+
 const userPokemonsFilePath = path.resolve(process.cwd(), "assets/userPokemons.json");
+
 const pokemonImagenes = {
   "pikachu": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/25.png",
   "bulbasaur": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/1.png",
@@ -9,28 +11,13 @@ const pokemonImagenes = {
   "squirtle": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/7.png",
   "eevee": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/133.png",
 };
-const errorMessages = {
-  noPokemonSpecified: "❌ Debes especificar un Pokémon para invocar.",
-  pokemonNotOwned: "❌ No tienes a *{}* en tu colección.",
-  pokemonNotRecognized: "❌ Pokémon no reconocido.",
-  errorInvokingPokemon: "❌ Ocurrió un error al invocar tu Pokémon.",
-};
-const logger = require("winston");
 
 const readData = (filePath) => {
-  if (!fs.existsSync(filePath)) {
-    return {};
-  }
   try {
     return JSON.parse(fs.readFileSync(filePath, "utf-8"));
   } catch {
-    logger.error("Error al leer el archivo:", filePath);
-    return {};
+    return {};  // Si hay un error, devolvemos un objeto vacío
   }
-};
-
-const isValidPokemon = (pokemon) => {
-  return Object.keys(pokemonImagenes).includes(pokemon);
 };
 
 module.exports = {
@@ -41,19 +28,26 @@ module.exports = {
   handle: async ({ sendReply, args, remoteJid, socket }) => {
     const pokemon = args[0]?.toLowerCase();
     if (!pokemon) {
-      await sendReply(errorMessages.noPokemonSpecified);
+      await sendReply(`❌ Debes especificar un Pokémon para invocar. Ejemplo: *${PREFIX}invocar pikachu*`);
       return;
     }
-    if (!isValidPokemon(pokemon)) {
-      await sendReply(errorMessages.pokemonNotRecognized);
-      return;
-    }
+
     let userPokemons = readData(userPokemonsFilePath);
+
+    // Verificar si el usuario ha comprado el Pokémon
     if (!userPokemons[remoteJid] || !userPokemons[remoteJid].includes(pokemon)) {
-      await sendReply(errorMessages.pokemonNotOwned.replace("{}", pokemon));
+      await sendReply(`❌ No tienes a *${pokemon}* en tu colección. ¿Seguro que lo compraste?`);
       return;
     }
+
+    if (!pokemonImagenes[pokemon]) {
+      await sendReply(`❌ Pokémon no reconocido.`);
+      return;
+    }
+
+    // Enviar la imagen correspondiente del Pokémon
     const pokemonImagen = pokemonImagenes[pokemon];
+
     try {
       await socket.sendMessage(
         remoteJid,
@@ -63,8 +57,8 @@ module.exports = {
         }
       );
     } catch (error) {
-      logger.error("Error al enviar la imagen:", error);
-      await sendReply(errorMessages.errorInvokingPokemon);
+      console.error("Error al enviar la imagen:", error);
+      await sendReply("❌ Ocurrió un error al invocar tu Pokémon.");
     }
   },
 };
