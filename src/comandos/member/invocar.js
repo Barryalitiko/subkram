@@ -25,7 +25,7 @@ module.exports = {
   description: "Invoca un Pokémon que has comprado.",
   commands: ["invocar"],
   usage: `${PREFIX}invocar <pokemon>`,
-  handle: async ({ sendReply, args, remoteJid, socket }) => {
+  handle: async ({ sendReply, args, userJid, socket }) => {
     const pokemon = args[0]?.toLowerCase();
     if (!pokemon) {
       await sendReply(`❌ Debes especificar un Pokémon para invocar. Ejemplo: *${PREFIX}invocar pikachu*`);
@@ -35,7 +35,7 @@ module.exports = {
     let userPokemons = readData(userPokemonsFilePath);
 
     // Verificar si el usuario ha comprado el Pokémon
-    if (!userPokemons[remoteJid] || !userPokemons[remoteJid].includes(pokemon)) {
+    if (!userPokemons[userJid] || !userPokemons[userJid].includes(pokemon)) {
       await sendReply(`❌ No tienes a *${pokemon}* en tu colección. ¿Seguro que lo compraste?`);
       return;
     }
@@ -50,7 +50,7 @@ module.exports = {
 
     try {
       await socket.sendMessage(
-        remoteJid,
+        userJid,
         {
           image: { url: pokemonImagen },
           caption: `🎉 ¡Has invocado a *${pokemon}*!`,
