@@ -12,11 +12,19 @@ const pokemonImagenes = {
   "eevee": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/133.png",
 };
 
+const pokemonShinyImagenes = {
+  "pikachu": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/25.png",
+  "bulbasaur": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/1.png",
+  "charmander": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/4.png",
+  "squirtle": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/7.png",
+  "eevee": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/133.png",
+};
+
 const readData = (filePath) => {
   try {
     return JSON.parse(fs.readFileSync(filePath, "utf-8"));
   } catch {
-    return {};  // Si hay un error, devolvemos un objeto vacío
+    return {}; // Si hay un error, devolvemos un objeto vacío
   }
 };
 
@@ -34,28 +42,33 @@ module.exports = {
 
     let userPokemons = readData(userPokemonsFilePath);
 
-    // Verificar si el usuario ha comprado el Pokémon
-    if (!userPokemons[userJid] || !userPokemons[userJid].includes(pokemon)) {
+    // Verificar si el usuario ha comprado el Pokémon (normal o shiny)
+    if (!userPokemons[userJid] || !userPokemons[userJid].includes(pokemon) && !userPokemons[userJid].includes(`${pokemon}_shiny`)) {
       await sendReply(`❌ No tienes a *${pokemon}* en tu colección. ¿Seguro que lo compraste?`);
       return;
     }
 
-    if (!pokemonImagenes[pokemon]) {
+    let imagenURL;
+    let esShiny = false;
+
+    if (userPokemons[userJid].includes(`${pokemon}_shiny`)) {
+      imagenURL = pokemonShinyImagenes[pokemon];
+      esShiny = true;
+    } else if (userPokemons[userJid].includes(pokemon)) {
+      imagenURL = pokemonImagenes[pokemon];
+    } else {
       await sendReply(`❌ Pokémon no reconocido.`);
       return;
     }
 
     // Enviar la imagen correspondiente del Pokémon
-    const pokemonImagen = pokemonImagenes[pokemon];
-
     try {
-      await socket.sendMessage(
-        remoteJid, // Enviar al grupo usando remoteJid
-        {
-          image: { url: pokemonImagen },
-          caption: `🎉 ¡Has invocado a *${pokemon}*!`,
-        }
-      );
+      await socket.sendMessage(remoteJid, {
+        image: { url: imagenURL },
+        caption: esShiny
+          ? `✨ ¡Has invocado a un *${pokemon} shiny*! ✨`
+          : `🎉 ¡Has invocado a *${pokemon}*!`,
+      });
     } catch (error) {
       console.error("Error al enviar la imagen:", error);
       await sendReply("❌ Ocurrió un error al invocar tu Pokémon.");
