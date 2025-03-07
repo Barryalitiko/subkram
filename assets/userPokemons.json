@@ -1,5 +1,5 @@
 {
-  "userJid1": ["pikachu", "bulbasaur"],
-  "userJid2": ["charmander"],
-  "userJid3": ["squirtle", "eevee"]
+  "userJid1": ["pikachu", "bulbasaur", "charmander_shiny"],
+  "userJid2": ["charmander", "squirtle_shiny"],
+  "userJid3": ["squirtle", "eevee", "pikachu_shiny"]
 }
