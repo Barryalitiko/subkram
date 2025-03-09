@@ -112,7 +112,7 @@ const shinyPokemons = [
 
 module.exports = {
   name: "shiny",
-  description: "Compra un *Pichu* shiny por 400 monedas.",
+  description: "Compra un Pokémon shiny aleatorio.",
   commands: ["shiny"],
   usage: `${PREFIX}shiny`,
   handle: async ({ sendReply, userJid }) => {
@@ -120,7 +120,7 @@ module.exports = {
     let userKrEntry = krData.find(entry => entry.userJid === userJid);
 
     if (!userKrEntry || userKrEntry.kr < 400) {
-      await sendReply(`❌ No tienes suficientes monedas para comprar un *Pichu* shiny. Necesitas 400 monedas.`);
+      await sendReply(`❌ No tienes suficientes monedas para comprar un Pokémon shiny. Necesitas 400 monedas.`);
       return;
     }
 
@@ -133,16 +133,19 @@ module.exports = {
       userPokemons[userJid] = [];
     }
 
-    // Verificar si el usuario ya tiene el Pichu shiny
+    // Seleccionar un Pokémon shiny aleatorio de la lista
+    const shinyPokemon = shinyPokemons[Math.floor(Math.random() * shinyPokemons.length)];
+
+    // Verificar si el usuario ya tiene ese shiny
     if (userPokemons[userJid].includes(shinyPokemon)) {
-      await sendReply(`❌ Ya tienes un *Pichu* shiny en tu colección.`);
+      await sendReply(`❌ Ya tienes un *${shinyPokemon.replace('_shiny', '').toUpperCase()}* shiny en tu colección.`);
       return;
     }
 
-    // Añadir el Pokémon shiny Pichu al inventario del usuario
+    // Añadir el Pokémon shiny aleatorio al inventario del usuario
     userPokemons[userJid].push(shinyPokemon);
     writeData(userPokemonsFilePath, userPokemons);
 
-    await sendReply(`✅ ¡Has obtenido un *Pichu* shiny por 400 monedas! 🎉\nTe quedan ${userKrEntry.kr} monedas.`);
+    await sendReply(`✅ ¡Has obtenido un *${shinyPokemon.replace('_shiny', '').toUpperCase()}* shiny por 400 monedas! 🎉\nTe quedan ${userKrEntry.kr} monedas.`);
   },
 };
