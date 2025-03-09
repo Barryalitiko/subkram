@@ -47,7 +47,13 @@ module.exports = {
 
     // Verificar si el usuario tiene el objeto 🍄
     let userItem = userItems.find(entry => entry.userJid === userJid);
-    if (!userItem || userItem.items.hongos <= 0) {
+    if (!userItem) {
+      // Si el usuario no tiene una entrada en userItems, creamos una nueva
+      userItem = { userJid, items: { hongos: 0 } };
+      userItems.push(userItem); // Añadimos al arreglo
+    }
+
+    if (userItem.items.hongos <= 0) {
       await sendReply(`❌ No tienes el objeto 🍄 necesario para la evolución.`);
       return;
     }
