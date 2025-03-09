@@ -18,10 +18,11 @@ const writeData = (filePath, data) => {
   fs.writeFileSync(filePath, JSON.stringify(data, null, 2), "utf-8");
 };
 
-// Definir los precios para los objetos y Pokémon (solo Pichu por ahora)
+// Definir los precios para los objetos y Pokémon (agregar más Pokémon aquí)
 const precios = {
   "pichu": 50,  // Pichu añadido a la tienda
-  "🍄": 300, // Hongo para evolución
+  "pikachu": 150, // Agrega más Pokémon aquí
+  "raichu": 200,  // Ejemplo de otro Pokémon
 };
 
 module.exports = {
@@ -39,7 +40,7 @@ module.exports = {
       for (const [item, precio] of Object.entries(precios)) {
         listaPrecios += `- ${item}: ${precio} monedas\n`;
       }
-      listaPrecios += `\nUsa *${PREFIX}tienda <emoji>* para comprar.\n> Por ejemplo *#tienda pichu*`;
+      listaPrecios += `\nUsa *${PREFIX}tienda <objeto>* para comprar.\n> Por ejemplo *#tienda pichu*`;
       await sendReply(listaPrecios);
       return;
     }
@@ -69,14 +70,18 @@ module.exports = {
     }
     const userItem = userItems.find(entry => entry.userJid === userJid);
 
-    if (objeto === "pichu") {
-      if (!userItem.items.hongos) {
-        await sendReply(`❌ No tienes el objeto necesario para la evolución (🍄).`);
+    // Agregar el Pokémon a la colección del usuario si no lo tiene
+    if (precios[objeto]) {
+      let userPokemons = readData(userPokemonsFilePath);
+      if (!userPokemons[userJid]) {
+        userPokemons[userJid] = [];
+      }
+      if (userPokemons[userJid].includes(objeto)) {
+        await sendReply(`❌ Ya tienes un *${objeto}* en tu colección.`);
         return;
       }
-      userItem.items.hongos -= 1; // Usamos un hongo para evolucionar
-    } else if (objeto === "🍄") {
-      userItem.items.hongos += 1; // Compramos un hongo para evolución
+      userPokemons[userJid].push(objeto);  // Agregar el Pokémon a la colección
+      writeData(userPokemonsFilePath, userPokemons);
     }
 
     const userKrBalance = userKr - precios[objeto];
@@ -86,6 +91,6 @@ module.exports = {
     writeData(userItemsFilePath, userItems);
     writeData(krFilePath, krData);
 
-    await sendReply(`✅ ¡Has comprado ${objeto}!\nAhora tienes ${userKrBalance} monedas y:\n- 🍄: ${userItem.items.hongos}`);
+    await sendReply(`✅ ¡Has comprado ${objeto}!\nAhora tienes ${userKrBalance} monedas.`);
   },
 };
