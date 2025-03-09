@@ -121,6 +121,18 @@ const pokemonEvoluciones = {
   "pupitar": "tyranitar"
 };
 
+const eeveeEvoluciones = [
+  "vaporeon", "jolteon", "flareon", 
+  "espeon", "umbreon", "leafeon", 
+  "glaceon", "sylveon"
+];
+
+const eeveeShinyEvoluciones = [
+  "vaporeon_shiny", "jolteon_shiny", "flareon_shiny",
+  "espeon_shiny", "umbreon_shiny", "leafeon_shiny",
+  "glaceon_shiny", "sylveon_shiny"
+];
+
 const readData = (filePath) => {
   try {
     return JSON.parse(fs.readFileSync(filePath, "utf-8"));
@@ -167,24 +179,21 @@ module.exports = {
       return;
     }
 
-    // Verificar si el Pokémon tiene una evolución
-    if (!pokemonEvoluciones[pokemon]) {
-      await sendReply(`❌ *${pokemon}* no tiene evolución disponible o ya ha evolucionado completamente.`);
-      return;
-    }
+    // Verificar si el Pokémon es Eevee o Eevee shiny
+    if (pokemon === "eevee" || pokemon === "eevee_shiny") {
+      const isShiny = pokemon.includes("shiny");
+      const evolucionesPosibles = isShiny ? eeveeShinyEvoluciones : eeveeEvoluciones;
+      const evolucionElegida = evolucionesPosibles[Math.floor(Math.random() * evolucionesPosibles.length)];
 
-    // Realizar la evolución: reemplazar el Pokémon antiguo con el nuevo
-    const evolucion = pokemonEvoluciones[pokemon];
-    userPokemons[userJid] = userPokemons[userJid].filter(p => p !== pokemon);
-    userPokemons[userJid].push(evolucion);
+      // Realizar la evolución: reemplazar el Pokémon antiguo con el nuevo
+      userPokemons[userJid] = userPokemons[userJid].filter(p => p !== pokemon);
+      userPokemons[userJid].push(evolucionElegida);
 
-    // Consumir el objeto 🍄
-    userItem.items.hongos -= 1;
+      // Consumir el objeto 🍄
+      userItem.items.hongos -= 1;
 
-    // Guardar los cambios
-    writeData(userPokemonsFilePath, userPokemons);
-    writeData(userItemsFilePath, userItems);
+      // Guardar los cambios
+      writeData(userPokemonsFilePath, userPokemons);
+      writeData(userItemsFilePath, userItems);
 
-    await sendReply(`✅ ¡Felicidades! *${pokemon}* ha evolucionado a *${evolucion}* y has usado un 🍄 de tu inventario.\nAhora tienes el nuevo Pokémon en tu colección.`);
-  },
-};
+      await sendReply(`✅ ¡Felicidades! *${pokemon}* ha evolucionado aleatoriamente
