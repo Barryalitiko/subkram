@@ -20,7 +20,7 @@ const writeData = (filePath, data) => {
 
 // Definir los precios para los objetos y Pokémon (agregar más Pokémon aquí)
 const precios = {
-  "pichu": 50,  
+  "pichu": 50,
   "bulbasaur": 100,
   "charmander": 120,
   "squirtle": 110,
@@ -31,13 +31,10 @@ const precios = {
   "spearow": 60,
   "ekans": 80,
   "sandshrew": 90,
-  "nidoran♀": 80,
-  "nidoran♂": 80,
   "vulpix": 100,
   "zubat": 50,
   "oddish": 70,
   "paras": 70,
-  "venonat": 75,
   "diglett": 70,
   "meowth": 100,
   "psyduck": 90,
@@ -90,7 +87,23 @@ const precios = {
   "slugma": 100,
   "swinub": 90,
   "remoraid": 85,
-  "larvitar": 300,  
+  "larvitar": 300,
+  
+  // Formas Alola y Hisuian con +30 monedas
+  "sandshrew_alola": 120,
+  "sandslash_alola": 120,
+  "vulpix_alola": 130,
+  "ninetales_alola": 130,
+  "meowth_alola": 130,
+  "persian_alola": 130,
+  "rapidash_galar": 150,
+  "slowbro_galar": 130,
+  "exeggutor_alola": 110,
+  "marowak_alola": 130,
+  "weezing_galar": 120,
+  "wooper_hisuian": 110,
+  "quagsire_hisuian": 110,
+  "ursaring_hisuian": 150
 };
 
 module.exports = {
