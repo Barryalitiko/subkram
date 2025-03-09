@@ -27,7 +27,7 @@ const precios = {
 module.exports = {
   name: "tienda",
   description: "Compra objetos en la tienda con tus monedas.",
-  commands: ["tienda"],
+  commands: ["comprar"],
   usage: `${PREFIX}tienda <objeto>`,
   handle: async ({ sendReply, args, userJid }) => {
     const objeto = args[0]?.toLowerCase();
