@@ -514,7 +514,19 @@ const pokemonImagenes = {
 "tyranitar": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/248.png",  
 "larvitar_shiny": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/246.png",  
 "pupitar_shiny": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/247.png",  
-"tyranitar_shiny": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/248.png"  
+"tyranitar_shiny": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/248.png",
+
+
+  "venusaur_mega": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/mega/3.png",
+  "charizard_mega_x": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/mega/6-x.png",
+  "charizard_mega_y": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/mega/6-y.png",
+  "blastoise_mega": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/mega/9.png",
+  "alakazam_mega": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/mega/65.png",
+  "gengar_mega": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/mega/94.png",
+  "slowbro_mega": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/mega/80.png",
+  "gyarados_mega": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/mega/130.png",
+  "ampharos_mega": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/mega/181.png",
+  "tyranitar_mega": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/mega/248.png"
 
 };
 
