@@ -552,14 +552,12 @@ module.exports = {
       return;
     }
 
-    // Enviar la imagen correspondiente del Pokémon sin responder a nadie
+    // Enviar la imagen correspondiente del Pokémon respondiendo al comando
     try {
-      const contact = await socket.getContact(userJid);
-      const userName = contact.name || contact.pushname;
       await socket.sendMessage(remoteJid, {
         image: { url: imagenURL },
-        caption: `🎉 @${userName} ha invocado a *${pokemon}*`,
-        mentions: [userJid],
+        caption: `🎉 Has invocado a *${pokemon}*`,
+        quoted: message,
       });
     } catch (error) {
       console.error("Error al enviar la imagen:", error);
