@@ -147,14 +147,14 @@ module.exports = {
     writeData(userPokemonsFilePath, userPokemons);
 
     // Hacer las reacciones con intervalo y luego enviar el mensaje
-    await sendReact(⚪️); // Primero con ⚪️
+    await sendReact(⚪️); 
     setTimeout(async () => {
-      await sendReact(🔴); // Después de 1 segundo con 🔴
+      await sendReact(🔴); 
     }, 1000);
     setTimeout(async () => {
-      await sendReact(✨); // Después de 2 segundos con ✨
+      await sendReact(✨); 
       // Enviar el mensaje después de la última reacción
       await sendReply(`¡Has obtenido un *${shinyPokemon.replace('_shiny', '').toUpperCase()}* shiny.\n\nFELICIDADES!\n\n> Te quedan ${userKrEntry.kr} monedas.`);
-    }, 2000); // Después de 2 segundos con ✨
+    }, 2000); 
   },
 };
