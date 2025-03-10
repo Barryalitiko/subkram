@@ -564,6 +564,5 @@ module.exports = {
       console.error("Error al enviar la imagen:", error);
       await sendReply("❌ Ocurrió un error al invocar tu Pokémon.");
     }
-  },
-};
+  }
 };
