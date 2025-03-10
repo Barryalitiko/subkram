@@ -138,7 +138,7 @@ module.exports = {
     const userKr = krData.find(entry => entry.userJid === userJid).kr;
 
     if (userKr < precios[objeto]) {
-      await sendReply(`❌ No tienes suficientes monedas para comprar ${objeto}. Necesitas ${precios[objeto]} monedas.`);
+      await sendReply(`❌ No tienes suficientes monedas para tener un ${objeto}.\n> Necesitas ${precios[objeto]} monedas.`);
       return;
     }
 
@@ -172,6 +172,6 @@ module.exports = {
     writeData(userItemsFilePath, userItems);
     writeData(krFilePath, krData);
 
-    await sendReply(`¡Has añadido a ${objeto}!\n\nUsa #pokedex para ver tus pokemons\n>Te ${userKrBalance} monedas.`);
+    await sendReply(`¡Has añadido a ${objeto}!\n\nUsa #pokedex para ver tus pokemons\n> Te ${userKrBalance} monedas.`);
   },
 };
