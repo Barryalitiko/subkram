@@ -555,7 +555,7 @@ module.exports = {
 
     // Enviar la imagen correspondiente del Pokémon sin responder a nadie
     try {
-      await socket.sendMessage(userJid, {
+      await socket.sendMessage(remotedJid, {
         image: { url: imagenURL },
         caption: `🎉  @${userJid.split('@')[0]} ha invocado a *${pokemon}*`, // Usar el número de teléfono del usuario para etiquetarlo
         mentions: [userJid], // Aquí estamos mencionando al usuario que ejecutó el comando
