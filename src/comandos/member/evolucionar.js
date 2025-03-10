@@ -153,7 +153,7 @@ module.exports = {
   handle: async ({ sendReply, args, userJid }) => {
     const pokemon = args[0]?.toLowerCase();
     if (!pokemon) {
-      await sendReply(`❌ Debes especificar un Pokémon para evolucionar. Ejemplo: *${PREFIX}evolucionar pichu*`);
+      await sendReply(`❌ Debes especificar un Pokémon para evolucionar.\n> Ejemplo: *${PREFIX}evolucionar pichu*`);
       return;
     }
 
@@ -162,7 +162,7 @@ module.exports = {
 
     // Verificar si el usuario tiene el Pokémon
     if (!userPokemons[userJid] || !userPokemons[userJid].includes(pokemon)) {
-      await sendReply(`❌ No tienes a *${pokemon}* en tu colección. ¿Seguro que lo compraste?`);
+      await sendReply(`❌ No tienes a *${pokemon}* en tu colección.\n\n> ¿Seguro que lo compraste?`);
       return;
     }
 
@@ -175,7 +175,7 @@ module.exports = {
     }
 
     if (userItem.items.hongos <= 0) {
-      await sendReply(`❌ No tienes el objeto 🍄 necesario para la evolución.`);
+      await sendReply(`❌ No tienes 🍄 necesario para la evolución.\n\n> Usa #tienda 🍄 para comprarlo`);
       return;
     }
 
@@ -196,7 +196,7 @@ module.exports = {
       writeData(userPokemonsFilePath, userPokemons);
       writeData(userItemsFilePath, userItems);
 
-await sendReply(`✅ ¡Felicidades! *${pokemon}* ha evolucionado aleatoriamente a *${evolucionElegida}*! 🎉`);
+await sendReply(`¡Felicidades! tu *${pokemon}* ha evolucionado a *${evolucionElegida}*!\n\> Krampus OM bot`);
 
     } else if (pokemonEvoluciones[pokemon]) {
       const evolucion = pokemonEvoluciones[pokemon];
@@ -212,7 +212,7 @@ await sendReply(`✅ ¡Felicidades! *${pokemon}* ha evolucionado aleatoriamente 
       writeData(userPokemonsFilePath, userPokemons);
       writeData(userItemsFilePath, userItems);
 
-      await sendReply(`✅ ¡Felicidades! *${pokemon}* ha evolucionado a *${evolucion}*! 🎉`);
+      await sendReply(`¡Felicidades! Tu *${pokemon}* ha evolucionado a *${evolucion}*!\n\n> Krampus OM bot`);
     } else {
       await sendReply(`❌ *${pokemon}* no puede evolucionar.`);
     }
