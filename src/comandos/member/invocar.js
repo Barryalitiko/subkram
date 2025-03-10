@@ -553,13 +553,13 @@ module.exports = {
       return;
     }
 
-    // Enviar la imagen correspondiente del Pokémon respondiendo al comentario
+    // Enviar la imagen correspondiente del Pokémon sin responder a nadie
     try {
       await socket.sendMessage(remoteJid, {
         image: { url: imagenURL },
-        caption: `🎉 ¡@${userJid.split("@")[0]} ha invocado a *${pokemon}*!`, // Usar el número de teléfono del usuario para etiquetarlo
+        caption: `🎉 ¡@+${userJid.split('@')[0]} ha invocado a *${pokemon}*!`, // Usar el número de teléfono del usuario para etiquetarlo
         mentions: [userJid], // Aquí estamos mencionando al usuario que ejecutó el comando
-        quoted: message, // Esto hace que se responda al comentario original
+        // No se agrega 'quoted: message' para evitar que se responda a alguien
       });
     } catch (error) {
       console.error("Error al enviar la imagen:", error);
