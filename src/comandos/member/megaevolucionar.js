@@ -51,14 +51,8 @@ module.exports = {
     }
 
     // Verificar si el usuario tiene el objeto ⚡️
-    let userItem = userItems.find(entry => entry.userJid === userJid);
-    if (!userItem) {
-      userItem = { userJid, items: { rayos: 0 } };
-      userItems.push(userItem);
-    }
-
-    if (userItem.items.rayos <= 0) {
-      await sendReply(`❌ No tienes el objeto ⚡️ necesario para la megaevolución.`);
+    if (!userItems[userJid] || userItems[userJid].rayos <= 0) {
+      await sendReply(`❌ No tienes ⚡️ para megaevolucionar. Consíguelo y vuelve a intentarlo.`);
       return;
     }
 
@@ -74,14 +68,12 @@ module.exports = {
       megaEvolucion = megaEvolucion[Math.floor(Math.random() * megaEvolucion.length)];
     }
 
-    console.log(`Megaevolucionando ${pokemon} a ${megaEvolucion}`); // Verificación adicional
-
     // Realizar la megaevolución
     userPokemons[userJid] = userPokemons[userJid].filter(p => p !== pokemon);
     userPokemons[userJid].push(megaEvolucion);
 
     // Consumir el objeto ⚡️
-    userItem.items.rayos -= 1;
+    userItems[userJid].rayos -= 1;
 
     // Guardar los cambios
     writeData(userPokemonsFilePath, userPokemons);
