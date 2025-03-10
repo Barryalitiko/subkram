@@ -553,14 +553,12 @@ module.exports = {
       return;
     }
 
-    // Extraer solo el número de teléfono del JID
-    const phoneNumber = userJid.split('@')[0];  // Esto elimina el '@s.whatsapp.net'
-
     // Enviar la imagen correspondiente del Pokémon respondiendo al comentario
     try {
       await socket.sendMessage(remoteJid, {
         image: { url: imagenURL },
-        caption: `🎉 ¡@${phoneNumber} ha invocado a *${pokemon}*!`, // Etiqueta al usuario con el número de teléfono
+        caption: `🎉 ¡@${userJid.split('@')[0]} ha invocado a *${pokemon}*!`, // Usar el número de teléfono del usuario para etiquetarlo
+        mentions: [userJid], // Aquí estamos mencionando al usuario que ejecutó el comando
         quoted: message, // Esto hace que se responda al comentario original
       });
     } catch (error) {
