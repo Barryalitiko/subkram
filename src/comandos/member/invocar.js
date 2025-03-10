@@ -543,7 +543,7 @@ module.exports = {
   description: "Invoca un Pokémon que has comprado.",
   commands: ["invocar"],
   usage: `${PREFIX}invocar <pokemon>`,
-  handle: async ({ sendReply, args, userJid, remoteJid, socket, message, sendImageFromURL }) => {
+  handle: async ({ sendReply, args, userJid, remoteJid, socket, message }) => {
     const pokemon = args[0]?.toLowerCase();
     if (!pokemon) {
       await sendReply(`❌ Debes especificar un Pokémon para invocar. Ejemplo: *${PREFIX}invocar pichu*`);
@@ -551,25 +551,31 @@ module.exports = {
     }
 
     let userPokemons = readData(userPokemonsFilePath);
+
     // Verificar si el usuario ha comprado el Pokémon
     if (!userPokemons[userJid] || !userPokemons[userJid].includes(pokemon)) {
       await sendReply(`❌ No tienes a *${pokemon}* en tu colección. ¿Seguro que lo compraste?`);
       return;
     }
 
-    const imagenURL = pokemonImagenes[pokemon];
-    // Obtener la imagen del Pokémon
+    const imagenURL = pokemonImagenes[pokemon];  // Obtener la imagen del Pokémon
+
     if (!imagenURL) {
       await sendReply(`❌ No se pudo encontrar la imagen del Pokémon *${pokemon}*.`);
       return;
     }
 
-    // Enviar la imagen correspondiente del Pokémon respondiendo al comando
+    // Enviar la imagen correspondiente del Pokémon respondiendo al comentario
     try {
-      await sendImageFromURL(socket, remoteJid, imagenURL, `🎉 Has invocado a *${pokemon}*`, message);
+      await socket.sendMessage(remoteJid, {
+        image: { url: imagenURL },
+        caption: `🎉 ¡@${userJid.split('@')[0]} ha invocado a *${pokemon}*!`, // Usar el número de teléfono del usuario para etiquetarlo
+        mentions: [userJid], // Aquí estamos mencionando al usuario que ejecutó el comando
+        quoted: message, // Esto hace que se responda al comentario original
+      });
     } catch (error) {
       console.error("Error al enviar la imagen:", error);
       await sendReply("❌ Ocurrió un error al invocar tu Pokémon.");
     }
-  },
+  }
 };
