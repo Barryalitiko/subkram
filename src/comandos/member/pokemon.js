@@ -109,7 +109,7 @@ const precios = {
 module.exports = {
   name: "tienda",
   description: "Compra objetos en la tienda con tus monedas.",
-  commands: ["comprar"],
+  commands: ["capturar"],
   usage: `${PREFIX}tienda <objeto>`,
   handle: async ({ sendReply, args, userJid }) => {
     const objeto = args[0]?.toLowerCase();
@@ -121,7 +121,7 @@ module.exports = {
       for (const [item, precio] of Object.entries(precios)) {
         listaPrecios += `- ${item}: ${precio} monedas\n`;
       }
-      listaPrecios += `\nUsa *${PREFIX}tienda <pokemon>* para comprar.\n> Por ejemplo *#tienda pichu*`;
+      listaPrecios += `\nUsa *${PREFIX}capturar <pokemon>* para comprar.\n> Por ejemplo *#capturar pichu*`;
       await sendReply(listaPrecios);
       return;
     }
