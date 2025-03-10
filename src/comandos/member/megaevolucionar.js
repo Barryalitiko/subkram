@@ -6,7 +6,6 @@ const userItemsFilePath = path.resolve(process.cwd(), "assets/userItems.json");
 const userPokemonsFilePath = path.resolve(process.cwd(), "assets/userPokemons.json");
 
 const megaEvoluciones = {
-  "bulbasaur": "mega_venusaur",
   "charmander": ["mega_charizard_x", "mega_charizard_y"],
   "squirtle": "mega_blastoise",
   "abra": "mega_alakazam",
@@ -15,6 +14,12 @@ const megaEvoluciones = {
   "magikarp": "mega_gyarados",
   "mareep": "mega_ampharos",
   "larvitar": "mega_tyranitar"
+};
+
+const gigaEvoluciones = {
+  "bulbasaur": "gmax_venusaur",
+  "eevee": "gmax_eevee",
+  "pikachu": "gmax_pikachu"
 };
 
 const readData = (filePath) => {
@@ -56,21 +61,30 @@ module.exports = {
       return;
     }
 
-    // Verificar si el Pokémon puede megaevolucionar
-    if (!megaEvoluciones[pokemon]) {
-      await sendReply(`❌ *${pokemon}* no puede megaevolucionar.`);
+    // Verificar si el Pokémon puede megaevolucionar o gigamax
+    if (!megaEvoluciones[pokemon] && !gigaEvoluciones[pokemon]) {
+      await sendReply(`❌ *${pokemon}* no puede megaevolucionar ni gigamaxizar.`);
       return;
     }
 
-    // Elegir evolución (si hay más de una opción, elegir aleatoriamente)
-    let megaEvolucion = megaEvoluciones[pokemon];
-    if (Array.isArray(megaEvolucion)) {
-      megaEvolucion = megaEvolucion[Math.floor(Math.random() * megaEvolucion.length)];
+    let evolucion = null;
+
+    // Si es una megaevolución, elegir la megaevolución
+    if (megaEvoluciones[pokemon]) {
+      evolucion = megaEvoluciones[pokemon];
+      if (Array.isArray(evolucion)) {
+        evolucion = evolucion[Math.floor(Math.random() * evolucion.length)];
+      }
     }
 
-    // Realizar la megaevolución
+    // Si es una gigamax, asignar la gigamax
+    if (gigaEvoluciones[pokemon]) {
+      evolucion = gigaEvoluciones[pokemon];
+    }
+
+    // Realizar la evolución
     userPokemons[userJid] = userPokemons[userJid].filter(p => p !== pokemon);
-    userPokemons[userJid].push(megaEvolucion);
+    userPokemons[userJid].push(evolucion);
 
     // Consumir el objeto ⚡️
     userItems[userJid].rayos -= 1;
@@ -79,6 +93,6 @@ module.exports = {
     writeData(userPokemonsFilePath, userPokemons);
     writeData(userItemsFilePath, userItems);
 
-    await sendReply(`⚡ ¡Increíble! *${pokemon}* ha megaevolucionado a *${megaEvolucion}*! 💥🔥`);
+    await sendReply(`⚡ ¡Increíble! *${pokemon}* ha evolucionado a *${evolucion}*! 💥🔥`);
   }
 };
