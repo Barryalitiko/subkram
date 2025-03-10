@@ -116,12 +116,12 @@ module.exports = {
 
     if (!objeto) {
       // Mostrar lista de objetos disponibles para comprar
-      let listaPrecios = "🛒 *Lista de precios de la tienda*:\n";
+      let listaPrecios = "⚪️🔴 *Lista de pokemons disponibles*:\n";
       
       for (const [item, precio] of Object.entries(precios)) {
         listaPrecios += `- ${item}: ${precio} monedas\n`;
       }
-      listaPrecios += `\nUsa *${PREFIX}tienda <objeto>* para comprar.\n> Por ejemplo *#tienda pichu*`;
+      listaPrecios += `\nUsa *${PREFIX}tienda <pokemon>* para comprar.\n> Por ejemplo *#tienda pichu*`;
       await sendReply(listaPrecios);
       return;
     }
@@ -172,6 +172,6 @@ module.exports = {
     writeData(userItemsFilePath, userItems);
     writeData(krFilePath, krData);
 
-    await sendReply(`✅ ¡Has comprado ${objeto}!\nAhora tienes ${userKrBalance} monedas.`);
+    await sendReply(`¡Has añadido a ${objeto}!\n\nUsa #pokedex para ver tus pokemones\n>Te ${userKrBalance} monedas.`);
   },
 };
