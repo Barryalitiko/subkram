@@ -172,6 +172,6 @@ module.exports = {
     writeData(userItemsFilePath, userItems);
     writeData(krFilePath, krData);
 
-    await sendReply(`¡Has añadido a ${objeto}!\n\nUsa #pokedex para ver tus pokemones\n>Te ${userKrBalance} monedas.`);
+    await sendReply(`¡Has añadido a ${objeto}!\n\nUsa #pokedex para ver tus pokemons\n>Te ${userKrBalance} monedas.`);
   },
 };
