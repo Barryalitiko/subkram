@@ -197,3 +197,24 @@ module.exports = {
       writeData(userItemsFilePath, userItems);
 
 await sendReply(`✅ ¡Felicidades! *${pokemon}* ha evolucionado aleatoriamente a *${evolucionElegida}*! 🎉`);
+
+    } else if (pokemonEvoluciones[pokemon]) {
+      const evolucion = pokemonEvoluciones[pokemon];
+
+      // Realizar la evolución: reemplazar el Pokémon antiguo con el nuevo
+      userPokemons[userJid] = userPokemons[userJid].filter(p => p !== pokemon);
+      userPokemons[userJid].push(evolucion);
+
+      // Consumir el objeto 🍄
+      userItem.items.hongos -= 1;
+
+      // Guardar los cambios
+      writeData(userPokemonsFilePath, userPokemons);
+      writeData(userItemsFilePath, userItems);
+
+      await sendReply(`✅ ¡Felicidades! *${pokemon}* ha evolucionado a *${evolucion}*! 🎉`);
+    } else {
+      await sendReply(`❌ *${pokemon}* no puede evolucionar.`);
+    }
+  }
+};
