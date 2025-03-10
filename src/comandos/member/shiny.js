@@ -115,7 +115,7 @@ module.exports = {
   description: "Compra un Pokémon shiny aleatorio.",
   commands: ["shiny"],
   usage: `${PREFIX}shiny`,
-  handle: async ({ sendReply, userJid }) => {
+  handle: async ({ sendReply, sendReact, userJid }) => {
     let krData = readData(krFilePath);
     let userKrEntry = krData.find(entry => entry.userJid === userJid);
 
@@ -146,6 +146,15 @@ module.exports = {
     userPokemons[userJid].push(shinyPokemon);
     writeData(userPokemonsFilePath, userPokemons);
 
-    await sendReply(`¡Has obtenido un *${shinyPokemon.replace('_shiny', '').toUpperCase()}* shiny.\n\nFELICIDADES!\n\n> Te quedan ${userKrEntry.kr} monedas.`);
+    // Hacer las reacciones con intervalo y luego enviar el mensaje
+    await sendReact(⚪️); // Primero con ⚪️
+    setTimeout(async () => {
+      await sendReact(🔴); // Después de 1 segundo con 🔴
+    }, 1000);
+    setTimeout(async () => {
+      await sendReact(✨); // Después de 2 segundos con ✨
+      // Enviar el mensaje después de la última reacción
+      await sendReply(`¡Has obtenido un *${shinyPokemon.replace('_shiny', '').toUpperCase()}* shiny.\n\nFELICIDADES!\n\n> Te quedan ${userKrEntry.kr} monedas.`);
+    }, 2000); // Después de 2 segundos con ✨
   },
 };
