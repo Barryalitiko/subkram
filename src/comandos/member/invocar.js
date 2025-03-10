@@ -531,41 +531,40 @@ module.exports = {
   description: "Invoca un Pokémon que has comprado.",
   commands: ["invocar"],
   usage: `${PREFIX}invocar <pokemon>`,
-  handle: async ({ sendReply, args, userJid, remoteJid, socket, message }) => {
+  handle: async ({ msg, sendReply, args, userJid, remoteJid, socket }) => {
+    // Reaccionar con ⚪️ cuando se recibe el comando
+    await msg.react("⚪️");
+
     const pokemon = args[0]?.toLowerCase();
     if (!pokemon) {
       await sendReply(`❌ Debes especificar un Pokémon para invocar. Ejemplo: *${PREFIX}invocar pichu*`);
       return;
     }
-
     let userPokemons = readData(userPokemonsFilePath);
-
     // Verificar si el usuario ha comprado el Pokémon
     if (!userPokemons[userJid] || !userPokemons[userJid].includes(pokemon)) {
       await sendReply(`❌ No tienes a *${pokemon}* en tu colección. ¿Seguro que lo compraste?`);
       return;
     }
-
-    const imagenURL = pokemonImagenes[pokemon];  // Obtener la imagen del Pokémon
-
+    const imagenURL = pokemonImagenes[pokemon];
+    // Obtener la imagen del Pokémon
     if (!imagenURL) {
       await sendReply(`❌ No se pudo encontrar la imagen del Pokémon *${pokemon}*.`);
       return;
     }
-
-    // Enviar la imagen correspondiente del Pokémon respondiendo al mensaje
+    // Enviar la imagen correspondiente del Pokémon
     try {
-      await socket.sendMessage(remoteJid, {
+      const sentMsg = await socket.sendMessage(remoteJid, {
         image: { url: imagenURL },
         caption: `🎉 ¡Has invocado a *${pokemon}*!`,
         contextInfo: {
-          mentionedJid: [userJid],  // Menciona al usuario en la respuesta
-          quotedMessage: {
-            key: { remoteJid, participant: userJid },
-            message: { conversation: `🔮 *Invocando a ${pokemon}...*` }
-          }
-        }
+          stanzaId: msg.key.id,
+          participant: msg.key.fromMe ? '0@s.whatsapp.net' : msg.key.participant,
+          quotedMessage: msg,
+        },
       });
+      // Reaccionar con 🔴 cuando se envía la imagen
+      await sentMsg.react("🔴");
     } catch (error) {
       console.error("Error al enviar la imagen:", error);
       await sendReply("❌ Ocurrió un error al invocar tu Pokémon.");
