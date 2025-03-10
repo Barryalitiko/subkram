@@ -531,7 +531,7 @@ module.exports = {
   description: "Invoca un Pokémon que has comprado.",
   commands: ["invocar"],
   usage: `${PREFIX}invocar <pokemon>`,
-  handle: async ({ sendReply, args, userJid, remoteJid, socket, message }) => {
+  handle: async ({ sendReply, args, userJid, remoteJid, socket, message, sendImageFromURL }) => {
     const pokemon = args[0]?.toLowerCase();
     if (!pokemon) {
       await sendReply(`❌ Debes especificar un Pokémon para invocar. Ejemplo: *${PREFIX}invocar pichu*`);
