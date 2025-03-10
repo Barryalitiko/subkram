@@ -196,4 +196,4 @@ module.exports = {
       writeData(userPokemonsFilePath, userPokemons);
       writeData(userItemsFilePath, userItems);
 
-      await sendReply(`✅ ¡Felicidades! *${pokemon}* ha evolucionado aleatoriamente
+await sendReply(`✅ ¡Felicidades! *${pokemon}* ha evolucionado aleatoriamente a *${evolucionElegida}*! 🎉`);
