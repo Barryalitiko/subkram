@@ -557,7 +557,7 @@ module.exports = {
     try {
       await socket.sendMessage(remoteJid, {
         image: { url: imagenURL },
-        caption: `🎉 ¡@${userJid.split('@')[0]} ha invocado a *${pokemon}*!`, // Etiquetar al usuario que usó el comando
+        caption: `🎉 ¡<@${userJid}> ha invocado a *${pokemon}*!`, // Formato correcto para etiquetar
         quoted: message, // Esto hace que se responda al comentario original
       });
     } catch (error) {
