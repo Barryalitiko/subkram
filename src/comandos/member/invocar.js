@@ -229,7 +229,7 @@ const pokemonImagenes = {
 "ponyta_galar": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/10109.png",  
 "rapidash_galar": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/10110.png",  
 "ponyta_galar_shiny": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/10109.png",  
-"rapidash_galar_shiny": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/10110.png"  
+"rapidash_galar_shiny": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/10110.png",
 
 "slowpoke": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/79.png",  
 "slowbro": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/80.png",  
