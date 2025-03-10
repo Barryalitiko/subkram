@@ -554,11 +554,7 @@ module.exports = {
 
     // Enviar la imagen correspondiente del Pokémon respondiendo al comando
     try {
-      await socket.sendMessage(remoteJid, {
-        image: { url: imagenURL },
-        caption: `🎉 Has invocado a *${pokemon}*`,
-        quoted: message,
-      });
+      await sendImageFromURL(socket, remoteJid, imagenURL, `🎉 Has invocado a *${pokemon}*`, message);
     } catch (error) {
       console.error("Error al enviar la imagen:", error);
       await sendReply("❌ Ocurrió un error al invocar tu Pokémon.");
