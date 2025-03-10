@@ -33,7 +33,8 @@ module.exports = {
     const precios = {
       "💍": 6,
       "✏️": 7,
-      "🍄": 300
+      "🍄": 300,
+      "⚡️": 350
     };
 
     const objeto = args[0]?.toLowerCase();
@@ -68,7 +69,7 @@ module.exports = {
       userItems = [];
     }
     if (!userItems.find(entry => entry.userJid === userJid)) {
-      userItems.push({ userJid, items: { anillos: 0, papeles: 0, hongos: 0 } });
+      userItems.push({ userJid, items: { anillos: 0, papeles: 0, hongos: 0, rayos: 0 } });
     }
     const userItem = userItems.find(entry => entry.userJid === userJid);
 
@@ -78,6 +79,8 @@ module.exports = {
       userItem.items.papeles += 1;
     } else if (objeto === "🍄") {
       userItem.items.hongos += 1;
+    } else if (objeto === "⚡️") {
+      userItem.items.rayos += 1;
     }
 
     const userKrBalance = userKr - precios[objeto];
@@ -87,6 +90,6 @@ module.exports = {
     writeData(userItemsFilePath, userItems);
     writeData(krFilePath, krData);
 
-    await sendReply(`✅ ¡Has comprado ${objeto}!\nAhora tienes ${userKrBalance} monedas y:\n- 💍: ${userItem.items.anillos}\n- ✏️: ${userItem.items.papeles}\n- 🍄: ${userItem.items.hongos}`);
+    await sendReply(`✅ ¡Has comprado ${objeto}!\nAhora tienes ${userKrBalance} monedas y:\n- 💍: ${userItem.items.anillos}\n- ✏️: ${userItem.items.papeles}\n- 🍄: ${userItem.items.hongos}\n- ⚡️: ${userItem.items.rayos}`);
   },
 };
