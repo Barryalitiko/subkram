@@ -7,7 +7,7 @@ const userPokemonsFilePath = path.resolve(process.cwd(), "assets/userPokemons.js
 
 const megaEvoluciones = {
   "bulbasaur": "mega_venusaur",
-  "charmander": ["mega_charizard_x", "mega_charizard_y"], // Dos opciones, el bot elegirá una al azar
+  "charmander": ["mega_charizard_x", "mega_charizard_y"],
   "squirtle": "mega_blastoise",
   "abra": "mega_alakazam",
   "gastly": "mega_gengar",
@@ -73,6 +73,8 @@ module.exports = {
     if (Array.isArray(megaEvolucion)) {
       megaEvolucion = megaEvolucion[Math.floor(Math.random() * megaEvolucion.length)];
     }
+
+    console.log(`Megaevolucionando ${pokemon} a ${megaEvolucion}`); // Verificación adicional
 
     // Realizar la megaevolución
     userPokemons[userJid] = userPokemons[userJid].filter(p => p !== pokemon);
