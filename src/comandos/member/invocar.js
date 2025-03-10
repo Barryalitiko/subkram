@@ -557,7 +557,7 @@ module.exports = {
       const userName = await socket.getContact(userJid).then((contact) => contact.name);
       await socket.sendMessage(remoteJid, {
         image: { url: imagenURL },
-        caption: `🎉 ¡@${userName} ha invocado a *${pokemon}*!`,
+        caption: `🎉 ¡@${userJid.split("@")[0]} ha invocado a *${pokemon}*!`,
         mentions: [userJid],
         quoted: message,
       });
