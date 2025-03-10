@@ -543,7 +543,7 @@ module.exports = {
   description: "Invoca un Pokémon que has comprado.",
   commands: ["invocar"],
   usage: `${PREFIX}invocar <pokemon>`,
-  handle: async ({ sendReply, args, userJid, remoteJid, socket, message, sendReact }) => {
+  handle: async ({ sendReply, args, userJid, remoteJid, socket, message }) => {
     const pokemon = args[0]?.toLowerCase();
     if (!pokemon) {
       await sendReply(`❌ Debes especificar un Pokémon para invocar. Ejemplo: *${PREFIX}invocar pichu*`);
@@ -565,10 +565,7 @@ module.exports = {
       return;
     }
 
-    // Enviar la reacción 🔎 antes de enviar la imagen
-    await sendReact(remoteJid, message.id, "🔎");
-
-    // Enviar la imagen del Pokémon
+    // Enviar la imagen correspondiente del Pokémon respondiendo al comentario
     try {
       await socket.sendMessage(remoteJid, {
         image: { url: imagenURL },
@@ -576,10 +573,6 @@ module.exports = {
         mentions: [userJid], // Aquí estamos mencionando al usuario que ejecutó el comando
         quoted: message, // Esto hace que se responda al comentario original
       });
-
-      // Enviar la reacción 🫧 después de enviar la imagen
-      await sendReact(remoteJid, message.id, "🫧");
-
     } catch (error) {
       console.error("Error al enviar la imagen:", error);
       await sendReply("❌ Ocurrió un error al invocar tu Pokémon.");
