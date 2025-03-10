@@ -556,11 +556,11 @@ module.exports = {
     try {
       const userName = await socket.getContact(userJid).then((contact) => contact.name);
       await socket.sendMessage(remoteJid, {
-        image: { url: imagenURL },
-        caption: `🎉 ¡@${userJid.split("@")[0]} ha invocado a *${pokemon}*!`,
-        mentions: [userJid],
-        quoted: message,
-      });
+  image: { url: imagenURL },
+  caption: `🎉 ¡@${userJid.split("@")[0]} ha invocado a *${pokemon}*!`,
+  mentions: [userJid],  // Usa el userJid completo aquí
+  quoted: message,
+});
     } catch (error) {
       console.error("Error al enviar la imagen:", error);
       await sendReply("❌ Ocurrió un error al invocar tu Pokémon.");
