@@ -539,15 +539,14 @@ module.exports = {
     }
 
     let userPokemons = readData(userPokemonsFilePath);
-
     // Verificar si el usuario ha comprado el Pokémon
     if (!userPokemons[userJid] || !userPokemons[userJid].includes(pokemon)) {
       await sendReply(`❌ No tienes a *${pokemon}* en tu colección. ¿Seguro que lo compraste?`);
       return;
     }
 
-    const imagenURL = pokemonImagenes[pokemon];  // Obtener la imagen del Pokémon
-
+    const imagenURL = pokemonImagenes[pokemon];
+    // Obtener la imagen del Pokémon
     if (!imagenURL) {
       await sendReply(`❌ No se pudo encontrar la imagen del Pokémon *${pokemon}*.`);
       return;
@@ -555,15 +554,16 @@ module.exports = {
 
     // Enviar la imagen correspondiente del Pokémon sin responder a nadie
     try {
-      await socket.sendMessage(remotedJid, {
+      const contact = await socket.getContact(userJid);
+      const userName = contact.name || contact.pushname;
+      await socket.sendMessage(remoteJid, {
         image: { url: imagenURL },
-        caption: `🎉  @${userJid.split('@')[0]} ha invocado a *${pokemon}*`, // Usar el número de teléfono del usuario para etiquetarlo
-        mentions: [userJid], // Aquí estamos mencionando al usuario que ejecutó el comando
-        // No se agrega 'quoted: message' para evitar que se responda a alguien
+        caption: `🎉 @${userName} ha invocado a *${pokemon}*`,
+        mentions: [userJid],
       });
     } catch (error) {
       console.error("Error al enviar la imagen:", error);
       await sendReply("❌ Ocurrió un error al invocar tu Pokémon.");
     }
-  }
+  },
 };
