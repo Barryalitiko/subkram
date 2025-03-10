@@ -138,7 +138,7 @@ module.exports = {
 
     // Verificar si el usuario ya tiene ese shiny
     if (userPokemons[userJid].includes(shinyPokemon)) {
-      await sendReply(`❌ Ya tienes un *${shinyPokemon.replace('_shiny', '').toUpperCase()}* shiny en tu colección.`);
+      await sendReply(`❌ Ya tienes un *${shinyPokemon.replace('_shiny', '').toUpperCase()}* shiny en tu colección.\n\n> Mala suerte 🙁`);
       return;
     }
 
@@ -146,6 +146,6 @@ module.exports = {
     userPokemons[userJid].push(shinyPokemon);
     writeData(userPokemonsFilePath, userPokemons);
 
-    await sendReply(`✅ ¡Has obtenido un *${shinyPokemon.replace('_shiny', '').toUpperCase()}* shiny por 400 monedas! 🎉\nTe quedan ${userKrEntry.kr} monedas.`);
+    await sendReply(`¡Has obtenido un *${shinyPokemon.replace('_shiny', '').toUpperCase()}* shiny.\n\nFELICIDADES!\n\n> Te quedan ${userKrEntry.kr} monedas.`);
   },
 };
