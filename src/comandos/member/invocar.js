@@ -591,9 +591,9 @@ const pokemonImagenes = {
   "solgaleo": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/791.png",
   "lunala": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/792.png",
   "necrozma": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/800.png",
-  "tapu lele": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/786.png",
-  "tapu bulu": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/787.png",
-  "tapu fini": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/788.png",
+  "tapu_lele": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/786.png",
+  "tapu_bulu": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/787.png",
+  "tapu_fini": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/788.png",
   "cosmog": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/789.png",
   "magearna": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/801.png",
   "marshadow": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/802.png",
@@ -612,74 +612,74 @@ const pokemonImagenes = {
   "chi-yu": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/1003.png",
   "ting-lu": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/1004.png",
   "wo-chien": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/1005.png",
-  "ruinous quartet": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/1006.png",
-  "slither wing": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/1007.png",
-  "iron leaves": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/1008.png",
-  "walking wake": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/1009.png",
-  "iron crown": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/1010.png",
+  "ruinous_quartet": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/1006.png",
+  "slither_wing": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/1007.png",
+  "iron_leaves": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/1008.png",
+  "walking_wake": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/1009.png",
+  "iron_crown": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/1010.png",
   
   
   
-  "mewtwo mega x": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/151-mega-x.png",
-  "mewtwo mega y": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/151-mega-y.png",
+  "mewtwo_mega_x": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/151-mega-x.png",
+  "mewtwo_mega_y": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/151-mega-y.png",
 
 
-  "suicune cristal": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/245-cristal.png",
+  "suicune_cristal": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/245-cristal.png",
 
 
-  "kyogre prima": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/382-prima.png",
-  "groudon prima": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/383-prima.png",
-  "rayquaza mega": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/384-mega.png",
+  "kyogre_prima": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/382-prima.png",
+  "groudon_prima": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/383-prima.png",
+  "rayquaza_mega": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/384-mega.png",
 
 
-  "giratina forma alterna": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/487-alterna.png",
-  "giratina forma origen": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/487-origen.png",
-  "dialga temporal": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/483-temporal.png",
-  "palkia espacial": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/484-espacial.png",
+  "giratina_forma_alterna": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/487-alterna.png",
+  "giratina_forma_origen": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/487-origen.png",
+  "dialga_temporal": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/483-temporal.png",
+  "palkia_espacial": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/484-espacial.png",
 
 
-  "kyurem negro": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/646-negro.png",
-  "kyurem blanco": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/646-blanco.png",
-  "reshiram blanco": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/643-blanco.png",
-  "zekrom negro": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/644-negro.png",
-  "tornadus teravolt": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/641-teravolt.png",
-  "thundurus teravolt": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/642-teravolt.png",
-  "landorus teravolt": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/645-teravolt.png",
+  "kyurem_negro": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/646-negro.png",
+  "kyurem_blanco": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/646-blanco.png",
+  "reshiram_blanco": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/643-blanco.png",
+  "zekrom_negro": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/644-negro.png",
+  "tornadus_teravolt": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/641-teravolt.png",
+  "thundurus_teravolt": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/642-teravolt.png",
+  "landorus_teravolt": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/645-teravolt.png",
 
 
-  "zygarde 10%": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/718-10.png",
-  "zygarde 50%": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/718-50.png",
-  "zygarde completo": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/718-completo.png",
-  "hoopa unbound": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/720-unbound.png",
+  "zygarde_10%": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/718-10.png",
+  "zygarde_50%": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/718-50.png",
+  "zygarde_completo": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/718-completo.png",
+  "hoopa_unbound": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/720-unbound.png",
 
 
-  "necrozma amanecer": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/800-amanecer.png",
-  "necrozma atardecer": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/800-atardecer.png",
-  "necrozma ultra": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/800-ultra.png",
-  "magearna original": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/801-original.png",
+  "necrozma_amanecer": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/800-amanecer.png",
+  "necrozma_atardecer": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/800-atardecer.png",
+  "necrozma_ultra": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/800-ultra.png",
+  "magearna_original": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/801-original.png",
 
 
-  "zacian corona": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/888-corona.png",
-  "zamazenta corona": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/889-corona.png",
-  "eternatus eterno": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/890-eterno.png",
-  "urshifu estilo uno": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/892-estilo-uno.png",
-  "urshifu estilo dos": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/892-estilo-dos.png",
-  "calyrex glacial": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/898-glacial.png",
-  "calyrex sombrío": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/898-sombrio.png",
+  "zacian_corona": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/888-corona.png",
+  "zamazenta_corona": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/889-corona.png",
+  "eternatus_eterno": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/890-eterno.png",
+  "urshifu_estilo_uno": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/892-estilo-uno.png",
+  "urshifu_estilo_dos": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/892-estilo-dos.png",
+  "calyrex_glacial": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/898-glacial.png",
+  "calyrex_sombrío": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/898-sombrio.png",
 
 
-  "koraidon combativo": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/1000-combativo.png",
-  "miraidon tecnológico": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/1001-tecnologico.png",
-  "chien-pao combativo": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/1002-combativo.png",
+  "koraidon_combativo": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/1000-combativo.png",
+  "miraidon_tecnológico": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/1001-tecnologico.png",
+  "chien_pao_combativo": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/1002-combativo.png",
   
   "chi-yu combativo": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/1003-combativo.png",
   "ting-lu combativo": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/1004-combativo.png",
   "wo-chien combativo": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/1005-combativo.png",
-  "ruinous quartet combativo": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/1006-combativo.png",
-  "slither wing combativo": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/1007-combativo.png",
-  "iron leaves combativo": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/1008-combativo.png",
-  "walking wake combativo": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/1009-combativo.png",
-  "iron crown combativo": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/1010-combativo.png"
+  "ruinous_quartet_combativo": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/1006-combativo.png",
+  "slither_wing_combativo": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/1007-combativo.png",
+  "iron_leaves_combativo": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/1008-combativo.png",
+  "walking_wake_combativo": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/1009-combativo.png",
+  "iron_crown_combativo": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/1010-combativo.png"
 
 
 
