@@ -71,7 +71,7 @@ module.exports = {
         .videoCodec("libx264")
         .outputOptions([
           "-t 10", 
-          "-vf fade=t=in:st=0:d=4,format=yuv420p,geq=r='r(X,Y)*(1-T/10)':g='g(X,Y)*(1-T/10)':b='b(X,Y)*(1-T/10)'",
+          "-vf format=yuv420p,lutrgb=r='r*(1-T/10)':g='g*(1-T/10)':b='b*(1-T/10)'",
           "-preset fast"
         ])
         .output(videoFilePath)
