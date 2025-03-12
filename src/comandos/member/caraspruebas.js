@@ -17,22 +17,27 @@ module.exports = {
     const canvas = createCanvas(canvasWidth, canvasHeight);
     const ctx = canvas.getContext('2d');
 
-    // Definir cabeza con forma humana (ovalada)
+    // Definir puntos clave de la cara humana
     const cx = canvasWidth / 2;
     const cy = canvasHeight / 2;
-    const rX = 120; // Radio en X (más ancho)
-    const rY = 160; // Radio en Y (más alto)
+    const rX = 120; // Ancho de la cabeza
+    const rY = 160; // Alto de la cabeza
 
+    // Dibujar la forma de la cabeza (mandíbula, barbilla y frente)
     ctx.beginPath();
-    ctx.ellipse(cx, cy, rX, rY, 0, 0, Math.PI * 2);
+    ctx.moveTo(cx - rX * 0.6, cy + rY * 0.6); // Lado izquierdo de la mandíbula
+    ctx.quadraticCurveTo(cx - rX, cy, cx - rX * 0.8, cy - rY * 0.5); // Curva de la mejilla izquierda
+    ctx.quadraticCurveTo(cx, cy - rY, cx + rX * 0.8, cy - rY * 0.5); // Frente y parte superior
+    ctx.quadraticCurveTo(cx + rX, cy, cx + rX * 0.6, cy + rY * 0.6); // Curva de la mejilla derecha
+    ctx.quadraticCurveTo(cx, cy + rY * 1.1, cx - rX * 0.6, cy + rY * 0.6); // Barbilla
     ctx.strokeStyle = 'blue';
     ctx.lineWidth = 3;
     ctx.stroke();
 
-    // Dibujar orejas (simples óvalos a los lados)
+    // Dibujar orejas
     ctx.beginPath();
-    ctx.ellipse(cx - rX - 20, cy, 25, 40, 0, 0, Math.PI * 2); // Oreja izquierda
-    ctx.ellipse(cx + rX + 20, cy, 25, 40, 0, 0, Math.PI * 2); // Oreja derecha
+    ctx.ellipse(cx - rX, cy - 30, 25, 40, 0, 0, Math.PI * 2); // Oreja izquierda
+    ctx.ellipse(cx + rX, cy - 30, 25, 40, 0, 0, Math.PI * 2); // Oreja derecha
     ctx.stroke();
 
     // Función para dibujar el círculo verde en la posición solicitada
@@ -45,13 +50,13 @@ module.exports = {
 
     // Mapa de las posiciones de los objetos
     const posiciones = {
-      A: { x: cx, y: cy - rY + 30 }, // Parte superior de la cabeza
+      A: { x: cx, y: cy - rY + 20 }, // Parte superior de la cabeza
       B: { x: cx - 50, y: cy - 40 }, // Ojo izquierdo
       C: { x: cx + 50, y: cy - 40 }, // Ojo derecho
       D: { x: cx, y: cy + 10 }, // Nariz
       E: { x: cx, y: cy + 60 }, // Boca
-      F: { x: cx - rX - 20, y: cy }, // Oreja izquierda
-      G: { x: cx + rX + 20, y: cy }, // Oreja derecha
+      F: { x: cx - rX, y: cy - 30 }, // Oreja izquierda
+      G: { x: cx + rX, y: cy - 30 }, // Oreja derecha
       H: { x: cx, y: cy + rY + 20 }, // Cuello
       I: { x: cx - rX + 30, y: cy - rY + 20 }, // Parte superior izquierda
       J: { x: cx + rX - 30, y: cy - rY + 20 }, // Parte superior derecha
