@@ -75,11 +75,10 @@ module.exports = {
       return;
     }
 
-    // Verificar si el usuario tiene el objeto
-    let userItem = userItems[userJid] || { items: { hongos: 0 } };
-
+    // Verificar si el usuario tiene el objeto 
+    let userItem = userItems.find((entry) => entry.userJid === userJid) || { userJid, items: { hongos: 0 } };
     if (userItem.items.hongos <= 0) {
-      await sendReply(`No tienes un 🍄 necesario para la evolución.`);
+      await sendReply(`No tienes un necesario para la evolución.`);
       return;
     }
 
@@ -91,11 +90,16 @@ module.exports = {
       userPokemons[userJid] = userPokemons[userJid].filter((p) => p !== pokemon);
       userPokemons[userJid].push(evolucion);
 
-      // Consumir el objeto
+      // Consumir el objeto 
       userItem.items.hongos -= 1;
 
       // Guardar los cambios
-      userItems[userJid] = userItem;
+      if (!userItems.find((entry) => entry.userJid === userJid)) {
+        userItems.push(userItem);
+      } else {
+        userItems = userItems.map((entry) => (entry.userJid === userJid ? userItem : entry));
+      }
+
       writeData(userPokemonsFilePath, userPokemons);
       writeData(userItemsFilePath, userItems);
 
@@ -105,3 +109,5 @@ module.exports = {
     }
   },
 };
+
+
