@@ -53,7 +53,7 @@ module.exports = {
       const sanitizedJid = userJid.replace(/[^a-zA-Z0-9_-]/g, "_");
       const imageFilePath = path.join(tempFolder, `${sanitizedJid}_profile.jpg`);
       const outputVideoPath = path.join(tempFolder, `${sanitizedJid}_fade.mp4`);
-      const audioFilePath = path.resolve(__dirname, "../../../assets/audio/preso30.mp3");
+      const audioFilePath = path.resolve(__dirname, "../../../assets/audio/audio.mp3");
 
       // Descargar la foto de perfil
       const response = await axios({ url: profilePicUrl, responseType: "arraybuffer" });
