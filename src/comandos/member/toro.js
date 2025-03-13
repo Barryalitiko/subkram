@@ -76,7 +76,7 @@ module.exports = {
         });
 
         // Ajustar los tiempos de aparición para que encajen en 15 segundos
-        const fadeDuration = 1.5; // Cada imagen aparece en 1.5s y desaparece en 1.5s
+        const fadeDuration = 1; // Cada imagen aparece en 1.5s y desaparece en 1.5s
         const interval = 3.75; // Cada imagen cambia cada 3 segundos
 
         const filters = imageSequence.map((_, index) => {
