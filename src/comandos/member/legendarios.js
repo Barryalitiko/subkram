@@ -82,9 +82,9 @@ const precios = {
   "solgaleo": 2400,
   "lunala": 2400,
   "necrozma": 2400,
-  "tapu lele": 2300,
-  "tapu bulu": 2300,
-  "tapu fini": 2300,
+  "tapu_lele": 2300,
+  "tapu_bulu": 2300,
+  "tapu_fini": 2300,
   "cosmog": 2300,
   "magearna": 2400,
   "marshadow": 2400,
@@ -103,36 +103,36 @@ const precios = {
   "chi-yu": 2300,
   "ting-lu": 2300,
   "wo-chien": 2300,
-  "ruinous quartet": 2400,
-  "slither wing": 2300,
-  "iron leaves": 2300,
-  "walking wake": 2300,
-  "iron crown": 2400,
+  "ruinous_quartet": 2400,
+  "slither_wing": 2300,
+  "iron_leaves": 2300,
+  "walking_wake": 2300,
+  "iron_crown": 2400,
 };
 
 
 module.exports = {
   name: "tienda",
   description: "Compra objetos en la tienda con tus monedas.",
-  commands: ["legendarios"],
+  commands: ["legendario"],
   usage: `${PREFIX}tienda <objeto>`,
   handle: async ({ sendReply, args, userJid }) => {
     const objeto = args[0]?.toLowerCase();
 
     if (!objeto) {
       // Mostrar lista de objetos disponibles para comprar
-      let listaPrecios = "⚪️🔴 *Lista de pokemons disponibles*:\n\n> Usa #capturar nombredelpokemon para comprarlo\n";
+      let listaPrecios = "⚡️*Legendarios disponibles*:\n\n> Usa #legendario nombredelpokemon para comprarlo\n";
       
       for (const [item, precio] of Object.entries(precios)) {
         listaPrecios += `- ${item}: ${precio} monedas\n`;
       }
-      listaPrecios += `\nUsa *${PREFIX}capturar <pokemon>* para comprar.\n> Por ejemplo *#capturar pichu*`;
+      listaPrecios += `\nUsa *${PREFIX}legendario <pokemon>* para comprar.\n> Por ejemplo *#legendario pichu*`;
       await sendReply(listaPrecios);
       return;
     }
 
     if (!precios[objeto]) {
-      await sendReply("❌ Objeto inválido. Usa el comando sin emojis para ver la lista de objetos.");
+      await sendReply("❌ Objeto inválido. Usa el comando de forma correcta para ver la lista de objetos.");
       return;
     }
 
