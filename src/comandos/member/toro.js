@@ -63,7 +63,6 @@ module.exports = {
       const imageSequence = [
         path.resolve(__dirname, "../../../assets/images/toro1.png"),
         path.resolve(__dirname, "../../../assets/images/toro2.png"),
-        path.resolve(__dirname, "../../../assets/images/toro3.png"),
         path.resolve(__dirname, "../../../assets/images/toro4.png"),
         path.resolve(__dirname, "../../../assets/images/toro5.png"),
       ]; // Agrega más imágenes si es necesario
@@ -78,7 +77,7 @@ module.exports = {
 
         // Ajustar los tiempos de aparición para que encajen en 15 segundos
         const fadeDuration = 1.5; // Cada imagen aparece en 1.5s y desaparece en 1.5s
-        const interval = 3; // Cada imagen cambia cada 3 segundos
+        const interval = 3.75; // Cada imagen cambia cada 3 segundos
 
         const filters = imageSequence.map((_, index) => {
           const startTime = index * interval; // Nueva distribución en 15s
