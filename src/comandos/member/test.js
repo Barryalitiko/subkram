@@ -2,18 +2,19 @@ const { PREFIX } = require("../../krampus");
 
 module.exports = {
   name: "editTest",
-  description: "Enviar un mensaje y editarlo después de 2 segundos",
+  description: "Envía un mensaje y lo edita después de 2 segundos",
   commands: ["edittest"],
   usage: `${PREFIX}edittest`,
-  handle: async ({ sendReply, sendReact }) => {
-    const startMessage = await sendReply("Hola");
-    
-    // Reaccionamos al mensaje
+  handle: async ({ sendMessage, sendReact, chatId }) => {
+    // Enviar el mensaje inicial "Hola"
+    const sentMessage = await sendMessage(chatId, { text: "Hola" });
+
+    // Reaccionar con un emoji
     await sendReact("👻");
-    
-    // Esperar 2 segundos y editar el mensaje
+
+    // Esperar 2 segundos y editar el mensaje a "Adiós"
     setTimeout(async () => {
-      await sendReply("Adiós", { edit: startMessage.key.id });
+      await sendMessage(chatId, { text: "Adiós" }, { edit: sentMessage.key.id });
     }, 2000);
   },
 };
