@@ -6,15 +6,28 @@ module.exports = {
   commands: ["edittest"],
   usage: `${PREFIX}edittest`,
   handle: async ({ sendMessage, sendReact, chatId }) => {
-    // Enviar el mensaje inicial "Hola"
-    const sentMessage = await sendMessage(chatId, { text: "Hola" });
+    try {
+      // Enviar el mensaje inicial "Hola"
+      const sentMessage = await sendMessage(chatId, { text: "Hola" });
 
-    // Reaccionar con un emoji
-    await sendReact("👻");
+      // Verificamos si el mensaje se envió correctamente
+      if (!sentMessage || !sentMessage.key || !sentMessage.key.id) {
+        throw new Error("No se pudo obtener el ID del mensaje enviado.");
+      }
 
-    // Esperar 2 segundos y editar el mensaje a "Adiós"
-    setTimeout(async () => {
-      await sendMessage(chatId, { text: "Adiós" }, { edit: sentMessage.key.id });
-    }, 2000);
+      // Reaccionar con un emoji
+      await sendReact("👻");
+
+      // Esperar 2 segundos y editar el mensaje a "Adiós"
+      setTimeout(async () => {
+        try {
+          await sendMessage(chatId, { text: "Adiós" }, { edit: sentMessage.key });
+        } catch (editError) {
+          console.error("Error al editar el mensaje:", editError);
+        }
+      }, 2000);
+    } catch (error) {
+      console.error("Error en el comando editTest:", error);
+    }
   },
 };
