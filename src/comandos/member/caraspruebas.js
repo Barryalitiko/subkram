@@ -4,11 +4,13 @@ const path = require('path');
 const { PREFIX } = require("../../krampus");
 
 module.exports = {
-  name: "editarA",
-  description: "Marca la posición de los ojos (Tipo A).",
-  commands: ["editarA"],
-  usage: `${PREFIX}editarA`,
-  handle: async ({ socket, remoteJid }) => {
+  name: "editar",
+  description: "Marca una posición específica en la imagen.",
+  commands: ["editar"],
+  usage: `${PREFIX}editar <posición>`,
+  handle: async ({ socket, remoteJid, args }) => {
+    const posicion = args[0]; // "A", "B", etc.
+    
     // Ruta de la imagen original
     const imagePath = path.resolve(__dirname, "../../../assets/images/cara.png");
 
@@ -24,25 +26,35 @@ module.exports = {
     // Dibujar la imagen original en el canvas sin alterarla
     ctx.drawImage(imagen, 0, 0, canvasWidth, canvasHeight);
 
-    // Dibujar el rectángulo rojo en la posición exacta de los ojos
-    const rectX = 174;
-    const rectY = 247;
-    const rectWidth = 146;
-    const rectHeight = 53;
+    // Definir las posiciones de los rectángulos
+    const posiciones = {
+      A: { x: 174, y: 247, width: 146, height: 53 }, // Ojos
+      B: { x: 207, y: 335, width: 84, height: 32 },  // Boca
+    };
 
+    // Verificar si la posición es válida
+    if (!posiciones[posicion]) {
+      socket.sendMessage(remoteJid, {
+        text: "Posición no válida. Usa A (ojos) o B (boca).",
+      });
+      return;
+    }
+
+    // Dibujar el rectángulo rojo en la posición seleccionada
+    const { x, y, width, height } = posiciones[posicion];
     ctx.strokeStyle = 'red';
     ctx.lineWidth = 3;
-    ctx.strokeRect(rectX, rectY, rectWidth, rectHeight);
+    ctx.strokeRect(x, y, width, height);
 
     // Guardar la imagen editada
-    const outputPath = path.resolve(__dirname, "editarA.png");
+    const outputPath = path.resolve(__dirname, `editar_${posicion}.png`);
     const buffer = canvas.toBuffer('image/png');
     fs.writeFileSync(outputPath, buffer);
 
     // Enviar la imagen al chat sin deformaciones
     socket.sendMessage(remoteJid, {
       image: fs.readFileSync(outputPath),
-      caption: "Marcador Tipo A (posición de los ojos).",
+      caption: `Marcador Tipo ${posicion} (${posicion === "A" ? "ojos" : "boca"}).`,
     });
   },
 };
