@@ -5,57 +5,68 @@ const { PREFIX } = require("../../krampus");
 
 module.exports = {
   name: "editar",
-  description: "Marca una posición específica en la imagen.",
+  description: "Añade un objeto en la posición especificada en la imagen.",
   commands: ["editar"],
   usage: `${PREFIX}editar <posición>`,
   handle: async ({ socket, remoteJid, args }) => {
-    const posicion = args[0]?.toUpperCase(); // "A", "B", "C", etc.
+    const posicion = args[0]?.toUpperCase(); // "A", "B", etc.
 
-    // Ruta de la imagen original
+    // Rutas de imágenes
     const imagePath = path.resolve(__dirname, "../../../assets/images/cara.png");
+    const objetoPath = path.resolve(__dirname, "../../../assets/images/gafas.png"); // PNG del objeto
 
-    // Cargar la imagen para obtener sus dimensiones reales
-    const imagen = await loadImage(imagePath);
-    const canvasWidth = imagen.width;
-    const canvasHeight = imagen.height;
+    // Cargar imágenes
+    const imagenBase = await loadImage(imagePath);
+    const objeto = await loadImage(objetoPath);
+    const canvasWidth = imagenBase.width;
+    const canvasHeight = imagenBase.height;
 
-    // Crear un canvas con las dimensiones exactas de la imagen
+    // Crear canvas con la imagen base
     const canvas = createCanvas(canvasWidth, canvasHeight);
     const ctx = canvas.getContext('2d');
+    ctx.drawImage(imagenBase, 0, 0, canvasWidth, canvasHeight);
 
-    // Dibujar la imagen original en el canvas sin alterarla
-    ctx.drawImage(imagen, 0, 0, canvasWidth, canvasHeight);
-
-    // Definir las posiciones de los rectángulos
+    // Definir posiciones
     const posiciones = {
       A: { x: 174, y: 247, width: 146, height: 53 }, // Ojos
-      B: { x: 207, y: 335, width: 84, height: 32 },  // Boca
-      C: { x: 148, y: 120, width: 198, height: 111 }, // Cabeza
     };
 
-    // Verificar si la posición es válida
     if (!posiciones[posicion]) {
       socket.sendMessage(remoteJid, {
-        text: "Posición no válida. Usa A (ojos), B (boca) o C (cabeza).",
+        text: "Posición no válida. Usa A (ojos).",
       });
       return;
     }
 
-    // Dibujar el rectángulo rojo en la posición seleccionada
+    // Obtener coordenadas de la posición seleccionada
     const { x, y, width, height } = posiciones[posicion];
-    ctx.strokeStyle = 'red';
-    ctx.lineWidth = 3;
-    ctx.strokeRect(x, y, width, height);
 
-    // Guardar la imagen editada
+    // Calcular escalado proporcional del objeto PNG
+    const aspectRatio = objeto.width / objeto.height;
+    let newWidth = width;
+    let newHeight = newWidth / aspectRatio;
+
+    if (newHeight > height) {
+      newHeight = height;
+      newWidth = newHeight * aspectRatio;
+    }
+
+    // Centrar el objeto en la posición
+    const objX = x + (width - newWidth) / 2;
+    const objY = y + (height - newHeight) / 2;
+
+    // Dibujar el objeto en la posición
+    ctx.drawImage(objeto, objX, objY, newWidth, newHeight);
+
+    // Guardar imagen editada
     const outputPath = path.resolve(__dirname, `editar_${posicion}.png`);
     const buffer = canvas.toBuffer('image/png');
     fs.writeFileSync(outputPath, buffer);
 
-    // Enviar la imagen al chat sin deformaciones
+    // Enviar la imagen al chat
     socket.sendMessage(remoteJid, {
       image: fs.readFileSync(outputPath),
-      caption: `Marcador Tipo ${posicion} (${posicion === "A" ? "ojos" : posicion === "B" ? "boca" : "cabeza"}).`,
+      caption: `Objeto añadido en Tipo ${posicion} (ojos).`,
     });
   },
 };
