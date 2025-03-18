@@ -9,8 +9,8 @@ module.exports = {
   commands: ["editar"],
   usage: `${PREFIX}editar <posición>`,
   handle: async ({ socket, remoteJid, args }) => {
-    const posicion = args[0]; // "A", "B", etc.
-    
+    const posicion = args[0]?.toUpperCase(); // "A", "B", "C", etc.
+
     // Ruta de la imagen original
     const imagePath = path.resolve(__dirname, "../../../assets/images/cara.png");
 
@@ -30,12 +30,13 @@ module.exports = {
     const posiciones = {
       A: { x: 174, y: 247, width: 146, height: 53 }, // Ojos
       B: { x: 207, y: 335, width: 84, height: 32 },  // Boca
+      C: { x: 148, y: 120, width: 198, height: 111 }, // Cabeza
     };
 
     // Verificar si la posición es válida
     if (!posiciones[posicion]) {
       socket.sendMessage(remoteJid, {
-        text: "Posición no válida. Usa A (ojos) o B (boca).",
+        text: "Posición no válida. Usa A (ojos), B (boca) o C (cabeza).",
       });
       return;
     }
@@ -54,7 +55,7 @@ module.exports = {
     // Enviar la imagen al chat sin deformaciones
     socket.sendMessage(remoteJid, {
       image: fs.readFileSync(outputPath),
-      caption: `Marcador Tipo ${posicion} (${posicion === "A" ? "ojos" : "boca"}).`,
+      caption: `Marcador Tipo ${posicion} (${posicion === "A" ? "ojos" : posicion === "B" ? "boca" : "cabeza"}).`,
     });
   },
 };
