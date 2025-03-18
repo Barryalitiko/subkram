@@ -9,32 +9,37 @@ module.exports = {
   commands: ["editarA"],
   usage: `${PREFIX}editarA`,
   handle: async ({ socket, remoteJid }) => {
-    const canvasWidth = 500; // Ajustar al tamaño real de la imagen si es diferente
-    const canvasHeight = 600;
-
-    // Ruta de la imagen del modelo
+    // Ruta de la imagen original
     const imagePath = path.resolve(__dirname, "../../../assets/images/cara.png");
 
-    // Crear un canvas
+    // Cargar la imagen para obtener sus dimensiones reales
+    const imagen = await loadImage(imagePath);
+    const canvasWidth = imagen.width;
+    const canvasHeight = imagen.height;
+
+    // Crear un canvas con las dimensiones exactas de la imagen
     const canvas = createCanvas(canvasWidth, canvasHeight);
     const ctx = canvas.getContext('2d');
 
-    // Cargar la imagen del modelo
-    const imagen = await loadImage(imagePath);
+    // Dibujar la imagen original en el canvas sin alterarla
     ctx.drawImage(imagen, 0, 0, canvasWidth, canvasHeight);
 
-    // Dibujar el rectángulo rojo en la posición de los ojos
-    const rectX = 174, rectY = 247, rectWidth = 146, rectHeight = 53;
+    // Dibujar el rectángulo rojo en la posición exacta de los ojos
+    const rectX = 174;
+    const rectY = 247;
+    const rectWidth = 146;
+    const rectHeight = 53;
+
     ctx.strokeStyle = 'red';
     ctx.lineWidth = 3;
     ctx.strokeRect(rectX, rectY, rectWidth, rectHeight);
 
-    // Guardar la imagen con la edición
+    // Guardar la imagen editada
     const outputPath = path.resolve(__dirname, "editarA.png");
     const buffer = canvas.toBuffer('image/png');
     fs.writeFileSync(outputPath, buffer);
 
-    // Enviar la imagen al chat
+    // Enviar la imagen al chat sin deformaciones
     socket.sendMessage(remoteJid, {
       image: fs.readFileSync(outputPath),
       caption: "Marcador Tipo A (posición de los ojos).",
