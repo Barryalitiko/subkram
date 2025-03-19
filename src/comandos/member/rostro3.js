@@ -29,6 +29,7 @@ module.exports = {
     const gafasPath = path.resolve(__dirname, "../../../assets/images/gafas.png");
     const lentesPath = path.resolve(__dirname, "../../../assets/images/lentes.png");
     const ojosPath = path.resolve(__dirname, "../../../assets/images/ojos.png");
+    const narutoPath = path.resolve(__dirname, "../../../assets/images/naruto.png"); // Añadido el nuevo objeto
 
     // Cargar imágenes base
     const rostro = await loadImage(rostroPath);
@@ -38,7 +39,7 @@ module.exports = {
     ctx.drawImage(rostro, 0, 0, rostro.width, rostro.height);
 
     // Verificar qué objeto tiene colocado
-    let objetoActual = usuarios[remoteJid].objetos.find(o => o === "gafas" || o === "lentes" || o === "ojos");
+    let objetoActual = usuarios[remoteJid].objetos.find(o => o === "gafas" || o === "lentes" || o === "ojos" || o === "naruto");
 
     // Primero, dibujamos las gafas o lentes (A1)
     if (objetoActual === "gafas" || objetoActual === "lentes") {
@@ -62,6 +63,19 @@ module.exports = {
       const posicionY = 250; // Ajustar para que se alinee bien sobre la cara, debajo de las gafas/lentes
       const ancho = 140;
       const alto = 40;
+
+      ctx.drawImage(objetoImagen, posicionX, posicionY, ancho, alto);
+    }
+
+    // Añadir el objeto de Naruto (A) si está en el inventario
+    if (usuarios[remoteJid].objetos.includes("naruto")) {
+      let objetoImagen = await loadImage(narutoPath);
+
+      // Coordenadas y dimensiones para el objeto de Naruto
+      const posicionX = 160; // Ajustar la posición
+      const posicionY = 220; // Ajustar la posición
+      const ancho = 120;
+      const alto = 120;
 
       ctx.drawImage(objetoImagen, posicionX, posicionY, ancho, alto);
     }
