@@ -1,4 +1,4 @@
-const { PREFIX } = require("../../krampus"); // Aseguramos que el PREFIX esté definido
+const { PREFIX } = require("../../krampus");
 const fs = require("fs");
 const path = require("path");
 
@@ -10,6 +10,14 @@ module.exports = {
   commands: ["colocar"],
   usage: `${PREFIX}colocar <objeto>`,
   handle: async ({ socket, remoteJid, args }) => {
+    if (!args[0]) {
+      return socket.sendMessage(remoteJid, { text: "Debes especificar qué objeto quieres colocar." });
+    }
+
+    const objeto = args[0].toLowerCase();
+    const objetosDisponibles = ["gafas", "lentes", "ojos"];
+
+    // Verificar si el archivo JSON existe
     if (!fs.existsSync(filePath)) {
       fs.writeFileSync(filePath, JSON.stringify({}, null, 2), "utf8");
     }
@@ -20,41 +28,35 @@ module.exports = {
       usuarios[remoteJid] = { objetos: [] };
     }
 
-    // Si no se especifica objeto, mostrar la lista de objetos
-    if (!args[0]) {
-      const objetos = usuarios[remoteJid].objetos;
-      if (objetos.length === 0) {
-        return socket.sendMessage(remoteJid, { text: "No tienes objetos. Usa #comprarobjeto <objeto> para adquirir uno." });
-      }
-      return socket.sendMessage(remoteJid, { text: `Tienes los siguientes objetos:\n${objetos.join("\n")}` });
-    }
-
-    const objeto = args[0].toLowerCase();
-    const objetosDisponibles = ["gafas", "lentes", "ojos"]; // Incluir los objetos disponibles
-
-    // Verificar si el objeto solicitado está disponible
-    if (!objetosDisponibles.includes(objeto)) {
-      return socket.sendMessage(remoteJid, { text: `El objeto ${objeto} no es válido. Solo puedes colocar gafas, lentes u ojos.` });
-    }
-
+    // Verificar si el usuario tiene el objeto en su inventario
     if (!usuarios[remoteJid].objetos.includes(objeto)) {
       return socket.sendMessage(remoteJid, { text: `No tienes ${objeto}. Usa #comprarobjeto ${objeto} para obtenerlo.` });
     }
 
-    // Si ya tiene un objeto colocado, quitarlo
-    if (objeto === "gafas" || objeto === "lentes" || objeto === "ojos") {
-      // Se eliminan objetos tipo A antes de colocar uno nuevo
-      usuarios[remoteJid].objetos = usuarios[remoteJid].objetos.filter((o) => o !== "gafas" && o !== "lentes" && o !== "ojos");
+    // Lógica para colocar objetos, considerando el orden de tipo A1 y A
+    if (objeto === "gafas" || objeto === "lentes") {
+      // Verificar si ya tiene algún objeto de tipo A (ojos) y evitar colocarlos
+      if (usuarios[remoteJid].objetos.includes("ojos")) {
+        return socket.sendMessage(remoteJid, { text: `Ya tienes ojos colocados. Los objetos A1 (gafas, lentes) van por encima de los ojos. Usa #quitar ojos para poner otro objeto.` });
+      }
+
+      // Colocar el objeto A1 (gafas/lentes)
+      usuarios[remoteJid].objetos.push(objeto);
+    } else if (objeto === "ojos") {
+      // Verificar si ya tiene algún objeto A1 (gafas/lentes) y permitir colocar ojos debajo
+      if (usuarios[remoteJid].objetos.includes("gafas") || usuarios[remoteJid].objetos.includes("lentes")) {
+        // Colocar el objeto A (ojos)
+        usuarios[remoteJid].objetos.push(objeto);
+      } else {
+        return socket.sendMessage(remoteJid, { text: `No puedes colocar ojos sin gafas o lentes. Los ojos (A) deben ir debajo de un objeto A1 (gafas o lentes).` });
+      }
     }
 
-    // Colocar el objeto seleccionado
-    usuarios[remoteJid].objetos.push(objeto);
-
-    // Guardar los cambios
+    // Guardar el estado actualizado en el archivo JSON
     fs.writeFileSync(filePath, JSON.stringify(usuarios, null, 2), "utf8");
 
     console.log(`✅ [DEBUG] ${remoteJid} ha colocado:`, usuarios[remoteJid].objetos);
 
-    await socket.sendMessage(remoteJid, { text: `Te has puesto ${objeto}. Usa #quitar ${objeto} para quitártelo.` });
+    await socket.sendMessage(remoteJid, { text: `Has colocado ${objeto}. Usa #quitar ${objeto} para quitártelo.` });
   },
 };
