@@ -16,10 +16,12 @@ module.exports = {
 
     const objeto = args[0].toLowerCase();
 
-    // Objetos disponibles
+    // Objetos disponibles por categorías
     const objetosA = ["ojos", "naruto", "sasuke", "rinesharingan", "rinegan", "remolino"]; // Grupo A
     const objetosA1 = ["gafas", "lentes"]; // Grupo A1
-    const objetosDisponibles = [...objetosA, ...objetosA1];
+    const objetosB = ["boca"]; // Grupo B (nuevo)
+
+    const objetosDisponibles = [...objetosA, ...objetosA1, ...objetosB];
 
     if (!objetosDisponibles.includes(objeto)) {
       return socket.sendMessage(remoteJid, { text: "Ese objeto no está disponible para colocar." });
@@ -49,6 +51,11 @@ module.exports = {
     // Si el objeto es del grupo A1, verificar que no tenga otro del mismo grupo
     if (objetosA1.includes(objeto) && usuarios[remoteJid].objetos.some(o => objetosA1.includes(o))) {
       return socket.sendMessage(remoteJid, { text: `Ya tienes un objeto de tipo A1 colocado. Solo puedes tener uno.` });
+    }
+
+    // Si el objeto es del grupo B (boca), verificar que no tenga otra boca colocada
+    if (objetosB.includes(objeto) && usuarios[remoteJid].objetos.some(o => objetosB.includes(o))) {
+      return socket.sendMessage(remoteJid, { text: `Ya tienes una boca colocada. Solo puedes tener una.` });
     }
 
     // Agregar el objeto al inventario del usuario
