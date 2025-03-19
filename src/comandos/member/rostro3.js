@@ -59,7 +59,7 @@ module.exports = {
 
       // Coordenadas y dimensiones para los ojos (A)
       const posicionX = 180; // Ajustar para que se alinee bien sobre la cara
-      const posicionY = 240; // Ajustar para que se alinee bien sobre la cara, debajo de las gafas/lentes
+      const posicionY = 245; // Ajustar para que se alinee bien sobre la cara, debajo de las gafas/lentes
       const ancho = 140;
       const alto = 40;
 
