@@ -15,7 +15,7 @@ module.exports = {
     }
 
     const objeto = args[0].toLowerCase();
-    const objetosDisponibles = ["gafas", "lentes", "ojos", "naruto"];  // Añadimos "naruto" a los objetos disponibles
+    const objetosDisponibles = ["gafas", "lentes", "ojos", "naruto", "sasuke", "rinesharingan", "rinegan", "remolino"];
 
     if (!objetosDisponibles.includes(objeto)) {
       return socket.sendMessage(remoteJid, { text: "Ese objeto no está disponible para comprar." });
