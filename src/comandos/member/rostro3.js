@@ -28,9 +28,8 @@ module.exports = {
     const rostroPath = path.resolve(__dirname, "../../../assets/images/cara.png");
     const gafasPath = path.resolve(__dirname, "../../../assets/images/gafas.png");
     const lentesPath = path.resolve(__dirname, "../../../assets/images/lentes.png");
-    const bocaPath = path.resolve(__dirname, "../../../assets/images/boca.png"); // Nueva boca
 
-    // Rutas de los objetos del grupo A
+    // Rutas de los objetos del grupo A (ojos)
     const objetosA = {
       ojos: path.resolve(__dirname, "../../../assets/images/ojos.png"),
       naruto: path.resolve(__dirname, "../../../assets/images/naruto.png"),
@@ -38,6 +37,15 @@ module.exports = {
       rinesharingan: path.resolve(__dirname, "../../../assets/images/rinesharingan.png"),
       rinegan: path.resolve(__dirname, "../../../assets/images/rinegan.png"),
       remolino: path.resolve(__dirname, "../../../assets/images/remolino.png"),
+    };
+
+    // Rutas de los objetos del grupo B (bocas)
+    const objetosB = {
+      labios: path.resolve(__dirname, "../../../assets/images/labios.png"),
+      bocamorada: path.resolve(__dirname, "../../../assets/images/bocamorada.png"),
+      bocaroja: path.resolve(__dirname, "../../../assets/images/bocaroja.png"),
+      bocaalegre: path.resolve(__dirname, "../../../assets/images/bocaalegre.png"),
+      labiosnormales: path.resolve(__dirname, "../../../assets/images/labiosnormales.png"),
     };
 
     // Cargar la imagen base del rostro
@@ -62,10 +70,12 @@ module.exports = {
     }
 
     // Dibujar la boca (Grupo B)
-    if (usuarios[remoteJid].objetos.includes("boca")) {
-      const bocaImagen = await loadImage(bocaPath);
+    const objetoB = usuarios[remoteJid].objetos.find(obj => objetosB[obj]);
 
-      // **NUEVAS COORDENADAS**
+    if (objetoB) {
+      const bocaImagen = await loadImage(objetosB[objetoB]);
+
+      // **NUEVAS COORDENADAS AJUSTADAS PARA LA BOCA**
       const bocaX = 211; // Límite izquierdo
       const bocaY = 338; // Límite superior
       const bocaAncho = 72; // Máximo ancho dentro del límite
