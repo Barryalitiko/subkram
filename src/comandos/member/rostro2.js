@@ -1,6 +1,8 @@
 const { PREFIX } = require("../../krampus");
+const fs = require("fs");
+const path = require("path");
 
-let usuarios = {}; // Simulación de base de datos
+const filePath = path.resolve(__dirname, "../../usuarios.json");
 
 module.exports = {
   name: "comprarobjeto",
@@ -12,26 +14,32 @@ module.exports = {
       return socket.sendMessage(remoteJid, { text: "Debes especificar qué objeto quieres comprar." });
     }
 
-    const objeto = args[0].toLowerCase(); // Convertir a minúsculas
+    const objeto = args[0].toLowerCase();
     const objetosDisponibles = ["gafas", "lentes"];
 
     if (!objetosDisponibles.includes(objeto)) {
       return socket.sendMessage(remoteJid, { text: "Ese objeto no está disponible para comprar." });
     }
 
-    // Inicializar usuario si no existe
+    // Verificar si el archivo JSON existe, si no, crearlo
+    if (!fs.existsSync(filePath)) {
+      fs.writeFileSync(filePath, JSON.stringify({}, null, 2), "utf8");
+    }
+
+    let usuarios = JSON.parse(fs.readFileSync(filePath, "utf8"));
+
     if (!usuarios[remoteJid]) {
       usuarios[remoteJid] = { objetos: [] };
     }
 
-    // Verificar si ya tiene el objeto
     if (usuarios[remoteJid].objetos.includes(objeto)) {
       return socket.sendMessage(remoteJid, { text: `Ya tienes ${objeto}.` });
     }
 
-    // Agregar objeto
     usuarios[remoteJid].objetos.push(objeto);
-    console.log(`✅ [DEBUG] ${remoteJid} ha comprado:`, usuarios[remoteJid].objetos); // Depuración
+    fs.writeFileSync(filePath, JSON.stringify(usuarios, null, 2), "utf8");
+
+    console.log(`✅ [DEBUG] ${remoteJid} ha comprado:`, usuarios[remoteJid].objetos);
 
     await socket.sendMessage(remoteJid, { text: `¡Has comprado ${objeto}! Usa #colocar ${objeto} para ponértelo.` });
   },
