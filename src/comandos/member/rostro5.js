@@ -16,6 +16,7 @@ module.exports = {
 
     const objeto = args[0].toLowerCase();
 
+    // Verificar si el archivo JSON existe
     if (!fs.existsSync(filePath)) {
       fs.writeFileSync(filePath, JSON.stringify({}, null, 2), "utf8");
     }
@@ -26,11 +27,13 @@ module.exports = {
       return socket.sendMessage(remoteJid, { text: `No tienes ${objeto} colocado.` });
     }
 
+    // Eliminar el objeto del inventario
     usuarios[remoteJid].objetos = usuarios[remoteJid].objetos.filter((o) => o !== objeto);
     fs.writeFileSync(filePath, JSON.stringify(usuarios, null, 2), "utf8");
 
     console.log(`✅ [DEBUG] ${remoteJid} ha quitado:`, objeto);
 
+    // Respuesta de confirmación
     await socket.sendMessage(remoteJid, { text: `Te has quitado ${objeto}.` });
   },
 };
