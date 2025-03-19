@@ -28,30 +28,40 @@ module.exports = {
     const rostroPath = path.resolve(__dirname, "../../../assets/images/cara.png");
     const gafasPath = path.resolve(__dirname, "../../../assets/images/gafas.png");
     const lentesPath = path.resolve(__dirname, "../../../assets/images/lentes.png");
-    const ojosPath = path.resolve(__dirname, "../../../assets/images/ojos.png");
-    const narutoPath = path.resolve(__dirname, "../../../assets/images/naruto.png");  // Ruta de Naruto
 
-    // Cargar imágenes base
+    // Rutas de los objetos del grupo A
+    const objetosA = {
+      ojos: path.resolve(__dirname, "../../../assets/images/ojos.png"),
+      naruto: path.resolve(__dirname, "../../../assets/images/naruto.png"),
+      sasuke: path.resolve(__dirname, "../../../assets/images/sasuke.png"),
+      rinesharingan: path.resolve(__dirname, "../../../assets/images/rinesharingan.png"),
+      rinegan: path.resolve(__dirname, "../../../assets/images/rinegan.png"),
+      remolino: path.resolve(__dirname, "../../../assets/images/remolino.png"),
+    };
+
+    // Cargar la imagen base del rostro
     const rostro = await loadImage(rostroPath);
     const canvas = createCanvas(rostro.width, rostro.height);
     const ctx = canvas.getContext("2d");
 
     ctx.drawImage(rostro, 0, 0, rostro.width, rostro.height);
 
-    // Dibujar primero los objetos A (ojos o naruto), que van debajo de los objetos A1
-    if (usuarios[remoteJid].objetos.includes("ojos") || usuarios[remoteJid].objetos.includes("naruto")) {
-      let objetoImagen = usuarios[remoteJid].objetos.includes("ojos") ? await loadImage(ojosPath) : await loadImage(narutoPath);
+    // Buscar si el usuario tiene algún objeto del grupo A
+    const objetoA = usuarios[remoteJid].objetos.find(obj => objetosA[obj]);
 
-      // Coordenadas y dimensiones para los ojos o naruto (A)
-      const posicionX = 178;  // Ajustar para que se alinee bien sobre la cara
-      const posicionY = 250;  // Ajustar para que se alinee bien sobre la cara, debajo de las gafas/lentes
+    if (objetoA) {
+      const objetoImagen = await loadImage(objetosA[objetoA]);
+
+      // Coordenadas y dimensiones para los objetos A
+      const posicionX = 178;
+      const posicionY = 250;
       const ancho = 140;
       const alto = 40;
 
       ctx.drawImage(objetoImagen, posicionX, posicionY, ancho, alto);
     }
 
-    // Luego, dibujamos los objetos A1 (gafas o lentes), que deben ir encima de los objetos A
+    // Dibujar los objetos A1 (gafas o lentes) encima de los A
     if (usuarios[remoteJid].objetos.includes("gafas") || usuarios[remoteJid].objetos.includes("lentes")) {
       let objetoImagen = usuarios[remoteJid].objetos.includes("gafas") ? await loadImage(gafasPath) : await loadImage(lentesPath);
 
