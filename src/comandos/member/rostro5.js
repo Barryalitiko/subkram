@@ -1,6 +1,8 @@
 const { PREFIX } = require("../../krampus");
+const fs = require("fs");
+const path = require("path");
 
-let usuarios = {}; // Simulación de base de datos
+const filePath = path.resolve(__dirname, "../../usuarios.json");
 
 module.exports = {
   name: "quitar",
@@ -14,12 +16,21 @@ module.exports = {
 
     const objeto = args[0].toLowerCase();
 
-    if (!usuarios[remoteJid] || !usuarios[remoteJid].objetos.includes(objeto)) {
-      return socket.sendMessage(remoteJid, { text: `No tienes ${objeto} puesto.` });
+    if (!fs.existsSync(filePath)) {
+      fs.writeFileSync(filePath, JSON.stringify({}, null, 2), "utf8");
     }
 
-    // Quitar objeto
+    let usuarios = JSON.parse(fs.readFileSync(filePath, "utf8"));
+
+    if (!usuarios[remoteJid] || !usuarios[remoteJid].objetos.includes(objeto)) {
+      return socket.sendMessage(remoteJid, { text: `No tienes ${objeto} colocado.` });
+    }
+
     usuarios[remoteJid].objetos = usuarios[remoteJid].objetos.filter((o) => o !== objeto);
+    fs.writeFileSync(filePath, JSON.stringify(usuarios, null, 2), "utf8");
+
+    console.log(`✅ [DEBUG] ${remoteJid} ha quitado:`, objeto);
+
     await socket.sendMessage(remoteJid, { text: `Te has quitado ${objeto}.` });
   },
 };
