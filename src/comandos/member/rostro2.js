@@ -11,28 +11,41 @@ module.exports = {
   usage: `${PREFIX}comprarobjeto <objeto> | ${PREFIX}objeto`,
   handle: async ({ socket, remoteJid, args }) => {
     // Lista de objetos disponibles por categorías
-    const objetosA = ["ojos", "naruto", "sasuke", "rinesharingan", "rinegan", "remolino"]; // Grupo A (ojos)
-    const objetosA1 = ["gafas", "lentes"]; // Grupo A1 (gafas/lentes)
-    const objetosB = ["labios", "bocamorada", "bocaroja", "bocaalegre", "labiosnormales"]; // Grupo B (bocas)
+    const objetosA = ["👁️ Ojos", "🌀 Naruto", "🔥 Sasuke", "🔱 RinneSharingan", "🔵 Rinnegan", "🌪️ Remolino"];
+    const objetosA1 = ["🕶️ Gafas", "👓 Lentes"];
+    const objetosB = ["💋 Labios", "💜 Boca Morada", "❤️ Boca Roja", "😁 Boca Alegre", "👄 Labios Normales"];
 
     const objetosDisponibles = [...objetosA, ...objetosA1, ...objetosB];
 
-    // Si el usuario solo usa "#objeto", mostrar la lista completa de objetos
+    // Si el usuario solo usa "#objeto", mostrar la lista completa de objetos en un formato atractivo
     if (!args[0]) {
       return socket.sendMessage(remoteJid, {
-        text: `📜 *Lista de objetos disponibles:*  
-        
-👁️ *Grupo A (ojos)*: ${objetosA.join(", ")}  
-🕶️ *Grupo A1 (gafas/lentes)*: ${objetosA1.join(", ")}  
-👄 *Grupo B (bocas)*: ${objetosB.join(", ")}  
-
-Usa *#comprarobjeto <objeto>* para comprar un objeto.`,
+        text: `🎭 *OBJETOS DISPONIBLES* 🎭
+━━━━━━━━━━━━━━━━━━
+👁️ *Grupo A (ojos)*  
+${objetosA.join(" | ")}
+━━━━━━━━━━━━━━━━━━
+🕶️ *Grupo A1 (gafas/lentes)*  
+${objetosA1.join(" | ")}
+━━━━━━━━━━━━━━━━━━
+👄 *Grupo B (bocas)*  
+${objetosB.join(" | ")}
+━━━━━━━━━━━━━━━━━━
+🛍️ *Para comprar un objeto, usa:*  
+*#comprarobjeto <objeto>*  
+Ejemplo: *#comprarobjeto gafas*`,
       });
     }
 
     const objeto = args[0].toLowerCase();
 
-    if (!objetosDisponibles.includes(objeto)) {
+    // Normalizar los nombres de los objetos sin emojis y en minúsculas
+    const normalizar = (nombre) => nombre.replace(/[^a-z]/gi, "").toLowerCase();
+
+    // Convertir la lista de objetos en una versión sin emojis para comparar
+    const objetosNormalizados = [...objetosA, ...objetosA1, ...objetosB].map(normalizar);
+
+    if (!objetosNormalizados.includes(objeto)) {
       return socket.sendMessage(remoteJid, { text: "Ese objeto no está disponible para comprar." });
     }
 
@@ -58,6 +71,6 @@ Usa *#comprarobjeto <objeto>* para comprar un objeto.`,
 
     console.log(`✅ [DEBUG] ${remoteJid} ha comprado:`, usuarios[remoteJid].objetos);
 
-    await socket.sendMessage(remoteJid, { text: `¡Has comprado ${objeto}! Usa #colocar ${objeto} para ponértelo.` });
+    await socket.sendMessage(remoteJid, { text: `¡Has comprado *${objeto}*! Usa *#colocar ${objeto}* para ponértelo.` });
   },
 };
