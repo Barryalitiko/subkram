@@ -29,7 +29,7 @@ module.exports = {
     const gafasPath = path.resolve(__dirname, "../../../assets/images/gafas.png");
     const lentesPath = path.resolve(__dirname, "../../../assets/images/lentes.png");
     const ojosPath = path.resolve(__dirname, "../../../assets/images/ojos.png");
-    const narutoPath = path.resolve(__dirname, "../../../assets/images/naruto.png"); // Añadido el nuevo objeto
+    const narutoPath = path.resolve(__dirname, "../../../assets/images/naruto.png");  // Ruta de Naruto
 
     // Cargar imágenes base
     const rostro = await loadImage(rostroPath);
@@ -54,28 +54,15 @@ module.exports = {
       ctx.drawImage(objetoImagen, posicionX, posicionY, ancho, alto);
     }
 
-    // Después, dibujamos los ojos (A) debajo de las gafas o lentes
-    if (usuarios[remoteJid].objetos.includes("ojos")) {
-      let objetoImagen = await loadImage(ojosPath);
+    // Luego, dibujamos los ojos o naruto (A)
+    if (usuarios[remoteJid].objetos.includes("ojos") || usuarios[remoteJid].objetos.includes("naruto")) {
+      let objetoImagen = usuarios[remoteJid].objetos.includes("ojos") ? await loadImage(ojosPath) : await loadImage(narutoPath);
 
-      // Coordenadas y dimensiones para los ojos (A)
-      const posicionX = 178; // Ajustar para que se alinee bien sobre la cara
-      const posicionY = 250; // Ajustar para que se alinee bien sobre la cara, debajo de las gafas/lentes
+      // Coordenadas y dimensiones para los ojos o naruto (A)
+      const posicionX = 178;  // Ajustar para que se alinee bien sobre la cara
+      const posicionY = 250;  // Ajustar para que se alinee bien sobre la cara, debajo de las gafas/lentes
       const ancho = 140;
       const alto = 40;
-
-      ctx.drawImage(objetoImagen, posicionX, posicionY, ancho, alto);
-    }
-
-    // Añadir el objeto de Naruto (A) si está en el inventario
-    if (usuarios[remoteJid].objetos.includes("naruto")) {
-      let objetoImagen = await loadImage(narutoPath);
-
-      // Coordenadas y dimensiones para el objeto de Naruto
-      const posicionX = 160; // Ajustar la posición
-      const posicionY = 220; // Ajustar la posición
-      const ancho = 120;
-      const alto = 120;
 
       ctx.drawImage(objetoImagen, posicionX, posicionY, ancho, alto);
     }
