@@ -38,12 +38,13 @@ module.exports = {
 
     ctx.drawImage(rostro, 0, 0, rostro.width, rostro.height);
 
-    // Verificar qué objeto tiene colocado
-    let objetoActual = usuarios[remoteJid].objetos.find(o => o === "gafas" || o === "lentes" || o === "ojos" || o === "naruto");
+    // Verificar qué objetos tiene colocados el usuario
+    const objetoA1 = usuarios[remoteJid].objetos.find(o => o === "gafas" || o === "lentes");
+    const objetoA = usuarios[remoteJid].objetos.find(o => o === "ojos" || o === "naruto");
 
-    // Primero, dibujamos las gafas o lentes (A1)
-    if (objetoActual === "gafas" || objetoActual === "lentes") {
-      let objetoImagen = objetoActual === "gafas" ? await loadImage(gafasPath) : await loadImage(lentesPath);
+    // Primero, dibujamos las gafas o lentes (A1) si existen
+    if (objetoA1) {
+      let objetoImagenA1 = objetoA1 === "gafas" ? await loadImage(gafasPath) : await loadImage(lentesPath);
 
       // Coordenadas y dimensiones para las gafas o lentes (A1)
       const posicionX = 174;
@@ -51,20 +52,20 @@ module.exports = {
       const ancho = 146;
       const alto = 53;
 
-      ctx.drawImage(objetoImagen, posicionX, posicionY, ancho, alto);
+      ctx.drawImage(objetoImagenA1, posicionX, posicionY, ancho, alto);
     }
 
-    // Luego, dibujamos los ojos o naruto (A)
-    if (usuarios[remoteJid].objetos.includes("ojos") || usuarios[remoteJid].objetos.includes("naruto")) {
-      let objetoImagen = usuarios[remoteJid].objetos.includes("ojos") ? await loadImage(ojosPath) : await loadImage(narutoPath);
+    // Luego, dibujamos los ojos o naruto (A), que pueden colocarse siempre, aunque sin A1
+    if (objetoA) {
+      let objetoImagenA = objetoA === "ojos" ? await loadImage(ojosPath) : await loadImage(narutoPath);
 
-      // Coordenadas y dimensiones para los ojos o naruto (A)
-      const posicionX = 178;  // Ajustar para que se alinee bien sobre la cara
-      const posicionY = 250;  // Ajustar para que se alinee bien sobre la cara, debajo de las gafas/lentes
+      // Coordenadas y dimensiones para los ojos o naruto (A), debajo de las gafas/lentes (si hay)
+      const posicionX = 178; // Ajustar para que se alinee bien sobre la cara
+      const posicionY = objetoA1 ? 310 : 250; // Si hay A1, debajo de este; si no, más arriba
       const ancho = 140;
       const alto = 40;
 
-      ctx.drawImage(objetoImagen, posicionX, posicionY, ancho, alto);
+      ctx.drawImage(objetoImagenA, posicionX, posicionY, ancho, alto);
     }
 
     // Asegurar que la carpeta temporal exista
@@ -83,6 +84,6 @@ module.exports = {
       caption: "Aquí está tu personaje.",
     });
 
-    console.log(`✅ [DEBUG] ${remoteJid} ha visto su personaje con:`, objetoActual || "ningún objeto");
+    console.log(`✅ [DEBUG] ${remoteJid} ha visto su personaje con:`, objetoA || objetoA1 ? objetoA : "ningún objeto");
   },
 };
