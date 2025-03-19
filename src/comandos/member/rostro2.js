@@ -32,10 +32,12 @@ module.exports = {
       usuarios[remoteJid] = { objetos: [] };
     }
 
-    if (usuarios[remoteJid].objetos.includes(objeto)) {
-      return socket.sendMessage(remoteJid, { text: `Ya tienes ${objeto}.` });
+    // Verificar si el usuario ya tiene un objeto de ese tipo
+    if (usuarios[remoteJid].objetos.some(o => objetosDisponibles.includes(o) && o !== objeto)) {
+      return socket.sendMessage(remoteJid, { text: `Ya tienes un objeto de otro tipo. Solo puedes tener uno de cada tipo.` });
     }
 
+    // Si el usuario no tiene el objeto, lo añade
     usuarios[remoteJid].objetos.push(objeto);
     fs.writeFileSync(filePath, JSON.stringify(usuarios, null, 2), "utf8");
 
