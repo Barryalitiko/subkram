@@ -40,31 +40,29 @@ module.exports = {
     // Verificar qué objeto tiene colocado
     let objetoActual = usuarios[remoteJid].objetos.find(o => o === "gafas" || o === "lentes" || o === "ojos");
 
-    // Colocar los objetos según el tipo y las coordenadas
-    if (objetoActual) {
-      let objetoImagen;
-      let posicionX, posicionY, ancho, alto;
+    // Primero, dibujamos las gafas o lentes (A1)
+    if (objetoActual === "gafas" || objetoActual === "lentes") {
+      let objetoImagen = objetoActual === "gafas" ? await loadImage(gafasPath) : await loadImage(lentesPath);
 
-      if (objetoActual === "gafas" || objetoActual === "lentes") {
-        objetoImagen = objetoActual === "gafas" ? await loadImage(gafasPath) : await loadImage(lentesPath);
+      // Coordenadas y dimensiones para las gafas o lentes (A1)
+      const posicionX = 174;
+      const posicionY = 247;
+      const ancho = 146;
+      const alto = 53;
 
-        // Coordenadas y dimensiones para las gafas o lentes
-        posicionX = 174;
-        posicionY = 247;
-        ancho = 146;
-        alto = 53;
+      ctx.drawImage(objetoImagen, posicionX, posicionY, ancho, alto);
+    }
 
-      } else if (objetoActual === "ojos") {
-        objetoImagen = await loadImage(ojosPath);
+    // Después, dibujamos los ojos (A) debajo de las gafas o lentes
+    if (usuarios[remoteJid].objetos.includes("ojos")) {
+      let objetoImagen = await loadImage(ojosPath);
 
-        // Coordenadas y dimensiones para los ojos
-        posicionX = 180; // Ajustar para que se alinee bien sobre la cara
-        posicionY = 240; // Ajustar para que se alinee bien sobre la cara
-        ancho = 140;
-        alto = 40;
-      }
+      // Coordenadas y dimensiones para los ojos (A)
+      const posicionX = 180; // Ajustar para que se alinee bien sobre la cara
+      const posicionY = 240; // Ajustar para que se alinee bien sobre la cara, debajo de las gafas/lentes
+      const ancho = 140;
+      const alto = 40;
 
-      // Dibujar el objeto sobre la imagen base
       ctx.drawImage(objetoImagen, posicionX, posicionY, ancho, alto);
     }
 
