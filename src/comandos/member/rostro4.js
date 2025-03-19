@@ -1,4 +1,4 @@
-const { PREFIX } = require("../../krampus");
+const { PREFIX } = require("../../krampus"); // Aseguramos que el PREFIX esté definido
 const fs = require("fs");
 const path = require("path");
 
