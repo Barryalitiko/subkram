@@ -19,18 +19,20 @@ module.exports = {
       return socket.sendMessage(remoteJid, { text: "Ese objeto no está disponible para comprar." });
     }
 
-    // Asegurar que el usuario tenga un espacio en la "base de datos"
+    // Inicializar usuario si no existe
     if (!usuarios[remoteJid]) {
       usuarios[remoteJid] = { objetos: [] };
     }
 
-    // Verificar si ya lo tiene
+    // Verificar si ya tiene el objeto
     if (usuarios[remoteJid].objetos.includes(objeto)) {
       return socket.sendMessage(remoteJid, { text: `Ya tienes ${objeto}.` });
     }
 
-    // Agregar objeto al usuario
+    // Agregar objeto
     usuarios[remoteJid].objetos.push(objeto);
+    console.log(`✅ [DEBUG] ${remoteJid} ha comprado:`, usuarios[remoteJid].objetos); // Depuración
+
     await socket.sendMessage(remoteJid, { text: `¡Has comprado ${objeto}! Usa #colocar ${objeto} para ponértelo.` });
   },
 };
