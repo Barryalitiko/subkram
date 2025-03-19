@@ -38,9 +38,9 @@ module.exports = {
 
     ctx.drawImage(rostro, 0, 0, rostro.width, rostro.height);
 
-    // Verificar qué objetos tiene colocados el usuario
-    const objetoA1 = usuarios[remoteJid].objetos.find(o => o === "gafas" || o === "lentes");
-    const objetoA = usuarios[remoteJid].objetos.find(o => o === "ojos" || o === "naruto");
+    // Verificar qué objeto tiene colocado el usuario
+    let objetoA1 = usuarios[remoteJid].objetos.find(o => o === "gafas" || o === "lentes");
+    let objetoA = usuarios[remoteJid].objetos.find(o => o === "ojos" || o === "naruto");
 
     // Primero, dibujamos las gafas o lentes (A1) si existen
     if (objetoA1) {
@@ -55,13 +55,13 @@ module.exports = {
       ctx.drawImage(objetoImagenA1, posicionX, posicionY, ancho, alto);
     }
 
-    // Luego, dibujamos los ojos o naruto (A), que pueden colocarse siempre, aunque sin A1
+    // Luego, dibujamos los ojos o naruto (A), los cuales siempre deben poder colocarse
     if (objetoA) {
       let objetoImagenA = objetoA === "ojos" ? await loadImage(ojosPath) : await loadImage(narutoPath);
 
-      // Coordenadas y dimensiones para los ojos o naruto (A), debajo de las gafas/lentes (si hay)
+      // Coordenadas y dimensiones para los ojos o naruto (A), colocados sobre la cara
       const posicionX = 178; // Ajustar para que se alinee bien sobre la cara
-      const posicionY = objetoA1 ? 310 : 250; // Si hay A1, debajo de este; si no, más arriba
+      const posicionY = 250; // Alineado con la zona de los ojos
       const ancho = 140;
       const alto = 40;
 
