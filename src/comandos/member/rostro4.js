@@ -30,11 +30,11 @@ module.exports = {
     }
 
     const objeto = args[0].toLowerCase();
-    const objetosDisponibles = ["gafas", "lentes"]; // Los objetos que pueden ser colocados
+    const objetosDisponibles = ["gafas", "lentes", "ojos"]; // Incluir los objetos disponibles
 
     // Verificar si el objeto solicitado está disponible
     if (!objetosDisponibles.includes(objeto)) {
-      return socket.sendMessage(remoteJid, { text: `El objeto ${objeto} no es válido. Solo puedes colocar gafas o lentes.` });
+      return socket.sendMessage(remoteJid, { text: `El objeto ${objeto} no es válido. Solo puedes colocar gafas, lentes u ojos.` });
     }
 
     if (!usuarios[remoteJid].objetos.includes(objeto)) {
@@ -42,9 +42,9 @@ module.exports = {
     }
 
     // Si ya tiene un objeto colocado, quitarlo
-    if (objeto === "gafas" || objeto === "lentes") {
-      // Se eliminan tanto gafas como lentes antes de colocar uno nuevo
-      usuarios[remoteJid].objetos = usuarios[remoteJid].objetos.filter((o) => o !== "gafas" && o !== "lentes");
+    if (objeto === "gafas" || objeto === "lentes" || objeto === "ojos") {
+      // Se eliminan objetos tipo A antes de colocar uno nuevo
+      usuarios[remoteJid].objetos = usuarios[remoteJid].objetos.filter((o) => o !== "gafas" && o !== "lentes" && o !== "ojos");
     }
 
     // Colocar el objeto seleccionado
