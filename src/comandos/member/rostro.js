@@ -1,6 +1,14 @@
 const { PREFIX } = require("../../krampus");
+const fs = require("fs");
+const path = require("path");
 
-let usuarios = {}; // Para almacenar los datos de cada usuario (esto sería una base de datos en un caso real)
+// Carga el archivo de usuarios (si existe) o crea uno vacío
+const usuariosPath = path.resolve(__dirname, "usuarios.json");
+let usuarios = {};
+
+if (fs.existsSync(usuariosPath)) {
+  usuarios = JSON.parse(fs.readFileSync(usuariosPath, "utf-8"));
+}
 
 module.exports = {
   name: "comprarrostro",
@@ -14,6 +22,7 @@ module.exports = {
 
     if (!usuarios[remoteJid].rostro) {
       usuarios[remoteJid].rostro = true; // El usuario ahora tiene rostro
+      fs.writeFileSync(usuariosPath, JSON.stringify(usuarios, null, 2)); // Guarda los datos en el archivo JSON
       await socket.sendMessage(remoteJid, { text: "¡Rostro comprado exitosamente!" });
     } else {
       await socket.sendMessage(remoteJid, { text: "Ya tienes un rostro." });
