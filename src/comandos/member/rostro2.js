@@ -7,7 +7,7 @@ const filePath = path.resolve(__dirname, "../../usuarios.json");
 module.exports = {
   name: "comprarobjeto",
   description: "Compra un objeto y lo añade a tu inventario.",
-  commands: ["objeto"],
+  commands: ["comprarobjeto"],
   usage: `${PREFIX}comprarobjeto <objeto>`,
   handle: async ({ socket, remoteJid, args }) => {
     if (!args[0]) {
@@ -15,7 +15,13 @@ module.exports = {
     }
 
     const objeto = args[0].toLowerCase();
-    const objetosDisponibles = ["gafas", "lentes", "ojos", "naruto", "sasuke", "rinesharingan", "rinegan", "remolino", "boca"]; // Se agregó "boca"
+
+    // Lista actualizada con los objetos de los grupos A y B
+    const objetosA = ["ojos", "naruto", "sasuke", "rinesharingan", "rinegan", "remolino"]; // Grupo A
+    const objetosA1 = ["gafas", "lentes"]; // Grupo A1
+    const objetosB = ["labios", "bocamorada", "bocaroja", "bocaalegre", "labiosnormales"]; // Grupo B
+
+    const objetosDisponibles = [...objetosA, ...objetosA1, ...objetosB];
 
     if (!objetosDisponibles.includes(objeto)) {
       return socket.sendMessage(remoteJid, { text: "Ese objeto no está disponible para comprar." });
