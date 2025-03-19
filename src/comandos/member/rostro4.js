@@ -15,7 +15,7 @@ module.exports = {
     }
 
     const objeto = args[0].toLowerCase();
-    const objetosDisponibles = ["gafas", "lentes", "ojos"];
+    const objetosDisponibles = ["gafas", "lentes", "ojos", "naruto"];
 
     // Verificar si el archivo JSON existe
     if (!fs.existsSync(filePath)) {
@@ -33,22 +33,22 @@ module.exports = {
       return socket.sendMessage(remoteJid, { text: `No tienes ${objeto}. Usa #comprarobjeto ${objeto} para obtenerlo.` });
     }
 
-    // Lógica para colocar objetos, considerando el orden de tipo A1 y A
+    // Lógica para colocar objetos
     if (objeto === "gafas" || objeto === "lentes") {
-      // Verificar si ya tiene algún objeto de tipo A (ojos) y evitar colocarlos
-      if (usuarios[remoteJid].objetos.includes("ojos")) {
-        return socket.sendMessage(remoteJid, { text: `Ya tienes ojos colocados. Los objetos A1 (gafas, lentes) van por encima de los ojos. Usa #quitar ojos para poner otro objeto.` });
+      // Verificar si ya tiene algún objeto de tipo A (ojos o naruto) y permitirlo
+      if (usuarios[remoteJid].objetos.includes("ojos") || usuarios[remoteJid].objetos.includes("naruto")) {
+        return socket.sendMessage(remoteJid, { text: `Ya tienes ojos o naruto colocados. Los objetos A1 (gafas, lentes) van por encima de los ojos. Usa #quitar ojos o #quitar naruto para poner otro objeto.` });
       }
 
       // Colocar el objeto A1 (gafas/lentes)
       usuarios[remoteJid].objetos.push(objeto);
-    } else if (objeto === "ojos") {
-      // Verificar si ya tiene algún objeto A1 (gafas/lentes) y permitir colocar ojos debajo
-      if (usuarios[remoteJid].objetos.includes("gafas") || usuarios[remoteJid].objetos.includes("lentes")) {
-        // Colocar el objeto A (ojos)
+    } else if (objeto === "ojos" || objeto === "naruto") {
+      // Permitir colocar un objeto A (ojos o naruto) sin necesidad de un objeto A1
+      if (!usuarios[remoteJid].objetos.includes("gafas") && !usuarios[remoteJid].objetos.includes("lentes")) {
+        // Colocar el objeto A (ojos o naruto)
         usuarios[remoteJid].objetos.push(objeto);
       } else {
-        return socket.sendMessage(remoteJid, { text: `No puedes colocar ojos sin gafas o lentes. Los ojos (A) deben ir debajo de un objeto A1 (gafas o lentes).` });
+        return socket.sendMessage(remoteJid, { text: `No puedes colocar ojos o naruto si ya tienes un objeto A1 (gafas o lentes) colocado. Usa #quitar gafas o #quitar lentes para poner otros objetos.` });
       }
     }
 
