@@ -1,6 +1,8 @@
 const { PREFIX } = require("../../krampus");
+const fs = require("fs");
+const path = require("path");
 
-let usuarios = {}; // Simulación de base de datos
+const filePath = path.resolve(__dirname, "../../usuarios.json");
 
 module.exports = {
   name: "colocar",
@@ -15,24 +17,28 @@ module.exports = {
     const objeto = args[0].toLowerCase();
     const objetosDisponibles = ["gafas", "lentes"];
 
+    if (!fs.existsSync(filePath)) {
+      fs.writeFileSync(filePath, JSON.stringify({}, null, 2), "utf8");
+    }
+
+    let usuarios = JSON.parse(fs.readFileSync(filePath, "utf8"));
+
     if (!usuarios[remoteJid]) {
       usuarios[remoteJid] = { objetos: [] };
     }
 
-    console.log(`✅ [DEBUG] Objetos del usuario ${remoteJid}:`, usuarios[remoteJid].objetos); // Depuración
-
-    // Verificar si tiene el objeto antes de colocarlo
     if (!usuarios[remoteJid].objetos.includes(objeto)) {
       return socket.sendMessage(remoteJid, { text: `No tienes ${objeto}. Usa #comprarobjeto ${objeto} para obtenerlo.` });
     }
 
-    // Asegurar que solo haya un objeto tipo A1
     if (objeto === "gafas" || objeto === "lentes") {
       usuarios[remoteJid].objetos = usuarios[remoteJid].objetos.filter((o) => o !== "gafas" && o !== "lentes");
     }
 
     usuarios[remoteJid].objetos.push(objeto);
-    console.log(`✅ [DEBUG] ${remoteJid} ha colocado:`, usuarios[remoteJid].objetos); // Depuración
+    fs.writeFileSync(filePath, JSON.stringify(usuarios, null, 2), "utf8");
+
+    console.log(`✅ [DEBUG] ${remoteJid} ha colocado:`, usuarios[remoteJid].objetos);
 
     await socket.sendMessage(remoteJid, { text: `Te has puesto ${objeto}. Usa #quitar ${objeto} para quitártelo.` });
   },
