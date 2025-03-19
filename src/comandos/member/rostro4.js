@@ -15,7 +15,15 @@ module.exports = {
     }
 
     const objeto = args[0].toLowerCase();
-    const objetosDisponibles = ["gafas", "lentes", "ojos", "naruto"];  // Añadimos "naruto" a la lista
+
+    // Objetos disponibles
+    const objetosA = ["ojos", "naruto", "sasuke", "rinesharingan", "rinegan", "remolino"]; // Grupo A
+    const objetosA1 = ["gafas", "lentes"]; // Grupo A1
+    const objetosDisponibles = [...objetosA, ...objetosA1];
+
+    if (!objetosDisponibles.includes(objeto)) {
+      return socket.sendMessage(remoteJid, { text: "Ese objeto no está disponible para colocar." });
+    }
 
     // Verificar si el archivo JSON existe
     if (!fs.existsSync(filePath)) {
@@ -33,18 +41,14 @@ module.exports = {
       return socket.sendMessage(remoteJid, { text: `No tienes ${objeto}. Usa #comprarobjeto ${objeto} para obtenerlo.` });
     }
 
-    // Verificar que no tenga más de un objeto del mismo tipo A o A1
-    const objetosA = ["ojos", "naruto"];
-    const objetosA1 = ["gafas", "lentes"];
-
-    // Si el objeto es A (ojos, naruto), verificar que solo tenga uno
+    // Si el objeto es del grupo A, verificar que no tenga otro del mismo grupo
     if (objetosA.includes(objeto) && usuarios[remoteJid].objetos.some(o => objetosA.includes(o))) {
-      return socket.sendMessage(remoteJid, { text: `Ya tienes un objeto de tipo A colocado (ojos o naruto). Solo puedes tener uno.` });
+      return socket.sendMessage(remoteJid, { text: `Ya tienes un objeto de tipo A colocado. Solo puedes tener uno.` });
     }
 
-    // Si el objeto es A1 (gafas, lentes), verificar que solo tenga uno
+    // Si el objeto es del grupo A1, verificar que no tenga otro del mismo grupo
     if (objetosA1.includes(objeto) && usuarios[remoteJid].objetos.some(o => objetosA1.includes(o))) {
-      return socket.sendMessage(remoteJid, { text: `Ya tienes un objeto de tipo A1 colocado (gafas o lentes). Solo puedes tener uno.` });
+      return socket.sendMessage(remoteJid, { text: `Ya tienes un objeto de tipo A1 colocado. Solo puedes tener uno.` });
     }
 
     // Agregar el objeto al inventario del usuario
