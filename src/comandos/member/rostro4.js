@@ -17,9 +17,9 @@ module.exports = {
     const objeto = args[0].toLowerCase();
 
     // Objetos disponibles por categorías
-    const objetosA = ["ojos", "naruto", "sasuke", "rinesharingan", "rinegan", "remolino"]; // Grupo A
-    const objetosA1 = ["gafas", "lentes"]; // Grupo A1
-    const objetosB = ["boca"]; // Grupo B (nuevo)
+    const objetosA = ["ojos", "naruto", "sasuke", "rinesharingan", "rinegan", "remolino"]; // Grupo A (ojos)
+    const objetosA1 = ["gafas", "lentes"]; // Grupo A1 (gafas/lentes)
+    const objetosB = ["labios", "bocamorada", "bocaroja", "bocaalegre", "labiosnormales"]; // Grupo B (bocas)
 
     const objetosDisponibles = [...objetosA, ...objetosA1, ...objetosB];
 
@@ -53,7 +53,7 @@ module.exports = {
       return socket.sendMessage(remoteJid, { text: `Ya tienes un objeto de tipo A1 colocado. Solo puedes tener uno.` });
     }
 
-    // Si el objeto es del grupo B (boca), verificar que no tenga otra boca colocada
+    // Si el objeto es del grupo B (bocas), verificar que no tenga otra boca colocada
     if (objetosB.includes(objeto) && usuarios[remoteJid].objetos.some(o => objetosB.includes(o))) {
       return socket.sendMessage(remoteJid, { text: `Ya tienes una boca colocada. Solo puedes tener una.` });
     }
