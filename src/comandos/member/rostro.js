@@ -2,7 +2,6 @@ const { PREFIX } = require("../../krampus");
 const fs = require("fs");
 const path = require("path");
 
-// Carga el archivo de usuarios (si existe) o crea uno vacío
 const usuariosPath = path.resolve(__dirname, "usuarios.json");
 let usuarios = {};
 
@@ -17,12 +16,12 @@ module.exports = {
   usage: `${PREFIX}comprarrostro`,
   handle: async ({ socket, remoteJid }) => {
     if (!usuarios[remoteJid]) {
-      usuarios[remoteJid] = { rostro: false, objetos: [] }; // Inicializa datos para el usuario
+      usuarios[remoteJid] = { rostro: false, objetos: [] };
     }
 
     if (!usuarios[remoteJid].rostro) {
-      usuarios[remoteJid].rostro = true; // El usuario ahora tiene rostro
-      fs.writeFileSync(usuariosPath, JSON.stringify(usuarios, null, 2)); // Guarda los datos en el archivo JSON
+      usuarios[remoteJid].rostro = true;
+      fs.writeFileSync(usuariosPath, JSON.stringify(usuarios, null, 2));
       await socket.sendMessage(remoteJid, { text: "¡Rostro comprado exitosamente!" });
     } else {
       await socket.sendMessage(remoteJid, { text: "Ya tienes un rostro." });
