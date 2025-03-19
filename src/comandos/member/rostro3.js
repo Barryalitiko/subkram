@@ -1,9 +1,10 @@
-const { createCanvas, loadImage } = require('canvas');
-const fs = require('fs');
-const path = require('path');
+const { createCanvas, loadImage } = require("canvas");
+const fs = require("fs");
+const path = require("path");
 const { PREFIX } = require("../../krampus");
 
-let usuarios = {}; // Simulación de base de datos
+const filePath = path.resolve(__dirname, "../../usuarios.json");
+const tempPath = path.resolve(__dirname, "../../temp");
 
 module.exports = {
   name: "personaje",
@@ -11,49 +12,61 @@ module.exports = {
   commands: ["personaje"],
   usage: `${PREFIX}personaje`,
   handle: async ({ socket, remoteJid }) => {
-    // Crear la carpeta temp si no existe
-    const tempDir = path.resolve(__dirname, "../../../temp");
-    if (!fs.existsSync(tempDir)) {
-      fs.mkdirSync(tempDir, { recursive: true });
+    // Verificar si existe el archivo de usuarios
+    if (!fs.existsSync(filePath)) {
+      fs.writeFileSync(filePath, JSON.stringify({}, null, 2), "utf8");
     }
 
-    // Imagen base del rostro
+    let usuarios = JSON.parse(fs.readFileSync(filePath, "utf8"));
+
+    if (!usuarios[remoteJid]) {
+      usuarios[remoteJid] = { objetos: [] };
+      fs.writeFileSync(filePath, JSON.stringify(usuarios, null, 2), "utf8");
+    }
+
+    // Rutas de imágenes
     const rostroPath = path.resolve(__dirname, "../../../assets/images/cara.png");
     const gafasPath = path.resolve(__dirname, "../../../assets/images/gafas.png");
     const lentesPath = path.resolve(__dirname, "../../../assets/images/lentes.png");
 
-    // Verificar si el usuario tiene objetos
-    if (!usuarios[remoteJid]) {
-      usuarios[remoteJid] = { objetos: [] };
+    // Cargar imágenes base
+    const rostro = await loadImage(rostroPath);
+    const canvas = createCanvas(rostro.width, rostro.height);
+    const ctx = canvas.getContext("2d");
+
+    ctx.drawImage(rostro, 0, 0, rostro.width, rostro.height);
+
+    // Verificar qué objeto tiene colocado
+    let objetoActual = usuarios[remoteJid].objetos.find(o => o === "gafas" || o === "lentes");
+
+    if (objetoActual) {
+      let objetoImagen = objetoActual === "gafas" ? await loadImage(gafasPath) : await loadImage(lentesPath);
+
+      // Posición de los objetos en la cara (ajustar según sea necesario)
+      const posicionX = 174;
+      const posicionY = 247;
+      const ancho = 146;
+      const alto = 53;
+
+      ctx.drawImage(objetoImagen, posicionX, posicionY, ancho, alto);
     }
 
-    const tieneGafas = usuarios[remoteJid].objetos.includes("gafas");
-    const tieneLentes = usuarios[remoteJid].objetos.includes("lentes");
-
-    // Cargar imagen base
-    const imagenBase = await loadImage(rostroPath);
-    const canvas = createCanvas(imagenBase.width, imagenBase.height);
-    const ctx = canvas.getContext('2d');
-    ctx.drawImage(imagenBase, 0, 0, imagenBase.width, imagenBase.height);
-
-    // Dibujar objeto si el usuario lo tiene
-    if (tieneGafas) {
-      const gafas = await loadImage(gafasPath);
-      ctx.drawImage(gafas, 174, 247, 146, 53);
-    } else if (tieneLentes) {
-      const lentes = await loadImage(lentesPath);
-      ctx.drawImage(lentes, 174, 247, 146, 53);
+    // Asegurar que la carpeta temporal exista
+    if (!fs.existsSync(tempPath)) {
+      fs.mkdirSync(tempPath, { recursive: true });
     }
 
-    // Guardar imagen generada
-    const outputPath = path.join(tempDir, `personaje_${remoteJid}.png`);
+    // Guardar la imagen generada
+    const outputPath = path.resolve(tempPath, `personaje_${remoteJid}.png`);
     const buffer = canvas.toBuffer("image/png");
     fs.writeFileSync(outputPath, buffer);
 
-    // Enviar la imagen al chat
+    // Enviar la imagen al usuario
     await socket.sendMessage(remoteJid, {
       image: fs.readFileSync(outputPath),
       caption: "Aquí está tu personaje.",
     });
+
+    console.log(`✅ [DEBUG] ${remoteJid} ha visto su personaje con:`, objetoActual || "ningún objeto");
   },
 };
