@@ -15,7 +15,7 @@ module.exports = {
     }
 
     const objeto = args[0].toLowerCase();
-    const objetosDisponibles = ["gafas", "lentes", "ojos", "naruto"];  // Añadimos "naruto"
+    const objetosDisponibles = ["gafas", "lentes", "ojos", "naruto"];  // Añadimos "naruto" a la lista
 
     // Verificar si el archivo JSON existe
     if (!fs.existsSync(filePath)) {
@@ -33,14 +33,22 @@ module.exports = {
       return socket.sendMessage(remoteJid, { text: `No tienes ${objeto}. Usa #comprarobjeto ${objeto} para obtenerlo.` });
     }
 
-    // Lógica para colocar objetos A1 (gafas/lentes)
-    if (objeto === "gafas" || objeto === "lentes") {
-      // Colocar el objeto A1 (gafas/lentes)
-      usuarios[remoteJid].objetos.push(objeto);
-    } else if (objeto === "ojos" || objeto === "naruto") {
-      // Los objetos A (ojos y naruto) se pueden colocar sin importar si hay un A1 colocado
-      usuarios[remoteJid].objetos.push(objeto);
+    // Verificar que no tenga más de un objeto del mismo tipo A o A1
+    const objetosA = ["ojos", "naruto"];
+    const objetosA1 = ["gafas", "lentes"];
+
+    // Si el objeto es A (ojos, naruto), verificar que solo tenga uno
+    if (objetosA.includes(objeto) && usuarios[remoteJid].objetos.some(o => objetosA.includes(o))) {
+      return socket.sendMessage(remoteJid, { text: `Ya tienes un objeto de tipo A colocado (ojos o naruto). Solo puedes tener uno.` });
     }
+
+    // Si el objeto es A1 (gafas, lentes), verificar que solo tenga uno
+    if (objetosA1.includes(objeto) && usuarios[remoteJid].objetos.some(o => objetosA1.includes(o))) {
+      return socket.sendMessage(remoteJid, { text: `Ya tienes un objeto de tipo A1 colocado (gafas o lentes). Solo puedes tener uno.` });
+    }
+
+    // Agregar el objeto al inventario del usuario
+    usuarios[remoteJid].objetos.push(objeto);
 
     // Guardar el estado actualizado en el archivo JSON
     fs.writeFileSync(filePath, JSON.stringify(usuarios, null, 2), "utf8");
