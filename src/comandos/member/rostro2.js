@@ -7,7 +7,7 @@ const filePath = path.resolve(__dirname, "../../usuarios.json");
 module.exports = {
   name: "comprarobjeto",
   description: "Compra un objeto y lo añade a tu inventario.",
-  commands: ["comprarobjeto"],
+  commands: ["objeto"],
   usage: `${PREFIX}comprarobjeto <objeto>`,
   handle: async ({ socket, remoteJid, args }) => {
     if (!args[0]) {
