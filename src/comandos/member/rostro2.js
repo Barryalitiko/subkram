@@ -32,9 +32,9 @@ module.exports = {
       usuarios[remoteJid] = { objetos: [] };
     }
 
-    // Verificar si el usuario ya tiene un objeto de ese tipo
-    if (usuarios[remoteJid].objetos.some(o => objetosDisponibles.includes(o) && o !== objeto)) {
-      return socket.sendMessage(remoteJid, { text: `Ya tienes un objeto de otro tipo. Solo puedes tener uno de cada tipo.` });
+    // Verificar si el usuario ya tiene el objeto
+    if (usuarios[remoteJid].objetos.includes(objeto)) {
+      return socket.sendMessage(remoteJid, { text: `Ya tienes ${objeto}. Solo puedes tener uno de cada objeto.` });
     }
 
     // Si el usuario no tiene el objeto, lo añade
