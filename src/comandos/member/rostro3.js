@@ -2,7 +2,6 @@ const { PREFIX } = require("../../krampus");
 const fs = require("fs");
 const path = require("path");
 
-// Carga el archivo de usuarios (si existe) o crea uno vacío
 const usuariosPath = path.resolve(__dirname, "usuarios.json");
 let usuarios = {};
 
@@ -16,17 +15,16 @@ module.exports = {
   commands: ["personaje"],
   usage: `${PREFIX}personaje`,
   handle: async ({ socket, remoteJid }) => {
-    // Verificamos que el usuario tenga un rostro
     if (!usuarios[remoteJid] || !usuarios[remoteJid].rostro) {
       return socket.sendMessage(remoteJid, { text: "No tienes un rostro." });
     }
 
-    // Imagen base del rostro (se generaría aquí con los objetos)
-    let imagen = "ruta_del_rostro.png"; // Aquí iría la imagen del rostro sin objetos
+    const imagenBasePath = path.resolve(__dirname, "../../../assets/images/cara.png"); // Ruta base del rostro
+    let imagen = imagenBasePath;
 
-    // Verificamos si el usuario tiene gafas
-    if (usuarios[remoteJid].objetos && usuarios[remoteJid].objetos.includes("gafas")) {
-      imagen = "ruta_con_gafas.png"; // Aquí iría la imagen del rostro con gafas
+    // Verificar si el usuario tiene objetos comprados
+    if (usuarios[remoteJid].objetos.includes("gafas")) {
+      imagen = path.resolve(__dirname, "../../../assets/images/cara_con_gafas.png"); // Imagen con gafas
     }
 
     await socket.sendMessage(remoteJid, { image: { url: imagen }, caption: "Aquí está tu rostro." });
