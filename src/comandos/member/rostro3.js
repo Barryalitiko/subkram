@@ -30,7 +30,7 @@ module.exports = {
     const lentesPath = path.resolve(__dirname, "../../../assets/images/lentes.png");
     const bocaPath = path.resolve(__dirname, "../../../assets/images/boca.png"); // Nueva boca
 
-    // Rutas de los objetos del grupo A (ojos)
+    // Rutas de los objetos del grupo A
     const objetosA = {
       ojos: path.resolve(__dirname, "../../../assets/images/ojos.png"),
       naruto: path.resolve(__dirname, "../../../assets/images/naruto.png"),
@@ -47,44 +47,31 @@ module.exports = {
 
     ctx.drawImage(rostro, 0, 0, rostro.width, rostro.height);
 
-    // Dibujar el objeto del grupo A (ojos)
+    // Dibujar los objetos A (ojos)
     const objetoA = usuarios[remoteJid].objetos.find(obj => objetosA[obj]);
+
     if (objetoA) {
       const objetoImagen = await loadImage(objetosA[objetoA]);
-
-      // Coordenadas y dimensiones para los objetos A (ojos)
-      const posicionX = 178;
-      const posicionY = 250;
-      const ancho = 140;
-      const alto = 40;
-
-      ctx.drawImage(objetoImagen, posicionX, posicionY, ancho, alto);
+      ctx.drawImage(objetoImagen, 178, 250, 140, 40); // Posición ojos
     }
 
-    // Dibujar los objetos A1 (gafas o lentes)
+    // Dibujar gafas/lentes (A1) encima de los ojos
     if (usuarios[remoteJid].objetos.includes("gafas") || usuarios[remoteJid].objetos.includes("lentes")) {
       let objetoImagen = usuarios[remoteJid].objetos.includes("gafas") ? await loadImage(gafasPath) : await loadImage(lentesPath);
-
-      // Coordenadas y dimensiones para las gafas o lentes (A1)
-      const posicionX = 174;
-      const posicionY = 247;
-      const ancho = 146;
-      const alto = 53;
-
-      ctx.drawImage(objetoImagen, posicionX, posicionY, ancho, alto);
+      ctx.drawImage(objetoImagen, 174, 247, 146, 53);
     }
 
-    // Dibujar la boca si el usuario la tiene en su inventario (Grupo B)
+    // Dibujar la boca (Grupo B)
     if (usuarios[remoteJid].objetos.includes("boca")) {
       const bocaImagen = await loadImage(bocaPath);
 
-      // **Coordenadas y dimensiones para la boca**
-      const posicionX = 211; // Lado izquierdo del área definida
-      const posicionY = 338; // Posición superior del área definida
-      const ancho = 72; // Flexible (dependerá del PNG)
-      const alto = 31; // Altura fija hasta la línea superior de la boca
+      // **NUEVAS COORDENADAS**
+      const bocaX = 211; // Límite izquierdo
+      const bocaY = 338; // Límite superior
+      const bocaAncho = 72; // Máximo ancho dentro del límite
+      const bocaAlto = bocaImagen.height * (bocaAncho / bocaImagen.width); // Escalar proporcionalmente
 
-      ctx.drawImage(bocaImagen, posicionX, posicionY, ancho, alto);
+      ctx.drawImage(bocaImagen, bocaX, bocaY, bocaAncho, bocaAlto);
     }
 
     // Asegurar que la carpeta temporal exista
