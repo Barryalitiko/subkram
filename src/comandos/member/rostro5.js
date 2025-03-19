@@ -1,20 +1,25 @@
 const { PREFIX } = require("../../krampus");
 
-let usuarios = {}; // Base de datos temporal
+let usuarios = {}; // Simulación de base de datos
 
 module.exports = {
-  name: "quitarobjeto",
-  description: "Quita el objeto colocado en tu personaje.",
-  commands: ["quitarobjeto"],
-  usage: `${PREFIX}quitarobjeto`,
-  handle: async ({ socket, remoteJid }) => {
-    if (!usuarios[remoteJid] || !usuarios[remoteJid].objetoA1) {
-      return socket.sendMessage(remoteJid, { text: "No tienes ningún objeto colocado." });
+  name: "quitar",
+  description: "Quita un objeto de tu personaje.",
+  commands: ["quitar"],
+  usage: `${PREFIX}quitar <objeto>`,
+  handle: async ({ socket, remoteJid, args }) => {
+    if (!args[0]) {
+      return socket.sendMessage(remoteJid, { text: "Debes especificar qué objeto quieres quitar." });
     }
 
-    const objetoQuitado = usuarios[remoteJid].objetoA1;
-    usuarios[remoteJid].objetoA1 = null;
+    const objeto = args[0].toLowerCase();
 
-    await socket.sendMessage(remoteJid, { text: `Has quitado ${objetoQuitado} de tu personaje. Usa #personaje para verlo.` });
+    if (!usuarios[remoteJid] || !usuarios[remoteJid].objetos.includes(objeto)) {
+      return socket.sendMessage(remoteJid, { text: `No tienes ${objeto} puesto.` });
+    }
+
+    // Quitar objeto
+    usuarios[remoteJid].objetos = usuarios[remoteJid].objetos.filter((o) => o !== objeto);
+    await socket.sendMessage(remoteJid, { text: `Te has quitado ${objeto}.` });
   },
 };
