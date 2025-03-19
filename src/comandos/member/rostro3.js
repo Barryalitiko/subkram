@@ -1,3 +1,4 @@
+const { PREFIX } = require("../../krampus"); // Añadido el PREFIX aquí también
 const { createCanvas, loadImage } = require("canvas");
 const fs = require("fs");
 const path = require("path");
