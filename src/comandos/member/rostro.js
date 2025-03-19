@@ -11,7 +11,7 @@ module.exports = {
     if (!usuarios[remoteJid]) {
       usuarios[remoteJid] = { rostro: false, objetos: [] }; // Inicializa datos para el usuario
     }
-    
+
     if (!usuarios[remoteJid].rostro) {
       usuarios[remoteJid].rostro = true; // El usuario ahora tiene rostro
       await socket.sendMessage(remoteJid, { text: "¡Rostro comprado exitosamente!" });
