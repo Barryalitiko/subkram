@@ -58,7 +58,7 @@ module.exports = {
       let objetoImagen = await loadImage(ojosPath);
 
       // Coordenadas y dimensiones para los ojos (A)
-      const posicionX = 170; // Ajustar para que se alinee bien sobre la cara
+      const posicionX = 174; // Ajustar para que se alinee bien sobre la cara
       const posicionY = 250; // Ajustar para que se alinee bien sobre la cara, debajo de las gafas/lentes
       const ancho = 140;
       const alto = 40;
