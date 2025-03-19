@@ -1,6 +1,14 @@
 const { PREFIX } = require("../../krampus");
+const fs = require("fs");
+const path = require("path");
 
-let usuarios = {}; // Para almacenar los datos de cada usuario (esto sería una base de datos en un caso real)
+// Carga el archivo de usuarios (si existe) o crea uno vacío
+const usuariosPath = path.resolve(__dirname, "usuarios.json");
+let usuarios = {};
+
+if (fs.existsSync(usuariosPath)) {
+  usuarios = JSON.parse(fs.readFileSync(usuariosPath, "utf-8"));
+}
 
 module.exports = {
   name: "personaje",
