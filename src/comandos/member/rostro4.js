@@ -1,6 +1,6 @@
 const { PREFIX } = require("../../krampus");
 
-let usuarios = {}; // Base de datos temporal
+let usuarios = {}; // Simulación de base de datos
 
 module.exports = {
   name: "colocar",
@@ -8,24 +8,23 @@ module.exports = {
   commands: ["colocar"],
   usage: `${PREFIX}colocar <objeto>`,
   handle: async ({ socket, remoteJid, args }) => {
-    const objeto = args[0]?.toLowerCase();
-    const objetosA1 = ["gafas", "lentes"];
-
-    if (!objeto || !objetosA1.includes(objeto)) {
-      return socket.sendMessage(remoteJid, { text: "Objeto inválido. Puedes colocar: gafas o lentes." });
+    if (!args[0]) {
+      return socket.sendMessage(remoteJid, { text: "Debes especificar qué objeto quieres colocar." });
     }
+
+    const objeto = args[0].toLowerCase(); // Convertir a minúsculas
+    const objetosDisponibles = ["gafas", "lentes"];
 
     if (!usuarios[remoteJid] || !usuarios[remoteJid].objetos.includes(objeto)) {
-      return socket.sendMessage(remoteJid, { text: `No tienes ${objeto}. Primero cómpralo con #comprarobjeto ${objeto}.` });
+      return socket.sendMessage(remoteJid, { text: `No tienes ${objeto}. Usa #comprarobjeto ${objeto} para obtenerlo.` });
     }
 
-    // Si ya hay un objeto A1 colocado, lo quitamos antes de poner el nuevo
-    if (usuarios[remoteJid].objetoA1 && usuarios[remoteJid].objetoA1 !== objeto) {
-      await socket.sendMessage(remoteJid, { text: `Has quitado ${usuarios[remoteJid].objetoA1} para colocar ${objeto}.` });
+    // Asegurar que solo haya un objeto del tipo A1
+    if (objeto === "gafas" || objeto === "lentes") {
+      usuarios[remoteJid].objetos = usuarios[remoteJid].objetos.filter((o) => o !== "gafas" && o !== "lentes");
     }
 
-    // Colocar el nuevo objeto A1
-    usuarios[remoteJid].objetoA1 = objeto;
-    await socket.sendMessage(remoteJid, { text: `Has colocado ${objeto} en tu personaje. Usa #personaje para verlo.` });
+    usuarios[remoteJid].objetos.push(objeto);
+    await socket.sendMessage(remoteJid, { text: `Te has puesto ${objeto}. Usa #quitar ${objeto} para quitártelo.` });
   },
 };
