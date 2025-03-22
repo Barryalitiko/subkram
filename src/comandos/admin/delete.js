@@ -6,11 +6,11 @@ module.exports = {
   commands: ["delete", "del", "dlt", "dt"],
   usage: `${PREFIX}delete`,
 
-  handle: async ({ sendReply, sendReact, webMessage, socket, remoteJid }) => {
+  handle: async ({ sendReact, webMessage, socket, remoteJid }) => {
     await sendReact("🗑️");
 
     if (!webMessage.message.extendedTextMessage || !webMessage.message.extendedTextMessage.contextInfo) {
-      return await sendReply("✳️ *Responde al mensaje que deseas eliminar.*");
+      return await sendReact("❌"); // Reacción de error si no hay mensaje citado
     }
 
     try {
@@ -25,11 +25,9 @@ module.exports = {
           participant: participant,
         },
       });
-
-      await sendReply("✅ *Mensaje eliminado con éxito!*");
     } catch (error) {
       console.error("Error al eliminar el mensaje:", error);
-      await sendReply("❌ *No se pudo eliminar el mensaje.*");
+      await sendReact("❌"); // Reacción de error si falla
     }
   },
 };
