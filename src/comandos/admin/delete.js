@@ -6,21 +6,30 @@ module.exports = {
   commands: ["delete", "del", "dlt", "dt"],
   usage: `${PREFIX}delete`,
 
-  handle: async ({ sendReply, sendReact, message, client }) => {
+  handle: async ({ sendReply, sendReact, webMessage, socket, remoteJid }) => {
     await sendReact("🗑️");
 
-    if (!message.quoted) {
-      return await sendReply("✳️ Responde al mensaje que deseas eliminar.");
+    if (!webMessage.message.extendedTextMessage || !webMessage.message.extendedTextMessage.contextInfo) {
+      return await sendReply("✳️ *Responde al mensaje que deseas eliminar.*");
     }
 
     try {
-      const key = message.quoted.key;
-      await client.sendMessage(message.chat, { delete: key });
-      await sendReply("✅ ¡Mensaje eliminado con éxito!");
+      const key = webMessage.message.extendedTextMessage.contextInfo.stanzaId;
+      const participant = webMessage.message.extendedTextMessage.contextInfo.participant;
+
+      await socket.sendMessage(remoteJid, {
+        delete: {
+          remoteJid: remoteJid,
+          fromMe: participant === socket.user.id,
+          id: key,
+          participant: participant,
+        },
+      });
+
+      await sendReply("✅ *Mensaje eliminado con éxito!*");
     } catch (error) {
       console.error("Error al eliminar el mensaje:", error);
-      await sendReply("❌ No se pudo eliminar el mensaje.");
+      await sendReply("❌ *No se pudo eliminar el mensaje.*");
     }
   },
 };
-
