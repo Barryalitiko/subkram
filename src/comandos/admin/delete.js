@@ -5,10 +5,7 @@ module.exports = {
   description: "Eliminar un mensaje respondido",
   commands: ["delete", "del", "dlt", "dt"],
   usage: `${PREFIX}delete`,
-  groupOnly: true,
-  adminOnly: true,
-  botAdminOnly: true,
-  
+
   handle: async ({ sendReply, sendReact, message, client }) => {
     await sendReact("🗑️");
 
@@ -26,3 +23,4 @@ module.exports = {
     }
   },
 };
+
