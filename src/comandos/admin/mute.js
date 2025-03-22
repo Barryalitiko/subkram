@@ -17,7 +17,6 @@ module.exports = {
 
     try {
       const targetUser = webMessage.message.extendedTextMessage.contextInfo.participant;
-      
       if (!targetUser) return await sendReply("❌ *No se pudo identificar al usuario.*");
 
       if (autoDeleteUsers.has(targetUser)) {
@@ -40,13 +39,18 @@ module.exports = {
 
     if (autoDeleteUsers.has(sender)) {
       try {
-        await socket.sendMessage(remoteJid, {
-          delete: webMessage.key, // Usamos directamente la clave del mensaje recibido
-        });
-        console.log(`🗑️ Mensaje de ${sender} eliminado automáticamente.`);
+        // Esperamos un poco para que el mensaje aparezca y luego lo eliminamos
+        setTimeout(async () => {
+          await socket.sendMessage(remoteJid, {
+            delete: webMessage.key, // Eliminamos el mensaje del usuario
+          });
+          console.log(`🗑️ Mensaje de ${sender} eliminado automáticamente.`);
+        }, 1000); // Espera 1 segundo antes de eliminar el mensaje
+
       } catch (error) {
         console.error("Error al eliminar mensaje automáticamente:", error);
       }
     }
   },
 };
+
