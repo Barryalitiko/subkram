@@ -4,11 +4,11 @@ let autoDeleteUsers = new Set();
 
 module.exports = {
   name: "autodelete",
-  description: "Activar autoeliminación de mensajes para un usuario",
+  description: "Activa o desactiva la autoeliminación de mensajes para un usuario.",
   commands: ["autodelete", "autodel", "autod"],
   usage: `${PREFIX}autodelete @usuario`,
 
-  handle: async ({ sendReply, sendReact, webMessage, remoteJid, socket }) => {
+  handle: async ({ sendReply, sendReact, webMessage }) => {
     await sendReact("🗑️");
 
     if (!webMessage.message.extendedTextMessage || !webMessage.message.extendedTextMessage.contextInfo) {
@@ -34,18 +34,16 @@ module.exports = {
   },
 
   onMessage: async ({ webMessage, socket, remoteJid }) => {
-    const sender = webMessage.key.participant || webMessage.key.remoteJid;
-    
+    if (!webMessage.key || !webMessage.key.participant) return;
+
+    const sender = webMessage.key.participant;
+
     if (autoDeleteUsers.has(sender)) {
       try {
         await socket.sendMessage(remoteJid, {
-          delete: {
-            remoteJid: remoteJid,
-            fromMe: false,
-            id: webMessage.key.id,
-            participant: sender,
-          },
+          delete: webMessage.key, // Usamos directamente la clave del mensaje recibido
         });
+        console.log(`🗑️ Mensaje de ${sender} eliminado automáticamente.`);
       } catch (error) {
         console.error("Error al eliminar mensaje automáticamente:", error);
       }
