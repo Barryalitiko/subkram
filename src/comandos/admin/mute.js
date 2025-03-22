@@ -1,48 +1,54 @@
-const { PREFIX, BOT_NUMBER } = require("../../krampus");
-const { InvalidParameterError } = require("../../errors/InvalidParameterError");
-const { DangerError } = require("../../errors/DangerError");
-const { muteUser, unmuteUser } = require("../../utils/database");
-const { toUserJid, onlyNumbers } = require("../../utils");
+const { PREFIX } = require("../../krampus");
+
+let autoDeleteUsers = new Set();
 
 module.exports = {
-  name: "mute",
-  description: "Mutea a un usuario en el grupo.",
-  commands: ["mute", "unmute"],
-  usage: `${PREFIX}mute @usuario\n${PREFIX}unmute @usuario`,
-  handle: async ({
-    args,
-    isReply,
-    socket,
-    remoteJid,
-    replyJid,
-    sendReply,
-    userJid,
-    sendReact,
-  }) => {
-    if (!args.length && !isReply) {
-      throw new InvalidParameterError(
-        "Debes indicarme a quien quieres mutear\n> Krampus OM bot"
-      );
+  name: "autodelete",
+  description: "Activar autoeliminación de mensajes para un usuario",
+  commands: ["autodelete", "autodel", "autod"],
+  usage: `${PREFIX}autodelete @usuario`,
+
+  handle: async ({ sendReply, sendReact, webMessage, remoteJid, socket }) => {
+    await sendReact("🗑️");
+
+    if (!webMessage.message.extendedTextMessage || !webMessage.message.extendedTextMessage.contextInfo) {
+      return await sendReply("✳️ *Responde a un mensaje del usuario que quieres silenciar.*");
     }
 
-    const memberToMuteJid = isReply ? replyJid : toUserJid(args[0]);
-    const memberToMuteNumber = onlyNumbers(memberToMuteJid);
+    try {
+      const targetUser = webMessage.message.extendedTextMessage.contextInfo.participant;
+      
+      if (!targetUser) return await sendReply("❌ *No se pudo identificar al usuario.*");
 
-    if (memberToMuteNumber.length < 7 || memberToMuteNumber.length > 15) {
-      throw new InvalidParameterError("Número inválido\n> Krampus OM bot");
+      if (autoDeleteUsers.has(targetUser)) {
+        autoDeleteUsers.delete(targetUser);
+        return await sendReply(`🚫 *Autoeliminación desactivada para @${targetUser.split('@')[0]}*`, [targetUser]);
+      } else {
+        autoDeleteUsers.add(targetUser);
+        return await sendReply(`✅ *Autoeliminación activada para @${targetUser.split('@')[0]}*`, [targetUser]);
+      }
+    } catch (error) {
+      console.error("Error al gestionar autoeliminación:", error);
+      await sendReply("❌ *Ocurrió un error.*");
     }
+  },
 
-    if (memberToMuteJid === userJid) {
-      throw new DangerError("No puedes mutearte a ti mismo\n> Krampus OM bot");
+  onMessage: async ({ webMessage, socket, remoteJid }) => {
+    const sender = webMessage.key.participant || webMessage.key.remoteJid;
+    
+    if (autoDeleteUsers.has(sender)) {
+      try {
+        await socket.sendMessage(remoteJid, {
+          delete: {
+            remoteJid: remoteJid,
+            fromMe: false,
+            id: webMessage.key.id,
+            participant: sender,
+          },
+        });
+      } catch (error) {
+        console.error("Error al eliminar mensaje automáticamente:", error);
+      }
     }
-
-    const botJid = toUserJid(BOT_NUMBER);
-    if (memberToMuteJid === botJid) {
-      throw new DangerError("No puedes mutear al bot\n> Krampus OM bot");
-    }
-
-    muteUser(remoteJid, memberToMuteJid);
-    await sendReply(`El usuario @${memberToMuteJid} ha sido muteado\n> Krampus OM bot`);
-    await sendReact(memberToMuteJid, "🔇");
   },
 };
