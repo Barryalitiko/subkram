@@ -20,7 +20,7 @@ module.exports = {
     const objetosA = ["ojos", "naruto", "sasuke", "rinesharingan", "rinegan", "remolino"]; // Grupo A (ojos)
     const objetosA1 = ["gafas", "lentes"]; // Grupo A1 (gafas/lentes)
     const objetosB = ["labios", "bocamorada", "bocaroja", "bocaalegre", "labiosnormales"]; // Grupo B (bocas)
-    const objetosZ = ["tortuga"]; // Grupo Z (animaciones)
+    const objetosZ = ["tortuga", "love"]; // Grupo Z (animaciones)
 
     const objetosDisponibles = [...objetosA, ...objetosA1, ...objetosB, ...objetosZ];
 
