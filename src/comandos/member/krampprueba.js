@@ -14,12 +14,22 @@ module.exports = {
   description: "Convertir número en bot con código de vinculación",
   commands: ["serbot"],
   usage: `${PREFIX}serbot`,
-  handle: async ({ sendReply, sendReact, sender }) => {
+  handle: async (context) => {
     try {
       console.log("Iniciando el proceso de creación del subbot...");
+      console.log("Contexto recibido:", context);
+      
+      const { sendReply, sendReact, sender } = context;
+      
+      if (!sender) {
+        console.error("❌ Error: No se recibió el número del remitente.");
+        await sendReply("❌ *Error:* No se pudo obtener tu número. Intenta nuevamente.");
+        return;
+      }
+      
       console.log(`Número del remitente recibido: ${sender}`);
       
-      if (!sender || isNaN(sender)) {
+      if (isNaN(sender)) {
         console.error(`❌ Error: El número del remitente no es válido. Número recibido: ${sender}`);
         await sendReply(`❌ *Error:* Número de teléfono inválido (${sender}). Asegúrate de escribirlo correctamente.`);
         return;
@@ -74,7 +84,7 @@ module.exports = {
           if (shouldReconnect) {
             console.log("🔄 Intentando reconectar el subbot...");
             await sendReply("⚠️ *Intentando reconectar el subbot...*");
-            await module.exports.handle({ sendReply, sendReact, sender });
+            await module.exports.handle(context);
           } else {
             console.log("❌ El subbot se ha desconectado permanentemente.");
             await sendReply("❌ *El subbot se ha desconectado permanentemente.*");
