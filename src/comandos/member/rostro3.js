@@ -11,7 +11,7 @@ module.exports = {
   name: "personaje",
   description: "Muestra el rostro del usuario con los objetos comprados.",
   commands: ["personaje"],
-  usage: ${PREFIX}personaje,
+  usage: `${PREFIX}personaje`, // CORREGIDO: Agregadas comillas invertidas
   handle: async ({ socket, remoteJid }) => {
     try {
       if (!fs.existsSync(filePath)) {
@@ -77,7 +77,7 @@ module.exports = {
       }
 
       // Guardar la imagen temporal en PNG
-      const pngPath = path.resolve(tempPath, personaje_${remoteJid}.png);
+      const pngPath = path.resolve(tempPath, `personaje_${remoteJid}.png`); // CORREGIDO: Template literal bien definido
       const bufferPng = canvas.toBuffer("image/png");
 
       if (!bufferPng || bufferPng.length === 0) {
@@ -87,7 +87,7 @@ module.exports = {
       fs.writeFileSync(pngPath, bufferPng);
 
       // Convertir la imagen PNG a WEBP para sticker con sharp
-      const webpPath = path.resolve(tempPath, personaje_${remoteJid}.webp);
+      const webpPath = path.resolve(tempPath, `personaje_${remoteJid}.webp`); // CORREGIDO: Template literal bien definido
       await sharp(pngPath).toFormat("webp").toFile(webpPath);
 
       // Verificar que el archivo se creó correctamente
@@ -101,11 +101,11 @@ module.exports = {
         mimetype: "image/webp",
       });
 
-      console.log(✅ [DEBUG] ${remoteJid} ha visto su personaje con:, usuarios[remoteJid].objetos);
+      console.log(`✅ [DEBUG] ${remoteJid} ha visto su personaje con:`, usuarios[remoteJid].objetos); // CORREGIDO: Comillas invertidas
     } catch (error) {
       console.error("❌ Error al generar sticker:", error);
       await socket.sendMessage(remoteJid, {
-        text: ☠ Ocurrió un error al generar tu sticker.\n📄 *Detalles*: ${error.message},
+        text: `☠ Ocurrió un error al generar tu sticker.\n📄 *Detalles*: ${error.message}`, // CORREGIDO: Template literal bien definido
       });
     }
   },
