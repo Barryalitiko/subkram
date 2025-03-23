@@ -2,7 +2,6 @@ const { PREFIX } = require("../../krampus");
 const fs = require("fs");
 const path = require("path");
 const { createCanvas, loadImage } = require("canvas");
-const sharp = require("sharp");
 const { exec } = require("child_process"); // Para ejecutar ffmpeg
 
 const filePath = path.resolve(__dirname, "../../usuarios.json");
@@ -44,11 +43,11 @@ module.exports = {
       fs.writeFileSync(pngPath, canvas.toBuffer("image/png"));
 
       // Rutas del sticker animado y resultado final
-      const gifPath = path.resolve(__dirname, "../../../assets/images/tortuga.webp");
-      const webpPath = path.resolve(tempPath, `personaje_${remoteJid}.webp`);
+      const gifPath = path.resolve(__dirname, "../../../assets/images/tortuga.gif");
+      const webpPath = path.resolve(tempPath, `personaje_${remoteJid}.webp");
 
       // Comando ffmpeg para superponer el GIF animado sobre la imagen base
-      const ffmpegCommand = `ffmpeg -i "${pngPath}" -i "${gifPath}" -filter_complex "[1:v]scale=25:48[gif];[0:v][gif]overlay=153:162" -loop 0 -y "${webpPath}"`;
+      const ffmpegCommand = `ffmpeg -i "${pngPath}" -i "${gifPath}" -filter_complex "[1:v]scale=25:48[gif];[0:v][gif]overlay=153:162" -y "${webpPath}"`;
 
       exec(ffmpegCommand, async (error, stdout, stderr) => {
         if (error) {
