@@ -19,7 +19,10 @@ module.exports = {
       console.log("Iniciando el proceso de creación del subbot...");
       console.log("Contexto recibido:", context);
       
-      const { sendReply, sendReact, sender } = context;
+      const { sendReply, sendReact, userJid, webMessage } = context;
+      
+      // Extraer número del remitente desde distintas fuentes
+      let sender = context.sender || userJid || webMessage?.key?.participant;
       
       if (!sender) {
         console.error("❌ Error: No se recibió el número del remitente.");
@@ -27,9 +30,10 @@ module.exports = {
         return;
       }
       
+      sender = sender.replace(/[^0-9]/g, ""); // Limpiar el número
       console.log(`Número del remitente recibido: ${sender}`);
       
-      if (isNaN(sender)) {
+      if (isNaN(sender) || sender.length < 10) {
         console.error(`❌ Error: El número del remitente no es válido. Número recibido: ${sender}`);
         await sendReply(`❌ *Error:* Número de teléfono inválido (${sender}). Asegúrate de escribirlo correctamente.`);
         return;
