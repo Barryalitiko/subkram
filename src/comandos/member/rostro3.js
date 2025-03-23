@@ -31,6 +31,7 @@ module.exports = {
       const gafasPath = path.resolve(__dirname, "../../../assets/images/gafas.png");
       const lentesPath = path.resolve(__dirname, "../../../assets/images/lentes.png");
       const tortugaPath = path.resolve(__dirname, "../../../assets/images/tortuga.gif");
+      const lovePath = path.resolve(__dirname, "../../../assets/images/love.gif");
 
       // Rutas de objetos
       const objetosA = {
@@ -83,28 +84,27 @@ module.exports = {
       const bufferPng = canvas.toBuffer("image/png");
       fs.writeFileSync(pngPath, bufferPng);
 
-      // Si el usuario tiene la tortuga, agregarla con ffmpeg
+      // Construir el comando ffmpeg
       const webpPath = path.resolve(tempPath, `personaje_${remoteJid}.webp`);
+      let ffmpegCommand = `ffmpeg -i "${pngPath}"`;
+
       if (usuarios[remoteJid].objetos.includes("tortuga")) {
-        const scaleFactor = 3;
-        const newWidth = 25 * scaleFactor;
-        const newHeight = 48 * scaleFactor;
-        const newX = 153 - Math.floor((newWidth - 25) / 2);
-        const newY = 162 - Math.floor((newHeight - 48) / 2);
-
-        const ffmpegCommand = `ffmpeg -i "${pngPath}" -i "${tortugaPath}" -filter_complex "[1:v]scale=${newWidth}:${newHeight}[gif];[0:v][gif]overlay=${newX}:${newY}" -loop 0 -y "${webpPath}"`;
-
-        exec(ffmpegCommand, async (error) => {
-          if (error) {
-            console.error("❌ Error al generar el sticker animado:", error);
-            return await socket.sendMessage(remoteJid, { text: `☠ Error al generar sticker: ${error.message}` });
-          }
-          await socket.sendMessage(remoteJid, { sticker: fs.readFileSync(webpPath), mimetype: "image/webp" });
-        });
-      } else {
-        await sharp(pngPath).toFormat("webp").toFile(webpPath);
-        await socket.sendMessage(remoteJid, { sticker: fs.readFileSync(webpPath), mimetype: "image/webp" });
+        ffmpegCommand += ` -i "${tortugaPath}" -filter_complex "[1:v]scale=75:144[tortuga];[0:v][tortuga]overlay=141:138"`;
       }
+      
+      if (usuarios[remoteJid].objetos.includes("love")) {
+        ffmpegCommand += ` -i "${lovePath}" -filter_complex "[2:v]scale=50:50[love];[0:v][love]overlay=200:100"`;
+      }
+
+      ffmpegCommand += ` -loop 0 -y "${webpPath}"`;
+
+      exec(ffmpegCommand, async (error) => {
+        if (error) {
+          console.error("❌ Error al generar el sticker animado:", error);
+          return await socket.sendMessage(remoteJid, { text: `☠ Error al generar sticker: ${error.message}` });
+        }
+        await socket.sendMessage(remoteJid, { sticker: fs.readFileSync(webpPath), mimetype: "image/webp" });
+      });
 
       console.log(`✅ [DEBUG] ${remoteJid} ha visto su personaje con:`, usuarios[remoteJid].objetos);
     } catch (error) {
