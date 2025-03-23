@@ -17,10 +17,11 @@ module.exports = {
   handle: async ({ sendReply, sendReact, sender }) => {
     try {
       console.log("Iniciando el proceso de creación del subbot...");
+      console.log(`Número del remitente recibido: ${sender}`);
       
       if (!sender || isNaN(sender)) {
-        console.error("❌ Error: El número del remitente no es válido.");
-        await sendReply("❌ *Error:* Número de teléfono inválido. Asegúrate de escribirlo correctamente.");
+        console.error(`❌ Error: El número del remitente no es válido. Número recibido: ${sender}`);
+        await sendReply(`❌ *Error:* Número de teléfono inválido (${sender}). Asegúrate de escribirlo correctamente.`);
         return;
       }
       
