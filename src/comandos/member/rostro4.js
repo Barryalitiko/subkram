@@ -20,8 +20,9 @@ module.exports = {
     const objetosA = ["ojos", "naruto", "sasuke", "rinesharingan", "rinegan", "remolino"]; // Grupo A (ojos)
     const objetosA1 = ["gafas", "lentes"]; // Grupo A1 (gafas/lentes)
     const objetosB = ["labios", "bocamorada", "bocaroja", "bocaalegre", "labiosnormales"]; // Grupo B (bocas)
+    const objetosZ = ["tortuga"]; // Grupo Z (animaciones)
 
-    const objetosDisponibles = [...objetosA, ...objetosA1, ...objetosB];
+    const objetosDisponibles = [...objetosA, ...objetosA1, ...objetosB, ...objetosZ];
 
     if (!objetosDisponibles.includes(objeto)) {
       return socket.sendMessage(remoteJid, { text: "Ese objeto no está disponible para colocar." });
@@ -43,19 +44,21 @@ module.exports = {
       return socket.sendMessage(remoteJid, { text: `No tienes ${objeto}. Usa #comprarobjeto ${objeto} para obtenerlo.` });
     }
 
-    // Si el objeto es del grupo A, verificar que no tenga otro del mismo grupo
+    // Verificar si ya tiene un objeto del mismo tipo colocado
     if (objetosA.includes(objeto) && usuarios[remoteJid].objetos.some(o => objetosA.includes(o))) {
       return socket.sendMessage(remoteJid, { text: `Ya tienes un objeto de tipo A colocado. Solo puedes tener uno.` });
     }
 
-    // Si el objeto es del grupo A1, verificar que no tenga otro del mismo grupo
     if (objetosA1.includes(objeto) && usuarios[remoteJid].objetos.some(o => objetosA1.includes(o))) {
       return socket.sendMessage(remoteJid, { text: `Ya tienes un objeto de tipo A1 colocado. Solo puedes tener uno.` });
     }
 
-    // Si el objeto es del grupo B (bocas), verificar que no tenga otra boca colocada
     if (objetosB.includes(objeto) && usuarios[remoteJid].objetos.some(o => objetosB.includes(o))) {
       return socket.sendMessage(remoteJid, { text: `Ya tienes una boca colocada. Solo puedes tener una.` });
+    }
+
+    if (objetosZ.includes(objeto) && usuarios[remoteJid].objetos.some(o => objetosZ.includes(o))) {
+      return socket.sendMessage(remoteJid, { text: `Ya tienes una animación colocada. Solo puedes tener una.` });
     }
 
     // Agregar el objeto al inventario del usuario
