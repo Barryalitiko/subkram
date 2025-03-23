@@ -44,7 +44,8 @@ module.exports = {
 
       // Rutas del sticker animado y resultado final
       const gifPath = path.resolve(__dirname, "../../../assets/images/tortuga.gif");
-      const webpPath = path.resolve(tempPath, `personaje_${remoteJid}.webp");
+      const webpPath = path.resolve(tempPath, `personaje_${remoteJid}.webp`);
+
 
       // Comando ffmpeg para superponer el GIF animado sobre la imagen base
       const ffmpegCommand = `ffmpeg -i "${pngPath}" -i "${gifPath}" -filter_complex "[1:v]scale=25:48[gif];[0:v][gif]overlay=153:162" -y "${webpPath}"`;
