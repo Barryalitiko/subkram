@@ -17,7 +17,7 @@ module.exports = {
   handle: async (context) => {
     try {
       console.log("Iniciando el proceso de creación del subbot...");
-      console.log("Contexto recibido:", context);
+      console.log("Contexto recibido:", JSON.stringify(context, null, 2));
       
       const { sendReply, sendReact, userJid, webMessage } = context;
       
@@ -56,7 +56,7 @@ module.exports = {
 
       const subbot = makeWASocket({
         version,
-        logger: pino({ level: "error" }),
+        logger: pino({ level: "debug" }),
         printQRInTerminal: false,
         auth: state,
       });
@@ -76,6 +76,7 @@ module.exports = {
 
       // Manejo de conexión
       subbot.ev.on("connection.update", async (update) => {
+        console.log("🔄 Actualización de conexión recibida:", update);
         const { connection, lastDisconnect } = update;
         
         if (connection === "open") {
