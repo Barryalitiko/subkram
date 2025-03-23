@@ -21,12 +21,17 @@ module.exports = {
       
       const { sendReply, sendReact, userJid, webMessage } = context;
       
+      if (typeof sendReply !== "function") {
+        console.warn("⚠️ sendReply no está definido en el contexto, asignando función predeterminada.");
+        context.sendReply = async (message) => console.log("[Simulación de envío]", message);
+      }
+      
       // Extraer número del remitente desde distintas fuentes
       let sender = context.sender || userJid || webMessage?.key?.participant;
       
       if (!sender) {
         console.error("❌ Error: No se recibió el número del remitente.");
-        await sendReply("❌ *Error:* No se pudo obtener tu número. Intenta nuevamente.");
+        await context.sendReply("❌ *Error:* No se pudo obtener tu número. Intenta nuevamente.");
         return;
       }
       
@@ -35,7 +40,7 @@ module.exports = {
       
       if (isNaN(sender) || sender.length < 10) {
         console.error(`❌ Error: El número del remitente no es válido. Número recibido: ${sender}`);
-        await sendReply(`❌ *Error:* Número de teléfono inválido (${sender}). Asegúrate de escribirlo correctamente.`);
+        await context.sendReply(`❌ *Error:* Número de teléfono inválido (${sender}). Asegúrate de escribirlo correctamente.`);
         return;
       }
       
@@ -67,10 +72,10 @@ module.exports = {
       try {
         const code = await subbot.requestPairingCode(sender);
         console.log(`✅ Código de vinculación generado: ${code}`);
-        await sendReply(`*Tu código de vinculación es:* ${code}`);
+        await context.sendReply(`*Tu código de vinculación es:* ${code}`);
       } catch (error) {
         console.error("❌ Error al generar el código de vinculación:", error);
-        await sendReply("❌ *Error:* No se pudo generar el código de vinculación. Intenta de nuevo más tarde.");
+        await context.sendReply("❌ *Error:* No se pudo generar el código de vinculación. Intenta de nuevo más tarde.");
         return;
       }
 
@@ -81,18 +86,18 @@ module.exports = {
         
         if (connection === "open") {
           console.log("✅ Subbot conectado correctamente.");
-          await sendReply("✅ *Subbot conectado correctamente!* ");
+          await context.sendReply("✅ *Subbot conectado correctamente!* ");
           await saveCreds();
         } else if (connection === "close") {
           console.log("⚠️ Subbot desconectado, evaluando si se debe reconectar...");
           const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut;
           if (shouldReconnect) {
             console.log("🔄 Intentando reconectar el subbot...");
-            await sendReply("⚠️ *Intentando reconectar el subbot...*");
+            await context.sendReply("⚠️ *Intentando reconectar el subbot...*");
             await module.exports.handle(context);
           } else {
             console.log("❌ El subbot se ha desconectado permanentemente.");
-            await sendReply("❌ *El subbot se ha desconectado permanentemente.*");
+            await context.sendReply("❌ *El subbot se ha desconectado permanentemente.*");
           }
         }
       });
@@ -104,7 +109,7 @@ module.exports = {
       });
     } catch (error) {
       console.error("❌ Error inesperado en el proceso de creación del subbot:", error);
-      await sendReply("❌ *Error inesperado:* No se pudo crear el subbot. Inténtalo de nuevo más tarde.");
+      await context.sendReply("❌ *Error inesperado:* No se pudo crear el subbot. Inténtalo de nuevo más tarde.");
     }
   },
 };
