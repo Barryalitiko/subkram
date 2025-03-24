@@ -10,8 +10,24 @@ module.exports = {
   commands: ["colocar"],
   usage: `${PREFIX}colocar <objeto>`,
   handle: async ({ socket, remoteJid, args }) => {
+    // Verificar si el archivo JSON existe
+    if (!fs.existsSync(filePath)) {
+      fs.writeFileSync(filePath, JSON.stringify({}, null, 2), "utf8");
+    }
+
+    let usuarios = JSON.parse(fs.readFileSync(filePath, "utf8"));
+
+    if (!usuarios[remoteJid]) {
+      usuarios[remoteJid] = { objetos: [] };
+    }
+
+    // Si el usuario no especifica un objeto, mostrar los objetos que ha comprado
     if (!args[0]) {
-      return socket.sendMessage(remoteJid, { text: "Debes especificar qué objeto quieres colocar." });
+      const objetosUsuario = usuarios[remoteJid].objetos;
+      if (objetosUsuario.length === 0) {
+        return socket.sendMessage(remoteJid, { text: "No tienes objetos comprados." });
+      }
+      return socket.sendMessage(remoteJid, { text: `📜 *Tus objetos comprados:*\n${objetosUsuario.join(" | ")}` });
     }
 
     const objeto = args[0].toLowerCase();
@@ -28,34 +44,26 @@ module.exports = {
       return socket.sendMessage(remoteJid, { text: "Ese objeto no está disponible para colocar." });
     }
 
-    // Verificar si el archivo JSON existe
-    if (!fs.existsSync(filePath)) {
-      fs.writeFileSync(filePath, JSON.stringify({}, null, 2), "utf8");
-    }
-
-    let usuarios = JSON.parse(fs.readFileSync(filePath, "utf8"));
-
-    if (!usuarios[remoteJid]) {
-      usuarios[remoteJid] = { objetos: [] };
-    }
-
     // Verificar si el usuario tiene el objeto en su inventario
     if (!usuarios[remoteJid].objetos.includes(objeto)) {
       return socket.sendMessage(remoteJid, { text: `No tienes ${objeto}. Usa #comprarobjeto ${objeto} para obtenerlo.` });
     }
 
-    // Función para encontrar si el usuario ya tiene un objeto de la misma categoría
-    const encontrarObjetoEnUso = (categoria) => usuarios[remoteJid].objetos.find(o => categoria.includes(o));
+    const verificarCapa = (grupo) => usuarios[remoteJid].objetos.find(o => grupo.includes(o));
 
-    let objetoEnUso = null;
-
-    if (objetosA.includes(objeto)) objetoEnUso = encontrarObjetoEnUso(objetosA);
-    else if (objetosA1.includes(objeto)) objetoEnUso = encontrarObjetoEnUso(objetosA1);
-    else if (objetosB.includes(objeto)) objetoEnUso = encontrarObjetoEnUso(objetosB);
-    else if (objetosZ.includes(objeto)) objetoEnUso = encontrarObjetoEnUso(objetosZ);
-
-    if (objetoEnUso) {
-      return socket.sendMessage(remoteJid, { text: `Ya tienes colocado *${objetoEnUso}*. Usa *#quitar ${objetoEnUso}* para poder colocarte *${objeto}*.` });
+    // Comprobar si ya tiene un objeto de la misma capa
+    let objetoActual = null;
+    if ((objetoActual = verificarCapa(objetosA)) && objetosA.includes(objeto)) {
+      return socket.sendMessage(remoteJid, { text: `Ya tienes colocado ${objetoActual}. Usa #quitar ${objetoActual} para poder colocarte ${objeto}.` });
+    }
+    if ((objetoActual = verificarCapa(objetosA1)) && objetosA1.includes(objeto)) {
+      return socket.sendMessage(remoteJid, { text: `Ya tienes colocado ${objetoActual}. Usa #quitar ${objetoActual} para poder colocarte ${objeto}.` });
+    }
+    if ((objetoActual = verificarCapa(objetosB)) && objetosB.includes(objeto)) {
+      return socket.sendMessage(remoteJid, { text: `Ya tienes colocado ${objetoActual}. Usa #quitar ${objetoActual} para poder colocarte ${objeto}.` });
+    }
+    if ((objetoActual = verificarCapa(objetosZ)) && objetosZ.includes(objeto)) {
+      return socket.sendMessage(remoteJid, { text: `Ya tienes colocado ${objetoActual}. Usa #quitar ${objetoActual} para poder colocarte ${objeto}.` });
     }
 
     // Agregar el objeto al inventario del usuario
