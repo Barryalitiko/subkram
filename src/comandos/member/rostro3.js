@@ -20,53 +20,54 @@ module.exports = {
       }
 
       let usuarios = JSON.parse(fs.readFileSync(filePath, "utf8"));
+
       if (!usuarios[remoteJid]) {
         usuarios[remoteJid] = { objetos: [] };
         fs.writeFileSync(filePath, JSON.stringify(usuarios, null, 2), "utf8");
       }
 
       const rostroPath = path.resolve(__dirname, "../../../assets/images/cara.png");
-      const lovePath = path.resolve(__dirname, "../../../assets/images/love.gif");
       const tortugaPath = path.resolve(__dirname, "../../../assets/images/tortuga.gif");
+      const lovePath = path.resolve(__dirname, "../../../assets/images/love.gif");
 
       const rostro = await loadImage(rostroPath);
       const canvas = createCanvas(rostro.width, rostro.height);
       const ctx = canvas.getContext("2d");
+
       ctx.drawImage(rostro, 0, 0, rostro.width, rostro.height);
-      
+
       if (!fs.existsSync(tempPath)) {
         fs.mkdirSync(tempPath, { recursive: true });
       }
+
       const pngPath = path.resolve(tempPath, `personaje_${remoteJid}.png`);
-      fs.writeFileSync(pngPath, canvas.toBuffer("image/png"));
+      const bufferPng = canvas.toBuffer("image/png");
+      fs.writeFileSync(pngPath, bufferPng);
+
       const webpPath = path.resolve(tempPath, `personaje_${remoteJid}.webp`);
-      
       let ffmpegCommand = `ffmpeg -i "${pngPath}"`;
-      let filters = [];
-      let inputs = 1;
-      
-      if (usuarios[remoteJid].objetos.includes("tortuga")) {
-        ffmpegCommand += ` -i "${tortugaPath}"`;
-        filters.push(`[${inputs}:v]scale=75:144[tortuga];[0:v][tortuga]overlay=141:138`);
-        inputs++;
+
+      const tieneTortuga = usuarios[remoteJid].objetos.includes("tortuga");
+      const tieneLove = usuarios[remoteJid].objetos.includes("love");
+
+      if (tieneTortuga && tieneLove) {
+        await socket.sendMessage(remoteJid, { text: "No puedes tener ambos objetos al mismo tiempo." });
+        return;
+      }
+
+      if (tieneTortuga) {
+        ffmpegCommand += ` -i "${tortugaPath}" -filter_complex "[1:v]scale=75:144[tortuga];[0:v][tortuga]overlay=141:138"`;
       }
       
-      if (usuarios[remoteJid].objetos.includes("love")) {
-        ffmpegCommand += ` -i "${lovePath}"`;
-        filters.push(`
-          [${inputs}:v]scale=200:200, 
-          format=rgba,
-          rotate='2*PI*t/5:c=black@0' [love];
-          [0:v][love] overlay=x='200+100*sin(2*PI*t/5)':y='150+50*cos(2*PI*t/5)'`);
-        inputs++;
+      if (tieneLove) {
+        ffmpegCommand += ` -i "${lovePath}" -filter_complex "
+          [1:v] scale=200:200, format=rgba, rotate=2*PI*t/5 [love];
+          [0:v][love] overlay=x='200+100*sin(2*PI*t/5)':y='150+50*cos(2*PI*t/5)':shortest=1
+        "`;
       }
-      
-      if (filters.length > 0) {
-        ffmpegCommand += ` -filter_complex "${filters.join(';')}"`;
-      }
-      
+
       ffmpegCommand += ` -loop 0 -y "${webpPath}"`;
-      
+
       exec(ffmpegCommand, async (error) => {
         if (error) {
           console.error("❌ Error al generar el sticker animado:", error);
@@ -74,6 +75,8 @@ module.exports = {
         }
         await socket.sendMessage(remoteJid, { sticker: fs.readFileSync(webpPath), mimetype: "image/webp" });
       });
+
+      console.log(`✅ [DEBUG] ${remoteJid} ha visto su personaje con:`, usuarios[remoteJid].objetos);
     } catch (error) {
       console.error("❌ Error al generar sticker:", error);
       await socket.sendMessage(remoteJid, { text: `☠ Ocurrió un error al generar tu sticker.\n📄 *Detalles*: ${error.message}` });
