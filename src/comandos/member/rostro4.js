@@ -17,10 +17,10 @@ module.exports = {
     const objeto = args[0].toLowerCase();
 
     // Objetos disponibles por categorías
-    const objetosA = ["ojos", "naruto", "sasuke", "rinesharingan", "rinegan", "remolino"]; // Grupo A (ojos)
-    const objetosA1 = ["gafas", "lentes"]; // Grupo A1 (gafas/lentes)
-    const objetosB = ["labios", "bocamorada", "bocaroja", "bocaalegre", "labiosnormales"]; // Grupo B (bocas)
-    const objetosZ = ["tortuga", "love"]; // Grupo Z (animaciones)
+    const objetosA = ["ojos", "naruto", "sasuke", "rinesharingan", "rinegan", "remolino"];
+    const objetosA1 = ["gafas", "lentes"];
+    const objetosB = ["labios", "bocamorada", "bocaroja", "bocaalegre", "labiosnormales"];
+    const objetosZ = ["tortuga", "love", "buho", "poderosas", "rosada", "torpe", "kawai", "huesos", "zombie", "sakura", "minato", "popi", "mariposa"];
 
     const objetosDisponibles = [...objetosA, ...objetosA1, ...objetosB, ...objetosZ];
 
