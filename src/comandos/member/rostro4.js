@@ -44,21 +44,18 @@ module.exports = {
       return socket.sendMessage(remoteJid, { text: `No tienes ${objeto}. Usa #comprarobjeto ${objeto} para obtenerlo.` });
     }
 
-    // Verificar si ya tiene un objeto del mismo tipo colocado
-    if (objetosA.includes(objeto) && usuarios[remoteJid].objetos.some(o => objetosA.includes(o))) {
-      return socket.sendMessage(remoteJid, { text: `Ya tienes un objeto de tipo A colocado. Solo puedes tener uno.` });
-    }
+    // Función para encontrar si el usuario ya tiene un objeto de la misma categoría
+    const encontrarObjetoEnUso = (categoria) => usuarios[remoteJid].objetos.find(o => categoria.includes(o));
 
-    if (objetosA1.includes(objeto) && usuarios[remoteJid].objetos.some(o => objetosA1.includes(o))) {
-      return socket.sendMessage(remoteJid, { text: `Ya tienes un objeto de tipo A1 colocado. Solo puedes tener uno.` });
-    }
+    let objetoEnUso = null;
 
-    if (objetosB.includes(objeto) && usuarios[remoteJid].objetos.some(o => objetosB.includes(o))) {
-      return socket.sendMessage(remoteJid, { text: `Ya tienes una boca colocada. Solo puedes tener una.` });
-    }
+    if (objetosA.includes(objeto)) objetoEnUso = encontrarObjetoEnUso(objetosA);
+    else if (objetosA1.includes(objeto)) objetoEnUso = encontrarObjetoEnUso(objetosA1);
+    else if (objetosB.includes(objeto)) objetoEnUso = encontrarObjetoEnUso(objetosB);
+    else if (objetosZ.includes(objeto)) objetoEnUso = encontrarObjetoEnUso(objetosZ);
 
-    if (objetosZ.includes(objeto) && usuarios[remoteJid].objetos.some(o => objetosZ.includes(o))) {
-      return socket.sendMessage(remoteJid, { text: `Ya tienes una animación colocada. Solo puedes tener una.` });
+    if (objetoEnUso) {
+      return socket.sendMessage(remoteJid, { text: `Ya tienes colocado *${objetoEnUso}*. Usa *#quitar ${objetoEnUso}* para poder colocarte *${objeto}*.` });
     }
 
     // Agregar el objeto al inventario del usuario
