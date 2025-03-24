@@ -61,8 +61,8 @@ module.exports = {
       
       if (tieneLove) {
         ffmpegCommand += ` -i "${lovePath}" -filter_complex "
-          [1:v] scale=200:200, format=rgba, rotate=2*PI*t/5 [love];
-          [0:v][love] overlay=x='200+100*sin(2*PI*t/5)':y='150+50*cos(2*PI*t/5)':shortest=1
+          [1:v] scale=200:200, format=rgba [love];
+          [0:v][love] overlay=x=200:y='150+20*sin(2*PI*t/3)':shortest=1
         "`;
       }
 
