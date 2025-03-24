@@ -2,7 +2,6 @@ const { PREFIX } = require("../../krampus");
 const fs = require("fs");
 const path = require("path");
 const { createCanvas, loadImage } = require("canvas");
-const sharp = require("sharp"); // Librería para manejar conversiones de imagen
 const { exec } = require("child_process");
 
 const filePath = path.resolve(__dirname, "../../usuarios.json");
@@ -33,24 +32,6 @@ module.exports = {
       const tortugaPath = path.resolve(__dirname, "../../../assets/images/tortuga.gif");
       const lovePath = path.resolve(__dirname, "../../../assets/images/love.gif");
 
-      // Rutas de objetos
-      const objetosA = {
-        ojos: path.resolve(__dirname, "../../../assets/images/ojos.png"),
-        naruto: path.resolve(__dirname, "../../../assets/images/naruto.png"),
-        sasuke: path.resolve(__dirname, "../../../assets/images/sasuke.png"),
-        rinesharingan: path.resolve(__dirname, "../../../assets/images/rinesharingan.png"),
-        rinegan: path.resolve(__dirname, "../../../assets/images/rinegan.png"),
-        remolino: path.resolve(__dirname, "../../../assets/images/remolino.png"),
-      };
-
-      const objetosB = {
-        labios: path.resolve(__dirname, "../../../assets/images/labios.png"),
-        bocamorada: path.resolve(__dirname, "../../../assets/images/bocamorada.png"),
-        bocaroja: path.resolve(__dirname, "../../../assets/images/bocaroja.png"),
-        bocaalegre: path.resolve(__dirname, "../../../assets/images/bocaalegre.png"),
-        labiosnormales: path.resolve(__dirname, "../../../assets/images/labiosnormales.png"),
-      };
-
       // Crear la imagen con los objetos colocados
       const rostro = await loadImage(rostroPath);
       const canvas = createCanvas(rostro.width, rostro.height);
@@ -58,21 +39,9 @@ module.exports = {
 
       ctx.drawImage(rostro, 0, 0, rostro.width, rostro.height);
 
-      const objetoA = usuarios[remoteJid].objetos.find(obj => objetosA[obj]);
-      if (objetoA) {
-        const objetoImagen = await loadImage(objetosA[objetoA]);
-        ctx.drawImage(objetoImagen, 178, 250, 140, 40);
-      }
-
       if (usuarios[remoteJid].objetos.includes("gafas") || usuarios[remoteJid].objetos.includes("lentes")) {
         let objetoImagen = usuarios[remoteJid].objetos.includes("gafas") ? await loadImage(gafasPath) : await loadImage(lentesPath);
         ctx.drawImage(objetoImagen, 174, 247, 146, 53);
-      }
-
-      const objetoB = usuarios[remoteJid].objetos.find(obj => objetosB[obj]);
-      if (objetoB) {
-        const bocaImagen = await loadImage(objetosB[objetoB]);
-        ctx.drawImage(bocaImagen, 211, 338, 72, (bocaImagen.height * (72 / bocaImagen.width)));
       }
 
       if (!fs.existsSync(tempPath)) {
@@ -81,30 +50,41 @@ module.exports = {
 
       // Guardar la imagen temporal en PNG
       const pngPath = path.resolve(tempPath, `personaje_${remoteJid}.png`);
-      const bufferPng = canvas.toBuffer("image/png");
-      fs.writeFileSync(pngPath, bufferPng);
+      fs.writeFileSync(pngPath, canvas.toBuffer("image/png"));
 
       // Construir el comando ffmpeg
       const webpPath = path.resolve(tempPath, `personaje_${remoteJid}.webp`);
       let ffmpegCommand = `ffmpeg -i "${pngPath}"`;
+      let tieneAnimacion = false;
 
       if (usuarios[remoteJid].objetos.includes("tortuga")) {
         ffmpegCommand += ` -i "${tortugaPath}" -filter_complex "[1:v]scale=75:144[tortuga];[0:v][tortuga]overlay=141:138"`;
-      }
-      
-      if (usuarios[remoteJid].objetos.includes("love")) {
-        ffmpegCommand += ` -i "${lovePath}" -filter_complex "[2:v]scale=50:50[love];[0:v][love]overlay=200:100"`;
+        tieneAnimacion = true;
+      } else if (usuarios[remoteJid].objetos.includes("love")) {
+        ffmpegCommand += ` -i "${lovePath}" -filter_complex "[1:v]scale=50:50[love];[0:v][love]overlay=200:100"`;
+        tieneAnimacion = true;
       }
 
       ffmpegCommand += ` -loop 0 -y "${webpPath}"`;
 
-      exec(ffmpegCommand, async (error) => {
-        if (error) {
-          console.error("❌ Error al generar el sticker animado:", error);
-          return await socket.sendMessage(remoteJid, { text: `☠ Error al generar sticker: ${error.message}` });
-        }
-        await socket.sendMessage(remoteJid, { sticker: fs.readFileSync(webpPath), mimetype: "image/webp" });
-      });
+      // Si no hay animación, convertir directamente a WebP sin ffmpeg
+      if (!tieneAnimacion) {
+        exec(`convert "${pngPath}" -loop 0 "${webpPath}"`, async (error) => {
+          if (error) {
+            console.error("❌ Error al generar el sticker:", error);
+            return await socket.sendMessage(remoteJid, { text: `☠ Error al generar sticker: ${error.message}` });
+          }
+          await socket.sendMessage(remoteJid, { sticker: fs.readFileSync(webpPath), mimetype: "image/webp" });
+        });
+      } else {
+        exec(ffmpegCommand, async (error) => {
+          if (error) {
+            console.error("❌ Error al generar el sticker animado:", error);
+            return await socket.sendMessage(remoteJid, { text: `☠ Error al generar sticker: ${error.message}` });
+          }
+          await socket.sendMessage(remoteJid, { sticker: fs.readFileSync(webpPath), mimetype: "image/webp" });
+        });
+      }
 
       console.log(`✅ [DEBUG] ${remoteJid} ha visto su personaje con:`, usuarios[remoteJid].objetos);
     } catch (error) {
