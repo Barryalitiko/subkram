@@ -61,7 +61,7 @@ module.exports = {
         ffmpegCommand += ` -i "${tortugaPath}" -filter_complex "[1:v]scale=75:144[tortuga];[0:v][tortuga]overlay=141:138"`;
         tieneAnimacion = true;
       } else if (usuarios[remoteJid].objetos.includes("love")) {
-        ffmpegCommand += ` -i "${lovePath}" -filter_complex "[1:v]scale=50:50[love];[0:v][love]overlay=200:100"`;
+        ffmpegCommand += ` -i "${lovePath}" -filter_complex "[1:v]scale=200:200[love];[0:v][love]overlay=100:50"`;
         tieneAnimacion = true;
       }
 
