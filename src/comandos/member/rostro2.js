@@ -14,7 +14,10 @@ module.exports = {
     const objetosA = ["👁️ Ojos", "🌀 Naruto", "🔥 Sasuke", "🔱 RinneSharingan", "🔵 Rinnegan", "🌪️ Remolino"];
     const objetosA1 = ["🕶️ Gafas", "👓 Lentes"];
     const objetosB = ["💋 Labios", "💜 Boca Morada", "❤️ Boca Roja", "😁 Boca Alegre", "👄 Labios Normales"];
-    const objetosZ = ["🐢 Tortuga", "💖 Love"]; // Añadido "love" al grupo de animaciones
+    const objetosZ = [
+      "🐢 Tortuga", "💖 Love", "🦉 Buho", "⚡ Poderosas", "🌸 Rosada", "🤪 Torpe", "🎀 Kawaii", 
+      "💀 Huesos", "🧟 Zombie", "🌸 Sakura", "⚡ Minato", "🐵 Popi", "🦋 Mariposa"
+    ];
 
     const objetosDisponibles = [...objetosA, ...objetosA1, ...objetosB, ...objetosZ];
 
