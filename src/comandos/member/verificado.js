@@ -24,7 +24,7 @@ module.exports = {
       // Crear el mensaje con el estilo personalizado
       let messageContent = {
         image: imageBuffer,  // Buffer de la imagen descargada
-        caption: "Operacion Marshall",  // Mensaje que acompaña la imagen
+        caption: "OperacionMarshall",  // Mensaje que acompaña la imagen
         mimetype: "image/png",  // Tipo MIME de la imagen (en este caso PNG)
       };
 
