@@ -7,15 +7,20 @@ module.exports = {
   description: "Envía un mensaje con un formato especial 🎭",
   commands: ["estilizado"],
   usage: `${PREFIX}estilizado`,
-  handle: async ({ sendReply, socket, remoteJid, webMessage }) => {
+  handle: async ({ sendReply, socket, remoteJid }) => {
     try {
       // Ruta de la imagen
       let imagePath = path.join(__dirname, "../../../assets/images/goku.jpg");
 
-      // Leer la imagen como base64
-      let catalogo = fs.readFileSync(imagePath).toString("base64");
+      // Verificar que el archivo existe
+      if (!fs.existsSync(imagePath)) {
+        return sendReply("⚠️ La imagen no fue encontrada en la ruta especificada.");
+      }
 
-      // Definir el mensaje con el formato `orderMessage`
+      // Leer la imagen y convertirla en buffer
+      let imageBuffer = fs.readFileSync(imagePath);
+
+      // Enviar el mensaje estilizado con la imagen como `thumbnail`
       let estilo = {
         key: {
           fromMe: false,
@@ -28,14 +33,14 @@ module.exports = {
             surface: 1,
             message: "👑【✫ᴍᴏɴᴛᴀɴᴀ✫】🪩",
             orderTitle: "Bang",
-            thumbnail: Buffer.from(catalogo, "base64"), // Convertir base64 a buffer
-            thumbnailMimeType: "image/jpeg", // MIME tipo correcto
-            sellerJid: "0@s.whatsapp.net"
+            thumbnail: imageBuffer, // Imagen en buffer
+            thumbnailMimeType: "image/jpeg", // Asegurar que el tipo sea correcto
+            sellerJid: "0@s.whatsapp.net",
           }
         }
       };
 
-      // Enviar el mensaje con el formato especial
+      // Enviar mensaje
       await socket.sendMessage(remoteJid, estilo);
     } catch (error) {
       console.error("❌ Error enviando el mensaje estilizado:", error);
