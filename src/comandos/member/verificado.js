@@ -38,7 +38,7 @@ module.exports = {
             message: "👑【✫ᴍᴏɴᴀɴᴀ✫】🪩",
             orderTitle: "Bang",
             thumbnail: imageBuffer, // Usar la imagen descargada
-            thumbnailMimeType: "image/png", // Especificar el tipo de imagen
+            // Eliminar la propiedad 'thumbnailMimeType' si no es compatible
             sellerJid: "0@s.whatsapp.net",
           }
         }
