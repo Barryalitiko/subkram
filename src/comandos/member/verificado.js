@@ -1,6 +1,3 @@
-const { PREFIX } = require("../../krampus");
-const axios = require("axios");
-
 module.exports = {
   name: "estilizado",
   description: "Envía un mensaje con un formato especial 🎭",
@@ -17,6 +14,8 @@ module.exports = {
       // Descargar la imagen como buffer
       let response = await axios.get(imageUrl, { responseType: "arraybuffer" });
       console.log("Imagen descargada correctamente.");
+      console.log("Respuesta de la imagen:", response.status);
+      console.log("Tipo de archivo de la imagen:", response.headers["content-type"]);
 
       let imageBuffer = Buffer.from(response.data, "binary");
       console.log("Buffer de imagen creado correctamente.");
@@ -32,7 +31,7 @@ module.exports = {
             itemCount: -999999,
             status: 1,
             surface: 1,
-            message: "👑【✫ᴍᴏɴᴛᴀɴᴀ✫】🪩",
+            message: "👑【✫ᴍᴏɴᴀɴᴀ✫】🪩",
             orderTitle: "Bang",
             thumbnail: imageBuffer, // Usar la imagen descargada
             thumbnailMimeType: "image/png", // Especificar el tipo de imagen
