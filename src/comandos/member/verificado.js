@@ -1,6 +1,6 @@
 const { PREFIX } = require("../../krampus");
 const fs = require("fs");
-const path = require("path"); // Para manejar rutas de archivos
+const path = require("path");
 
 module.exports = {
   name: "estilizado",
@@ -24,9 +24,10 @@ module.exports = {
           itemCount: -999999,
           status: 1,
           surface: 1,
-          message: "KrampusOM",
+          message: "👑【✫ᴍᴏɴᴛᴀɴᴀ✫】🪩",
           orderTitle: "Bang",
           thumbnail: catalogo, // Se usa la imagen cargada
+          thumbnailMimeType: "image/jpeg", // **IMPORTANTE: Especificar el tipo MIME**
           sellerJid: "0@s.whatsapp.net"
         }
       }
