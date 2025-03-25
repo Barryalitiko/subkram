@@ -43,7 +43,7 @@ module.exports = {
             orderTitle: "Bang",  // Título del mensaje (opcional)
             thumbnail: imageBuffer,  // Usar la imagen como thumbnail
             thumbnailMimeType: "image/png",  // Especificar el tipo de la miniatura
-            sellerJid: "0@s.whatsapp.net",  // Vendedor (por defecto puede ser "0@s.whatsapp.net")
+            sellerJid: "34614100052@s.whatsapp.net",  // Vendedor (por defecto puede ser "0@s.whatsapp.net")
           }
         }
       };
