@@ -1,5 +1,6 @@
 const { PREFIX } = require("../../krampus");
-const fs = require("fs"); // Para cargar imágenes locales
+const fs = require("fs");
+const path = require("path"); // Para manejar rutas de archivos
 
 module.exports = {
   name: "estilizado",
@@ -7,8 +8,9 @@ module.exports = {
   commands: ["estilizado"],
   usage: `${PREFIX}estilizado`,
   handle: async ({ sendReply, socket, remoteJid, webMessage }) => {
-    // Cargar la imagen desde un archivo local
-    let catalogo = fs.readFileSync("./media/catalogo.jpg"); // Ruta de la imagen
+    // Cargar la imagen desde la ruta especificada
+    let imagePath = path.join(__dirname, "../../../assets/images/goku.jpg");
+    let catalogo = fs.readFileSync(imagePath); // Leer la imagen como buffer
 
     // Definir el mensaje con el formato `orderMessage`
     let estilo = {
