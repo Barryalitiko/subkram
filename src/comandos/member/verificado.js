@@ -9,9 +9,10 @@ module.exports = {
   handle: async ({ sendReply, socket, remoteJid }) => {
     try {
       console.log("Iniciando proceso de envío de mensaje estilizado...");
+
       // URL de la imagen para la prueba
       let imageUrl = "https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png";
-      console.log(URL de la imagen: ${imageUrl});
+      console.log(`URL de la imagen: ${imageUrl}`);
 
       // Descargar la imagen como buffer
       let response = await axios.get(imageUrl, { responseType: "arraybuffer" });
@@ -23,7 +24,7 @@ module.exports = {
       // Crear el mensaje con el estilo personalizado
       let messageContent = {
         image: imageBuffer,  // Buffer de la imagen descargada
-        caption: "Operacion Marshall",  // Mensaje que acompaña la imagen
+        caption: "KrampusOM",  // Mensaje que acompaña la imagen
         mimetype: "image/png",  // Tipo MIME de la imagen (en este caso PNG)
       };
 
@@ -35,11 +36,11 @@ module.exports = {
         },
         message: {
           orderMessage: {
-            itemCount: 000000,
+            itemCount: 0000000,
             status: 1,
             surface: 1,
             message: messageContent.caption,  // El mensaje que contiene la imagen
-            orderTitle: "¡Oferta especial!",  // Título del mensaje (opcional)
+            orderTitle: "Bang",  // Título del mensaje (opcional)
             thumbnail: imageBuffer,  // Usar la imagen como thumbnail
             thumbnailMimeType: "image/png",  // Especificar el tipo de la miniatura
             sellerJid: "0@s.whatsapp.net",  // Vendedor (por defecto puede ser "0@s.whatsapp.net")
