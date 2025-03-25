@@ -1,3 +1,7 @@
+// Asegúrate de que la constante PREFIX esté correctamente importada
+const { PREFIX } = require("../../krampus"); // Ajusta la ruta si es necesario
+const axios = require("axios");
+
 module.exports = {
   name: "estilizado",
   description: "Envía un mensaje con un formato especial 🎭",
