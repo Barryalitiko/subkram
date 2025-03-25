@@ -40,7 +40,7 @@ module.exports = {
             surface: 1,
             message: "👑【✫ᴍᴏɴᴇɴᴀ✫】🪩",
             orderTitle: "Bang",
-            thumbnail: media,
+            thumbnail: media.url, // Cambiar a media.url
             sellerJid: "0@s.whatsapp.net",
           }
         }
