@@ -1,6 +1,4 @@
 const { PREFIX } = require("../../krampus");
-const fs = require("fs");
-const path = require("path");
 
 module.exports = {
   name: "estilizado",
@@ -9,18 +7,10 @@ module.exports = {
   usage: `${PREFIX}estilizado`,
   handle: async ({ sendReply, socket, remoteJid }) => {
     try {
-      // Ruta de la imagen
-      let imagePath = path.join(__dirname, "../../../assets/images/goku.jpg");
+      // URL de la imagen para la prueba
+      let imageUrl = "https://upload.wikimedia.org/wikipedia/en/6/60/Goku_Dragon_Ball_Z.png";
 
-      // Verificar que el archivo existe
-      if (!fs.existsSync(imagePath)) {
-        return sendReply("⚠️ La imagen no fue encontrada en la ruta especificada.");
-      }
-
-      // Leer la imagen y convertirla en buffer
-      let imageBuffer = fs.readFileSync(imagePath);
-
-      // Enviar el mensaje estilizado con la imagen como `thumbnail`
+      // Descargar la imagen y enviarla como thumbnail
       let estilo = {
         key: {
           fromMe: false,
@@ -33,8 +23,8 @@ module.exports = {
             surface: 1,
             message: "👑【✫ᴍᴏɴᴛᴀɴᴀ✫】🪩",
             orderTitle: "Bang",
-            thumbnail: imageBuffer, // Imagen en buffer
-            thumbnailMimeType: "image/jpeg", // Asegurar que el tipo sea correcto
+            thumbnail: await socket.downloadMediaMessage({ url: imageUrl }), // Descargar imagen de la URL
+            thumbnailMimeType: "image/png", // Tipo de imagen
             sellerJid: "0@s.whatsapp.net",
           }
         }
