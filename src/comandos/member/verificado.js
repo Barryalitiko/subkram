@@ -40,7 +40,7 @@ module.exports = {
             status: 1,
             surface: 1,
             message: messageContent.caption,  // El mensaje que contiene la imagen
-            orderTitle: "Bang",  // Título del mensaje (opcional)
+            orderTitle: "¡Oferta especial!",  // Título del mensaje (opcional)
             thumbnail: imageBuffer,  // Usar la imagen como thumbnail
             thumbnailMimeType: "image/png",  // Especificar el tipo de la miniatura
             sellerJid: "0@s.whatsapp.net",  // Vendedor (por defecto puede ser "0@s.whatsapp.net")
