@@ -24,7 +24,7 @@ module.exports = {
       // Crear el mensaje con el estilo personalizado
       let messageContent = {
         image: imageBuffer,  // Buffer de la imagen descargada
-        caption: "OperacionMarshall",  // Mensaje que acompaña la imagen
+        caption: "Operacion Marshall",  // Mensaje que acompaña la imagen
         mimetype: "image/png",  // Tipo MIME de la imagen (en este caso PNG)
       };
 
@@ -32,11 +32,11 @@ module.exports = {
       let estilo = {
         key: {
           fromMe: false,
-          participant: "0.whatsapp.net",
+          participant: "0@s.whatsapp.net",
         },
         message: {
           orderMessage: {
-            itemCount: 808080,
+            itemCount: 000000,
             status: 1,
             surface: 1,
             message: messageContent.caption,  // El mensaje que contiene la imagen
