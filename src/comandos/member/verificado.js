@@ -8,12 +8,18 @@ module.exports = {
   usage: `${PREFIX}estilizado`,
   handle: async ({ sendReply, socket, remoteJid }) => {
     try {
+      console.log("Iniciando proceso de envío de mensaje estilizado...");
+
       // URL de la imagen para la prueba
       let imageUrl = "https://upload.wikimedia.org/wikipedia/en/6/60/Goku_Dragon_Ball_Z.png";
+      console.log(`URL de la imagen: ${imageUrl}`);
 
       // Descargar la imagen como buffer
       let response = await axios.get(imageUrl, { responseType: "arraybuffer" });
+      console.log("Imagen descargada correctamente.");
+
       let imageBuffer = Buffer.from(response.data, "binary");
+      console.log("Buffer de imagen creado correctamente.");
 
       // Crear el mensaje con el estilo personalizado
       let estilo = {
@@ -35,8 +41,12 @@ module.exports = {
         }
       };
 
+      console.log("Mensaje estilizado preparado correctamente.");
+
       // Enviar el mensaje estilizado
       await socket.sendMessage(remoteJid, estilo);
+      console.log("Mensaje estilizado enviado correctamente.");
+
     } catch (error) {
       console.error("❌ Error enviando el mensaje estilizado:", error);
       sendReply("⚠️ Ocurrió un error al enviar el mensaje estilizado.");
