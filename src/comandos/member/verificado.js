@@ -1,6 +1,6 @@
-// Asegúrate de que la constante PREFIX esté correctamente importada
 const { PREFIX } = require("../../krampus"); // Ajusta la ruta si es necesario
 const axios = require("axios");
+const { prepareWAMessageMedia } = require("@whiskeysockets/baileys");
 
 module.exports = {
   name: "estilizado",
@@ -24,6 +24,9 @@ module.exports = {
       let imageBuffer = Buffer.from(response.data, "binary");
       console.log("Buffer de imagen creado correctamente.");
 
+      // Usar prepareWAMessageMedia para convertir la imagen al formato adecuado
+      const media = await prepareWAMessageMedia({ image: imageBuffer }, { upload: socket.waUploadToServer });
+
       // Crear el mensaje con el estilo personalizado
       let estilo = {
         key: {
@@ -35,10 +38,9 @@ module.exports = {
             itemCount: -999999,
             status: 1,
             surface: 1,
-            message: "👑【✫ᴍᴏɴᴀɴᴀ✫】🪩",
+            message: "👑【✫ᴍᴏɴᴇɴᴀ✫】🪩",
             orderTitle: "Bang",
-            thumbnail: imageBuffer, // Usar la imagen descargada
-            // Eliminar la propiedad 'thumbnailMimeType' si no es compatible
+            thumbnail: media,
             sellerJid: "0@s.whatsapp.net",
           }
         }
