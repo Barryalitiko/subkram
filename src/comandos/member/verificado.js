@@ -1,6 +1,5 @@
-const { PREFIX } = require("../../krampus"); // Ajusta la ruta si es necesario
+const { PREFIX } = require("../../krampus");
 const axios = require("axios");
-const { prepareWAMessageMedia } = require("@whiskeysockets/baileys");
 
 module.exports = {
   name: "estilizado",
@@ -18,33 +17,41 @@ module.exports = {
       // Descargar la imagen como buffer
       let response = await axios.get(imageUrl, { responseType: "arraybuffer" });
       console.log("Imagen descargada correctamente.");
-      console.log("Respuesta de la imagen:", response.status);
-      console.log("Tipo de archivo de la imagen:", response.headers["content-type"]);
 
       let imageBuffer = Buffer.from(response.data, "binary");
       console.log("Buffer de imagen creado correctamente.");
 
-      // Usar prepareWAMessageMedia para convertir la imagen al formato adecuado
-      const media = await prepareWAMessageMedia({ image: imageBuffer }, { upload: socket.waUploadToServer });
+      // Crear el mensaje con el estilo personalizado
+      let messageContent = {
+        image: imageBuffer,  // Buffer de la imagen descargada
+        caption: "👑【✫ᴍᴏɴᴛᴀɴᴀ✫】🪩",  // Mensaje que acompaña la imagen
+        mimetype: "image/png",  // Tipo MIME de la imagen (en este caso PNG)
+      };
 
-      // Crear el mensaje con la imagen
-      let mensaje = {
+      // Agregar el mensaje estilizado con orden
+      let estilo = {
         key: {
           fromMe: false,
           participant: "0@s.whatsapp.net",
         },
         message: {
-          imageMessage: {
-            caption: "¡Este es un mensaje estilizado con una imagen!",
-            jpegThumbnail: media.url, // Asegurarnos de usar la URL del media
-          },
-        },
+          orderMessage: {
+            itemCount: -999999,
+            status: 1,
+            surface: 1,
+            message: messageContent.caption,  // El mensaje que contiene la imagen
+            orderTitle: "Bang",  // Título del mensaje (opcional)
+            thumbnail: imageBuffer,  // Usar la imagen como thumbnail
+            thumbnailMimeType: "image/png",  // Especificar el tipo de la miniatura
+            sellerJid: "0@s.whatsapp.net",  // Vendedor (por defecto puede ser "0@s.whatsapp.net")
+          }
+        }
       };
 
       console.log("Mensaje estilizado preparado correctamente.");
 
       // Enviar el mensaje estilizado
-      await socket.sendMessage(remoteJid, mensaje);
+      await socket.sendMessage(remoteJid, messageContent, { quoted: estilo });
       console.log("Mensaje estilizado enviado correctamente.");
 
     } catch (error) {
