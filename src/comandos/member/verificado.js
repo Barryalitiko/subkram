@@ -27,29 +27,24 @@ module.exports = {
       // Usar prepareWAMessageMedia para convertir la imagen al formato adecuado
       const media = await prepareWAMessageMedia({ image: imageBuffer }, { upload: socket.waUploadToServer });
 
-      // Crear el mensaje con el estilo personalizado
-      let estilo = {
+      // Crear el mensaje con la imagen
+      let mensaje = {
         key: {
           fromMe: false,
           participant: "0@s.whatsapp.net",
         },
         message: {
-          orderMessage: {
-            itemCount: -999999,
-            status: 1,
-            surface: 1,
-            message: "👑【✫ᴍᴏɴᴇɴᴀ✫】🪩",
-            orderTitle: "Bang",
-            thumbnail: media.url, // Cambiar a media.url
-            sellerJid: "0@s.whatsapp.net",
-          }
-        }
+          imageMessage: {
+            caption: "¡Este es un mensaje estilizado con una imagen!",
+            jpegThumbnail: media.url, // Asegurarnos de usar la URL del media
+          },
+        },
       };
 
       console.log("Mensaje estilizado preparado correctamente.");
 
       // Enviar el mensaje estilizado
-      await socket.sendMessage(remoteJid, estilo);
+      await socket.sendMessage(remoteJid, mensaje);
       console.log("Mensaje estilizado enviado correctamente.");
 
     } catch (error) {
