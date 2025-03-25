@@ -10,8 +10,25 @@ module.exports = {
   commands: ["colocar"],
   usage: `${PREFIX}colocar <objeto>`,
   handle: async ({ socket, remoteJid, args }) => {
+    // Verificar si el archivo JSON existe
+    if (!fs.existsSync(filePath)) {
+      fs.writeFileSync(filePath, JSON.stringify({}, null, 2), "utf8");
+    }
+
+    let usuarios = JSON.parse(fs.readFileSync(filePath, "utf8"));
+
+    if (!usuarios[remoteJid]) {
+      usuarios[remoteJid] = { comprados: [], colocados: [] };
+    }
+
+    // Si el usuario no especifica un objeto, mostrar los objetos que ha comprado
     if (!args[0]) {
-      return socket.sendMessage(remoteJid, { text: "Debes especificar qué objeto quieres colocar." });
+      const objetosUsuario = usuarios[remoteJid].comprados;
+      if (objetosUsuario.length === 0) {
+        return socket.sendMessage(remoteJid, { text: "No tienes objetos comprados." });
+      }
+      return socket.sendMessage(remoteJid, { text: `📜 *Tus objetos comprados:*
+${objetosUsuario.join(" | ")}` });
     }
 
     const objeto = args[0].toLowerCase();
@@ -28,46 +45,35 @@ module.exports = {
       return socket.sendMessage(remoteJid, { text: "Ese objeto no está disponible para colocar." });
     }
 
-    // Verificar si el archivo JSON existe
-    if (!fs.existsSync(filePath)) {
-      fs.writeFileSync(filePath, JSON.stringify({}, null, 2), "utf8");
-    }
-
-    let usuarios = JSON.parse(fs.readFileSync(filePath, "utf8"));
-
-    if (!usuarios[remoteJid]) {
-      usuarios[remoteJid] = { objetos: [] };
-    }
-
-    // Verificar si el usuario tiene el objeto en su inventario
-    if (!usuarios[remoteJid].objetos.includes(objeto)) {
+    // Verificar si el usuario tiene el objeto en su inventario de comprados
+    if (!usuarios[remoteJid].comprados.includes(objeto)) {
       return socket.sendMessage(remoteJid, { text: `No tienes ${objeto}. Usa #comprarobjeto ${objeto} para obtenerlo.` });
     }
 
-    // Verificar si ya tiene un objeto del mismo tipo colocado
-    if (objetosA.includes(objeto) && usuarios[remoteJid].objetos.some(o => objetosA.includes(o))) {
-      return socket.sendMessage(remoteJid, { text: `Ya tienes un objeto de tipo A colocado. Solo puedes tener uno.` });
+    const verificarCapa = (grupo) => usuarios[remoteJid].colocados.find(o => grupo.includes(o));
+
+    // Comprobar si ya tiene un objeto de la misma capa
+    let objetoActual = null;
+    if ((objetoActual = verificarCapa(objetosA)) && objetosA.includes(objeto)) {
+      return socket.sendMessage(remoteJid, { text: `Ya tienes colocado ${objetoActual}. Usa #quitar ${objetoActual} para poder colocarte ${objeto}.` });
+    }
+    if ((objetoActual = verificarCapa(objetosA1)) && objetosA1.includes(objeto)) {
+      return socket.sendMessage(remoteJid, { text: `Ya tienes colocado ${objetoActual}. Usa #quitar ${objetoActual} para poder colocarte ${objeto}.` });
+    }
+    if ((objetoActual = verificarCapa(objetosB)) && objetosB.includes(objeto)) {
+      return socket.sendMessage(remoteJid, { text: `Ya tienes colocado ${objetoActual}. Usa #quitar ${objetoActual} para poder colocarte ${objeto}.` });
+    }
+    if ((objetoActual = verificarCapa(objetosZ)) && objetosZ.includes(objeto)) {
+      return socket.sendMessage(remoteJid, { text: `Ya tienes colocado ${objetoActual}. Usa #quitar ${objetoActual} para poder colocarte ${objeto}.` });
     }
 
-    if (objetosA1.includes(objeto) && usuarios[remoteJid].objetos.some(o => objetosA1.includes(o))) {
-      return socket.sendMessage(remoteJid, { text: `Ya tienes un objeto de tipo A1 colocado. Solo puedes tener uno.` });
-    }
-
-    if (objetosB.includes(objeto) && usuarios[remoteJid].objetos.some(o => objetosB.includes(o))) {
-      return socket.sendMessage(remoteJid, { text: `Ya tienes una boca colocada. Solo puedes tener una.` });
-    }
-
-    if (objetosZ.includes(objeto) && usuarios[remoteJid].objetos.some(o => objetosZ.includes(o))) {
-      return socket.sendMessage(remoteJid, { text: `Ya tienes una animación colocada. Solo puedes tener una.` });
-    }
-
-    // Agregar el objeto al inventario del usuario
-    usuarios[remoteJid].objetos.push(objeto);
+    // Agregar el objeto a la lista de colocados (sin eliminarlo de comprados)
+    usuarios[remoteJid].colocados.push(objeto);
 
     // Guardar el estado actualizado en el archivo JSON
     fs.writeFileSync(filePath, JSON.stringify(usuarios, null, 2), "utf8");
 
-    console.log(`✅ [DEBUG] ${remoteJid} ha colocado:`, usuarios[remoteJid].objetos);
+    console.log(`✅ [DEBUG] ${remoteJid} ha colocado:`, usuarios[remoteJid].colocados);
 
     await socket.sendMessage(remoteJid, { text: `Has colocado ${objeto}. Usa #quitar ${objeto} para quitártelo.` });
   },
