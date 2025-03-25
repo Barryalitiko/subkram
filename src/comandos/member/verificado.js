@@ -28,7 +28,7 @@ module.exports = {
         mimetype: "image/png",  // Tipo MIME de la imagen (en este caso PNG)
       };
 
-      // Agregar el mensaje estilizado con orden
+      // Crear el mensaje estilizado con detalles de la orden
       let estilo = {
         key: {
           fromMe: false,
@@ -50,8 +50,8 @@ module.exports = {
 
       console.log("Mensaje estilizado preparado correctamente.");
 
-      // Enviar el mensaje estilizado
-      await socket.sendMessage(remoteJid, messageContent, { quoted: estilo });
+      // Enviar el mensaje estilizado con el contenido de la imagen
+      await socket.sendMessage(remoteJid, estilo);  // Usamos la estructura 'estilo' aquí
       console.log("Mensaje estilizado enviado correctamente.");
 
     } catch (error) {
