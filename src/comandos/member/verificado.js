@@ -11,7 +11,7 @@ module.exports = {
       console.log("Iniciando proceso de envío de mensaje estilizado...");
 
       // URL de la imagen para la prueba
-      let imageUrl = "https://upload.wikimedia.org/wikipedia/en/6/60/Goku_Dragon_Ball_Z.png";
+      let imageUrl = "https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png";
       console.log(`URL de la imagen: ${imageUrl}`);
 
       // Descargar la imagen como buffer
