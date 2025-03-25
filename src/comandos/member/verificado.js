@@ -5,14 +5,14 @@ module.exports = {
   name: "estilizado",
   description: "Envía un mensaje con un formato especial 🎭",
   commands: ["estilizado"],
-  usage: `${PREFIX}estilizado`,
+  usage: ${PREFIX}estilizado,
   handle: async ({ sendReply, socket, remoteJid }) => {
     try {
       console.log("Iniciando proceso de envío de mensaje estilizado...");
 
       // URL de la imagen para la prueba
       let imageUrl = "https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png";
-      console.log(`URL de la imagen: ${imageUrl}`);
+      console.log(URL de la imagen: ${imageUrl});
 
       // Descargar la imagen como buffer
       let response = await axios.get(imageUrl, { responseType: "arraybuffer" });
@@ -28,7 +28,7 @@ module.exports = {
         mimetype: "image/png",  // Tipo MIME de la imagen (en este caso PNG)
       };
 
-      // Crear el mensaje estilizado con detalles de la orden
+      // Agregar el mensaje estilizado con orden
       let estilo = {
         key: {
           fromMe: false,
@@ -50,8 +50,8 @@ module.exports = {
 
       console.log("Mensaje estilizado preparado correctamente.");
 
-      // Enviar el mensaje estilizado con el contenido de la imagen
-      await socket.sendMessage(remoteJid, estilo);  // Usamos la estructura 'estilo' aquí
+      // Enviar el mensaje estilizado
+      await socket.sendMessage(remoteJid, messageContent, { quoted: estilo });
       console.log("Mensaje estilizado enviado correctamente.");
 
     } catch (error) {
