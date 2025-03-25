@@ -4,7 +4,7 @@ const axios = require("axios");
 module.exports = {
   name: "estilizado",
   description: "Envía un mensaje con un formato especial 🎭",
-  commands: ["estilizado"],
+  commands: ["krampus"],
   usage: `${PREFIX}estilizado`,
   handle: async ({ sendReply, socket, remoteJid }) => {
     try {
