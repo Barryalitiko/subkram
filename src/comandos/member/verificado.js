@@ -24,7 +24,7 @@ module.exports = {
       // Crear el mensaje con el estilo personalizado
       let messageContent = {
         image: imageBuffer,  // Buffer de la imagen descargada
-        caption: "👑【✫ᴍᴏɴᴛᴀɴᴀ✫】🪩",  // Mensaje que acompaña la imagen
+        caption: "KrampusOM",  // Mensaje que acompaña la imagen
         mimetype: "image/png",  // Tipo MIME de la imagen (en este caso PNG)
       };
 
@@ -36,7 +36,7 @@ module.exports = {
         },
         message: {
           orderMessage: {
-            itemCount: -999999,
+            itemCount: 808080,
             status: 1,
             surface: 1,
             message: messageContent.caption,  // El mensaje que contiene la imagen
