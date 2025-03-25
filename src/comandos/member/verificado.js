@@ -1,4 +1,5 @@
 const { PREFIX } = require("../../krampus");
+const fs = require("fs"); // Para cargar imágenes locales
 
 module.exports = {
   name: "estilizado",
@@ -6,6 +7,9 @@ module.exports = {
   commands: ["estilizado"],
   usage: `${PREFIX}estilizado`,
   handle: async ({ sendReply, socket, remoteJid, webMessage }) => {
+    // Cargar la imagen desde un archivo local
+    let catalogo = fs.readFileSync("./media/catalogo.jpg"); // Ruta de la imagen
+
     // Definir el mensaje con el formato `orderMessage`
     let estilo = {
       key: {
@@ -20,7 +24,7 @@ module.exports = {
           surface: 1,
           message: "KrampusOM",
           orderTitle: "Bang",
-          thumbnail: catalogo, // Asegúrate de definir "catalogo" en tu código
+          thumbnail: catalogo, // Se usa la imagen cargada
           sellerJid: "0@s.whatsapp.net"
         }
       }
