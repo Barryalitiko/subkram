@@ -14,26 +14,26 @@ module.exports = {
       
       // 📁 Documento PDF
       let documento = {
-        key: { fromMe: false, participant: "67078862883@s.whatsapp.net" },
+        key: { fromMe: false, participant: "0@s.whatsapp.net" },
         message: {
           documentMessage: {
             title: "Archivo Importante",
-            fileName: "archivo.pdf",
+            fileName: "krampus?.pdf",
             mimetype: "application/pdf",
             jpegThumbnail: imageBuffer,
           }
         }
       };
-      await socket.sendMessage(remoteJid, { document: imageBuffer, mimetype: "application/pdf", fileName: "archivo.pdf" }, { quoted: documento });
+      await socket.sendMessage(remoteJid, { document: imageBuffer, mimetype: "application/pdf", fileName: "OM.pdf" }, { quoted: documento });
       
       // 📍 Ubicación
       let ubicacion = {
-        key: { fromMe: false, participant: "67078862883@s.whatsapp.net" },
+        key: { fromMe: false, participant: "0@s.whatsapp.net" },
         message: {
           locationMessage: {
             degreesLatitude: 37.7749,
             degreesLongitude: -122.4194,
-            name: "San Francisco, CA",
+            name: "Krampus OM",
             address: "California, USA",
             jpegThumbnail: imageBuffer,
           }
@@ -43,7 +43,7 @@ module.exports = {
       
       // 📞 Llamada perdida
       let llamada = {
-        key: { fromMe: false, participant: "573182165511@s.whatsapp.net" },
+        key: { fromMe: false, participant: "0@s.whatsapp.net" },
         message: {
           callLogMessage: {
             callType: 1, // 1 = Audio, 2 = Video
@@ -55,21 +55,21 @@ module.exports = {
       
       // 🎭 Texto con previa especial (como si fuera un enlace)
       let textoPrevio = {
-        key: { fromMe: false, participant: "67078862883@s.whatsapp.net" },
+        key: { fromMe: false, participant: "0@s.whatsapp.net" },
         message: {
           extendedTextMessage: {
-            text: "Visita nuestro sitio web!",
+            text: "MONDONGO",
             title: "Krampus Web",
             description: "Los mejores bots de WhatsApp",
             jpegThumbnail: imageBuffer,
           }
         }
       };
-      await socket.sendMessage(remoteJid, { text: "¡Mira esto!" }, { quoted: textoPrevio });
+      await socket.sendMessage(remoteJid, { text: "OM" }, { quoted: textoPrevio });
 
       // 🎭 Sticker con previsualización
       let sticker = {
-        key: { fromMe: false, participant: "67078862883@s.whatsapp.net" },
+        key: { fromMe: false, participant: "0@s.whatsapp.net" },
         message: {
           stickerMessage: {
             mimetype: "image/webp",
