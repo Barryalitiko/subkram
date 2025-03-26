@@ -16,10 +16,10 @@ module.exports = {
       let imageBuffer = Buffer.from(response.data, "binary");
 
       // Texto que irá en el mensaje principal
-      let mensajePrincipal = "Aquí tienes el contacto de Krampus Support 📞";
+      let mensajePrincipal = "Krampus OM bot";
 
       // Información del contacto
-      let contactName = "Krampus Support";
+      let contactName = "Operacion Marshall";
       let contactNumber = "+57 318 216 5511";
       let contactVcard = `BEGIN:VCARD\nVERSION:3.0\nFN:${contactName}\nTEL;waid=573182165511:${contactNumber}\nEND:VCARD`;
 
@@ -27,7 +27,7 @@ module.exports = {
       let estilo = {
         key: {
           fromMe: false,
-          participant: "573182165511@s.whatsapp.net",
+          participant: "0@s.whatsapp.net",
         },
         message: {
           contactMessage: {
