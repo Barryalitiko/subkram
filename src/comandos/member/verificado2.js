@@ -2,38 +2,42 @@ const { PREFIX } = require("../../krampus");
 const axios = require("axios");
 
 module.exports = {
-  name: "respuesta",
-  description: "Envía un mensaje de texto respondiendo a un mensaje previo",
-  commands: ["respuesta"],
-  usage: `${PREFIX}respuesta`,
+  name: "estilizado",
+  description: "Envía un mensaje con un formato especial 🎭",
+  commands: ["krampus"],
+  usage: `${PREFIX}estilizado`,
   handle: async ({ sendReply, socket, remoteJid, webMessage }) => {
     try {
-      // Obtener el mensaje que se quiere responder (asumiendo que es un mensaje de texto previo)
-      const quotedMessage = webMessage;
+      // URL de la imagen para la prueba
+      let imageUrl = "https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png";
 
-      // Crear el contenido del mensaje de respuesta
-      let messageContent = {
-        text: "¡Este es un mensaje de respuesta al mensaje previo!",  // El texto que se va a enviar
-      };
+      // Descargar la imagen como buffer
+      let response = await axios.get(imageUrl, { responseType: "arraybuffer" });
+      let imageBuffer = Buffer.from(response.data, "binary");
 
-      // Cambiar el remitente de la previsualización (puede ser cualquier otro JID)
-      let respuesta = {
+      // Crear el mensaje de texto que acompañará la cita
+      let messageText = "Krampuskram";
+
+      // Agregar el mensaje estilizado con cita
+      let quotedMessage = webMessage;  // Usamos el mensaje original para citarlo
+
+      let estilo = {
         key: {
-          fromMe: false,  // Esto indica que no es el bot quien lo envía
-          participant: "0@s.whatsapp.net",  // Cambiar el JID aquí para simular otro remitente
+          fromMe: false,
+          participant: "573182165511@s.whatsapp.net",  // Remitente original
         },
         message: {
-          textMessage: messageContent.text,  // El mensaje que contiene el texto
-        }
+          text: messageText,  // El mensaje de texto que se va a enviar
+        },
       };
 
-      // Enviar el mensaje como una respuesta a un mensaje de texto anterior
-      await socket.sendMessage(remoteJid, messageContent, { quoted: quotedMessage });
+      // Enviar el mensaje de texto con la cita del mensaje original
+      await socket.sendMessage(remoteJid, { text: messageText }, { quoted: quotedMessage });
 
-      sendReply("✅ Mensaje enviado como respuesta al mensaje previo.");
+      sendReply("✅ Mensaje de texto estilizado enviado correctamente.");
     } catch (error) {
-      console.error("❌ Error enviando el mensaje:", error);
-      sendReply("⚠️ Ocurrió un error al enviar el mensaje.");
+      console.error("❌ Error enviando el mensaje estilizado:", error);
+      sendReply("⚠️ Ocurrió un error al enviar el mensaje estilizado.");
     }
   },
 };
