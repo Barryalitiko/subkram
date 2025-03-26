@@ -1,29 +1,30 @@
 const { PREFIX } = require("../../krampus");
 
 module.exports = {
-  name: "buttonTest",
-  description: "Probar la función de respuesta con botones",
-  commands: ["buttontest"],
-  usage: `${PREFIX}buttontest`,
-  handle: async ({ sendReply, sendReact, sendReplyWithButton }) => {
-    // Enviar un emoji para indicar que la prueba comenzó
-    await sendReact("🔘");
+  name: "botones",
+  description: "Envía un mensaje con botones interactivos",
+  commands: ["botones"],
+  usage: `${PREFIX}botones`,
+  handle: async ({ sendReply, socket, remoteJid }) => {
+    try {
+      // Crear el mensaje con botones
+      const buttonMessage = {
+        caption: "Selecciona una opción:", // Mensaje que aparecerá antes de los botones
+        buttons: [
+          { buttonId: "opcion1", buttonText: { displayText: "Opción 1" } },
+          { buttonId: "opcion2", buttonText: { displayText: "Opción 2" } },
+          { buttonId: "opcion3", buttonText: { displayText: "Opción 3" } },
+        ],
+        headerType: 1,  // Opcional, tipo de cabecera del mensaje
+      };
 
-    // Definir los botones
-    const button = {
-      buttonText: "Haz clic aquí", // Texto del botón
-      buttonId: "button_click",    // ID del botón
-      type: 1                      // Tipo de botón
-    };
+      // Enviar el mensaje con botones
+      await socket.sendMessage(remoteJid, buttonMessage);
 
-    const buttons = [button]; // Puedes agregar más botones si lo deseas
-
-    // Mensaje con los botones
-    const text = "¡Hola! Este es un mensaje con un botón para probar la función sendReplyWithButton.";
-
-    // Enviar el mensaje con los botones
-    await sendReplyWithButton(text, buttons);
-
-    console.log("Botón enviado correctamente.");
+      console.log("Mensaje con botones enviado correctamente.");
+    } catch (error) {
+      console.error("❌ Error al enviar el mensaje con botones:", error);
+      sendReply("⚠️ Ocurrió un error al enviar el mensaje con botones.");
+    }
   },
 };
