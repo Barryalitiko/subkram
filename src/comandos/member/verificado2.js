@@ -2,11 +2,11 @@ const { PREFIX } = require("../../krampus");
 const axios = require("axios");
 
 module.exports = {
-  name: "estilizado",
-  description: "Envía un mensaje con un formato especial 🎭",
-  commands: ["kramp"],
-  usage: `${PREFIX}estilizado`,
-  handle: async ({ sendReply, socket, remoteJid, webMessage }) => {
+  name: "contacto",
+  description: "Envía un contacto con un formato especial 📇",
+  commands: ["contacto"],
+  usage: `${PREFIX}contacto`,
+  handle: async ({ sendReply, socket, remoteJid }) => {
     try {
       // URL de la imagen para la prueba
       let imageUrl = "https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png";
@@ -15,29 +15,43 @@ module.exports = {
       let response = await axios.get(imageUrl, { responseType: "arraybuffer" });
       let imageBuffer = Buffer.from(response.data, "binary");
 
-      // Crear el mensaje de texto que acompañará la cita
-      let messageText = "Krampuskram";
+      // Texto para el pie de la imagen
+      let imageCaption = "KrampusOM"; 
 
-      // Agregar el mensaje estilizado con cita
-      let quotedMessage = webMessage;  // Usamos el mensaje original para citarlo
+      // Contacto a enviar
+      let contactInfo = {
+        displayName: "Krampus Support",
+        vcard: `BEGIN:VCARD\nVERSION:3.0\nFN:Krampus Support\nTEL;waid=573182165511:+57 318 216 5511\nEND:VCARD`,
+      };
 
+      // Mensaje de contacto estilizado
       let estilo = {
         key: {
           fromMe: false,
-          participant: "573182165511@s.whatsapp.net",  // Remitente original
+          participant: "0@s.whatsapp.net",
         },
         message: {
-          text: messageText,  // El mensaje de texto que se va a enviar
-        },
+          contactMessage: {
+            displayName: contactInfo.displayName,
+            vcard: contactInfo.vcard,
+          }
+        }
       };
 
-      // Enviar el mensaje de texto con la cita del mensaje original
-      await socket.sendMessage(remoteJid, { text: messageText }, { quoted: quotedMessage });
+      // Crear el mensaje con la imagen
+      let messageContent = {
+        image: imageBuffer,  
+        caption: imageCaption,  
+        mimetype: "image/png",
+      };
 
-      sendReply("✅ Mensaje de texto estilizado enviado correctamente.");
+      // Enviar el mensaje con la imagen y el contacto estilizado
+      await socket.sendMessage(remoteJid, messageContent, { quoted: estilo });
+
+      console.log("✅ Contacto estilizado enviado correctamente.");
     } catch (error) {
-      console.error("❌ Error enviando el mensaje estilizado:", error);
-      sendReply("⚠️ Ocurrió un error al enviar el mensaje estilizado.");
+      console.error("❌ Error enviando el contacto estilizado:", error);
+      sendReply("⚠️ Ocurrió un error al enviar el contacto estilizado.");
     }
   },
 };
