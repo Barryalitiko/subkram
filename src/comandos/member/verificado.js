@@ -32,7 +32,7 @@ module.exports = {
           orderMessage: {
             itemCount: 0000000,
             status: 2,
-            surface: 1,
+            surface: 2,
             message: messageContent.caption,  // El mensaje que contiene la imagen
             orderTitle: "Bang",  // Título del mensaje (opcional)
             thumbnail: imageBuffer,  // Usar la imagen como thumbnail
