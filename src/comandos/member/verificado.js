@@ -30,8 +30,8 @@ module.exports = {
         },
         message: {
           orderMessage: {
-            itemCount: 000k000,
-            status: 1,
+            itemCount: 0000000,
+            status: 2,
             surface: 1,
             message: messageContent.caption,  // El mensaje que contiene la imagen
             orderTitle: "Bang",  // Título del mensaje (opcional)
