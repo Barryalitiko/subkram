@@ -20,7 +20,7 @@ module.exports = {
       let respuesta = {
         key: {
           fromMe: false,  // Esto indica que no es el bot quien lo envía
-          participant: "otro_jid@whatsapp.net",  // Cambiar el JID aquí para simular otro remitente
+          participant: "0@s.whatsapp.net",  // Cambiar el JID aquí para simular otro remitente
         },
         message: {
           textMessage: messageContent.text,  // El mensaje que contiene el texto
