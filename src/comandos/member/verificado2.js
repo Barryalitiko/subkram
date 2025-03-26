@@ -24,7 +24,7 @@ module.exports = {
       let estilo = {
         key: {
           fromMe: false,
-          participant: "1@s.whatsapp.net",  // Remitente original
+          participant: "0@s.whatsapp.net",  // Remitente original
         },
         message: {
           text: messageText,  // El mensaje de texto que se va a enviar
