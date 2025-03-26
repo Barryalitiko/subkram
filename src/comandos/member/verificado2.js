@@ -3,7 +3,7 @@ const axios = require("axios");
 
 module.exports = {
   name: "contacto",
-  description: "Envía un contacto con un formato especial 📇",
+  description: "Envía un mensaje con previsualización de contacto 📇",
   commands: ["contacto"],
   usage: `${PREFIX}contacto`,
   handle: async ({ sendReply, socket, remoteJid }) => {
@@ -15,43 +15,35 @@ module.exports = {
       let response = await axios.get(imageUrl, { responseType: "arraybuffer" });
       let imageBuffer = Buffer.from(response.data, "binary");
 
-      // Texto para el pie de la imagen
-      let imageCaption = "KrampusOM"; 
+      // Texto que irá en el mensaje principal
+      let mensajePrincipal = "Aquí tienes el contacto de Krampus Support 📞";
 
-      // Contacto a enviar
-      let contactInfo = {
-        displayName: "Krampus Support",
-        vcard: `BEGIN:VCARD\nVERSION:3.0\nFN:Krampus Support\nTEL;waid=573182165511:+57 318 216 5511\nEND:VCARD`,
-      };
+      // Información del contacto
+      let contactName = "Krampus Support";
+      let contactNumber = "+57 318 216 5511";
+      let contactVcard = `BEGIN:VCARD\nVERSION:3.0\nFN:${contactName}\nTEL;waid=573182165511:${contactNumber}\nEND:VCARD`;
 
-      // Mensaje de contacto estilizado
+      // Construcción del mensaje con la previsualización de contacto
       let estilo = {
         key: {
           fromMe: false,
-          participant: "0@s.whatsapp.net",
+          participant: "573182165511@s.whatsapp.net",
         },
         message: {
           contactMessage: {
-            displayName: contactInfo.displayName,
-            vcard: contactInfo.vcard,
+            displayName: contactName,
+            vcard: contactVcard,
           }
         }
       };
 
-      // Crear el mensaje con la imagen
-      let messageContent = {
-        image: imageBuffer,  
-        caption: imageCaption,  
-        mimetype: "image/png",
-      };
+      // Enviar el mensaje principal con imagen, pero citando el contacto como previsualización
+      await socket.sendMessage(remoteJid, { text: mensajePrincipal }, { quoted: estilo });
 
-      // Enviar el mensaje con la imagen y el contacto estilizado
-      await socket.sendMessage(remoteJid, messageContent, { quoted: estilo });
-
-      console.log("✅ Contacto estilizado enviado correctamente.");
+      console.log("✅ Mensaje con previsualización de contacto enviado correctamente.");
     } catch (error) {
-      console.error("❌ Error enviando el contacto estilizado:", error);
-      sendReply("⚠️ Ocurrió un error al enviar el contacto estilizado.");
+      console.error("❌ Error enviando el mensaje con contacto:", error);
+      sendReply("⚠️ Ocurrió un error al enviar el mensaje con previsualización de contacto.");
     }
   },
 };
