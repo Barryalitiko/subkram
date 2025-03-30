@@ -1,6 +1,6 @@
 const { PREFIX } = require("../../krampus");
 const path = require("path");
-const fs = require("fs").promises;
+const fs = require("fs");
 
 module.exports = {
   name: "combate",
@@ -17,15 +17,15 @@ module.exports = {
 
     // Cargar razas desde el archivo JSON
     const razasPath = path.resolve(process.cwd(), "assets/razas.json");
-    let razas = JSON.parse(await fs.readFile(razasPath, "utf8"));
+    let razas = JSON.parse(fs.readFileSync(razasPath, "utf8"));
 
     // Función para obtener la raza de un usuario
     const obtenerRaza = async (usuario) => {
-      let datos = JSON.parse(await fs.readFile(razasPath, "utf8"));
+      let datos = JSON.parse(fs.readFileSync(razasPath, "utf8"));
       if (!datos[usuario]) {
         let razaAleatoria = Object.keys(razas)[Math.floor(Math.random() * Object.keys(razas).length)];
         datos[usuario] = razaAleatoria;
-        await fs.writeFile(razasPath, JSON.stringify(datos, null, 2)); // Guardar la raza asignada al usuario
+        fs.writeFileSync(razasPath, JSON.stringify(datos, null, 2)); // Guardar la raza asignada al usuario
         return razaAleatoria;
       }
       return datos[usuario];
@@ -40,8 +40,9 @@ module.exports = {
       [usuario2]: { HP: razas[raza2].HP, MP: 0, AM: 0 }
     };
 
+    // Función para mostrar las barras de HP, MP y Ataque Mágico
     let barras = (value, symbol, emptySymbol, max = 10) => {
-      let filled = Math.max(0, Math.round((value / 100) * max));
+      let filled = Math.max(0, Math.min(max, Math.round((value / 100) * max)));
       return symbol.repeat(filled) + emptySymbol.repeat(max - filled);
     };
 
@@ -66,6 +67,7 @@ ${barras(stats[usuario2].AM, "★", "☆")} (${stats[usuario2].AM}%)
 ⏳ *Batalla en curso...*`, { mentions: [usuario1, usuario2] }
     );
 
+    // Ciclo de la batalla
     while (stats[usuario1].HP > 0 && stats[usuario2].HP > 0) {
       await new Promise(resolve => setTimeout(resolve, 2000));
 
@@ -75,10 +77,11 @@ ${barras(stats[usuario2].AM, "★", "☆")} (${stats[usuario2].AM}%)
       let dano = Math.floor(Math.random() * 20) + 10;
       stats[defensor].HP = Math.max(0, stats[defensor].HP - dano);
 
-      // Incrementar MP y AM según la carga de la raza y asegurarse de que no excedan 100
-      stats[atacante].MP = Math.min(100, Math.max(0, stats[atacante].MP + razas[await obtenerRaza(atacante)].MP_carga));
-      stats[atacante].AM = Math.min(100, Math.max(0, stats[atacante].AM + razas[await obtenerRaza(atacante)].AM_carga));
+      // Incrementar MP y AM según la carga de la raza
+      stats[atacante].MP = Math.min(100, stats[atacante].MP + razas[await obtenerRaza(atacante)].MP_carga);
+      stats[atacante].AM = Math.min(100, stats[atacante].AM + razas[await obtenerRaza(atacante)].AM_carga);
 
+      // Actualizar mensaje de batalla
       await socket.sendMessage(remoteJid, {
         edit: sentMessage.key,
         text: `⚔️ *¡Batalla en curso!* ⚔️
@@ -105,6 +108,7 @@ ${barras(stats[usuario2].AM, "★", "☆")} (${stats[usuario2].AM}%)
       });
     }
 
+    // Anunciar el ganador
     let ganador = stats[usuario1].HP > 0 ? usuario1 : usuario2;
     await socket.sendMessage(remoteJid, {
       edit: sentMessage.key,
