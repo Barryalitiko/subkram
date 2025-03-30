@@ -6,6 +6,10 @@ module.exports = {
   commands: ["pelea"],
   usage: `${PREFIX}pelea [@usuario]`,
   handle: async ({ sendReply, socket, remoteJid, webMessage, db }) => {
+    if (!db || typeof db.get !== "function" || typeof db.set !== "function") {
+      return sendReply("⚠️ Error: No se pudo acceder a la base de datos.");
+    }
+
     let usuario1 = webMessage.key.participant;
     let mencionados = webMessage.message.extendedTextMessage?.contextInfo?.mentionedJid || [];
     let usuario2 = mencionados.length > 0 ? mencionados[0] : null;
@@ -25,10 +29,10 @@ module.exports = {
     };
     
     const obtenerRaza = async (usuario) => {
-      let datos = await db.get(`raza_${usuario}`);
+      let datos = await db?.get(`raza_${usuario}`).catch(() => null);
       if (!datos) {
         let razaAleatoria = Object.keys(razas)[Math.floor(Math.random() * Object.keys(razas).length)];
-        await db.set(`raza_${usuario}`, razaAleatoria);
+        await db?.set(`raza_${usuario}`, razaAleatoria).catch(() => null);
         return razaAleatoria;
       }
       return datos;
@@ -47,25 +51,10 @@ module.exports = {
       return symbol.repeat(filled) + emptySymbol.repeat(max - filled);
     };
     
-    let sentMessage = await sendReply(`⚔️ *¡Batalla iniciada!* ⚔️
-👤 @${usuario1.split("@")[0]} (${raza1}) vs 👤 @${usuario2.split("@")[0]} (${raza2})
-
-` +
-      `💥 HP:
-${barras(stats[usuario1].HP, "■", "▢")} (${stats[usuario1].HP}%)
-${barras(stats[usuario2].HP, "■", "▢")} (${stats[usuario2].HP}%)
-
-` +
-      `⚡ MP:
-${barras(stats[usuario1].MP, "●", "○")} (${stats[usuario1].MP}%)
-${barras(stats[usuario2].MP, "●", "○")} (${stats[usuario2].MP}%)
-
-` +
-      `✨ Ataque Mágico:
-${barras(stats[usuario1].AM, "★", "☆")} (${stats[usuario1].AM}%)
-${barras(stats[usuario2].AM, "★", "☆")} (${stats[usuario2].AM}%)
-
-⏳ *Batalla en curso...*`, { mentions: [usuario1, usuario2] }
+    let sentMessage = await sendReply(`⚔️ *¡Batalla iniciada!* ⚔️\n👤 @${usuario1.split("@")[0]} (${raza1}) vs 👤 @${usuario2.split("@")[0]} (${raza2})\n\n` +
+      `💥 HP:\n${barras(stats[usuario1].HP, "■", "▢")} (${stats[usuario1].HP}%)\n${barras(stats[usuario2].HP, "■", "▢")} (${stats[usuario2].HP}%)\n\n` +
+      `⚡ MP:\n${barras(stats[usuario1].MP, "●", "○")} (${stats[usuario1].MP}%)\n${barras(stats[usuario2].MP, "●", "○")} (${stats[usuario2].MP}%)\n\n` +
+      `✨ Ataque Mágico:\n${barras(stats[usuario1].AM, "★", "☆")} (${stats[usuario1].AM}%)\n${barras(stats[usuario2].AM, "★", "☆")} (${stats[usuario2].AM}%)\n\n⏳ *Batalla en curso...*`, { mentions: [usuario1, usuario2] }
     );
     
     while (stats[usuario1].HP > 0 && stats[usuario2].HP > 0) {
@@ -80,25 +69,10 @@ ${barras(stats[usuario2].AM, "★", "☆")} (${stats[usuario2].AM}%)
       
       await socket.sendMessage(remoteJid, {
         edit: sentMessage.key,
-        text: `⚔️ *¡Batalla en curso!* ⚔️
-👤 @${usuario1.split("@")[0]} (${raza1}) vs 👤 @${usuario2.split("@")[0]} (${raza2})
-
-` +
-          `💥 HP:
-${barras(stats[usuario1].HP, "■", "▢")} (${stats[usuario1].HP}%)
-${barras(stats[usuario2].HP, "■", "▢")} (${stats[usuario2].HP}%)
-
-` +
-          `⚡ MP:
-${barras(stats[usuario1].MP, "●", "○")} (${stats[usuario1].MP}%)
-${barras(stats[usuario2].MP, "●", "○")} (${stats[usuario2].MP}%)
-
-` +
-          `✨ Ataque Mágico:
-${barras(stats[usuario1].AM, "★", "☆")} (${stats[usuario1].AM}%)
-${barras(stats[usuario2].AM, "★", "☆")} (${stats[usuario2].AM}%)
-
-` +
+        text: `⚔️ *¡Batalla en curso!* ⚔️\n👤 @${usuario1.split("@")[0]} (${raza1}) vs 👤 @${usuario2.split("@")[0]} (${raza2})\n\n` +
+          `💥 HP:\n${barras(stats[usuario1].HP, "■", "▢")} (${stats[usuario1].HP}%)\n${barras(stats[usuario2].HP, "■", "▢")} (${stats[usuario2].HP}%)\n\n` +
+          `⚡ MP:\n${barras(stats[usuario1].MP, "●", "○")} (${stats[usuario1].MP}%)\n${barras(stats[usuario2].MP, "●", "○")} (${stats[usuario2].MP}%)\n\n` +
+          `✨ Ataque Mágico:\n${barras(stats[usuario1].AM, "★", "☆")} (${stats[usuario1].AM}%)\n${barras(stats[usuario2].AM, "★", "☆")} (${stats[usuario2].AM}%)\n\n` +
           `⚔️ @${atacante.split("@")[0]} atacó a @${defensor.split("@")[0]} e hizo *${dano} de daño!*`,
         mentions: [usuario1, usuario2]
       });
@@ -107,8 +81,7 @@ ${barras(stats[usuario2].AM, "★", "☆")} (${stats[usuario2].AM}%)
     let ganador = stats[usuario1].HP > 0 ? usuario1 : usuario2;
     await socket.sendMessage(remoteJid, {
       edit: sentMessage.key,
-      text: `⚔️ *¡Batalla finalizada!* ⚔️
-🏆 *GANADOR:* @${ganador.split("@")[0]} con ${stats[ganador].HP}% de vida restante!`,
+      text: `⚔️ *¡Batalla finalizada!* ⚔️\n🏆 *GANADOR:* @${ganador.split("@")[0]} con ${stats[ganador].HP}% de vida restante!`,
       mentions: [usuario1, usuario2]
     });
   },
