@@ -1,1 +1,37 @@
-[]
+{
+  "Dragon": {
+    "HP": 120,
+    "MP_carga": 8,
+    "AM_carga": 5
+  },
+  "Caballero": {
+    "HP": 150,
+    "MP_carga": 5,
+    "AM_carga": 6
+  },
+  "Mago": {
+    "HP": 100,
+    "MP_carga": 12,
+    "AM_carga": 8
+  },
+  "Hada": {
+    "HP": 90,
+    "MP_carga": 15,
+    "AM_carga": 10
+  },
+  "Demonio": {
+    "HP": 110,
+    "MP_carga": 10,
+    "AM_carga": 12
+  },
+  "Elfo": {
+    "HP": 95,
+    "MP_carga": 14,
+    "AM_carga": 9
+  },
+  "Angel": {
+    "HP": 130,
+    "MP_carga": 7,
+    "AM_carga": 7
+  }
+}
