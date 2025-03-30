@@ -1,6 +1,6 @@
 const { PREFIX } = require("../../krampus");
 const path = require("path");
-const fs = require("fs");
+const fs = require("fs").promises;
 
 module.exports = {
   name: "combate",
@@ -17,15 +17,15 @@ module.exports = {
 
     // Cargar razas desde el archivo JSON
     const razasPath = path.resolve(process.cwd(), "assets/razas.json");
-    let razas = JSON.parse(fs.readFileSync(razasPath, "utf8"));
+    let razas = JSON.parse(await fs.readFile(razasPath, "utf8"));
 
     // Función para obtener la raza de un usuario
     const obtenerRaza = async (usuario) => {
-      let datos = JSON.parse(fs.readFileSync(razasPath, "utf8"));
+      let datos = JSON.parse(await fs.readFile(razasPath, "utf8"));
       if (!datos[usuario]) {
         let razaAleatoria = Object.keys(razas)[Math.floor(Math.random() * Object.keys(razas).length)];
         datos[usuario] = razaAleatoria;
-        fs.writeFileSync(razasPath, JSON.stringify(datos, null, 2)); // Guardar la raza asignada al usuario
+        await fs.writeFile(razasPath, JSON.stringify(datos, null, 2)); // Guardar la raza asignada al usuario
         return razaAleatoria;
       }
       return datos[usuario];
