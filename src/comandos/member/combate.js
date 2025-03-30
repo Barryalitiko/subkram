@@ -71,7 +71,7 @@ ${barras(stats[usuario2].AM, "★", "☆")} (${stats[usuario2].AM}%)
 
     // Ciclo de combate
     while (stats[usuario1].HP > 0 && stats[usuario2].HP > 0) {
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      await new Promise(resolve => setTimeout(resolve, 3000));
 
       let atacante = Math.random() < 0.5 ? usuario1 : usuario2;
       let defensor = atacante === usuario1 ? usuario2 : usuario1;
