@@ -40,9 +40,9 @@ module.exports = {
       [usuario2]: { ...razas[razaUsuario2] }
     };
     
-    // Función para crear las barras
+    // Función para crear las barras, asegurándose de no pasar valores negativos
     let barras = (value, symbol, emptySymbol, max = 10) => {
-      let filled = Math.round((value / 100) * max);
+      let filled = Math.max(0, Math.min(Math.round((value / 100) * max), max));
       return symbol.repeat(filled) + emptySymbol.repeat(max - filled);
     };
     
