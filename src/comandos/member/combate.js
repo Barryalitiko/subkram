@@ -1,20 +1,21 @@
 const { PREFIX } = require("../../krampus");
+const fs = require("fs");
+const path = require("path");
 
-const razas = {
-  dragón: { HP: 120, MP: 50, AM: 30 },
-  caballero: { HP: 110, MP: 40, AM: 20 },
-  mago: { HP: 80, MP: 100, AM: 80 },
-  hada: { HP: 90, MP: 60, AM: 40 },
-  demonio: { HP: 90, MP: 100, AM: 100 },
-  elfo: { HP: 100, MP: 70, AM: 50 },
-  angel: { HP: 110, MP: 50, AM: 50 }
+const RAZAS = {
+  Dragon: { HP: 130, MP_carga: 6, AM_carga: 10 },
+  Caballero: { HP: 150, MP_carga: 5, AM_carga: 5 },
+  Mago: { HP: 90, MP_carga: 12, AM_carga: 8 },
+  Hada: { HP: 100, MP_carga: 15, AM_carga: 5 },
+  Demonio: { HP: 110, MP_carga: 8, AM_carga: 15 },
+  Elfo: { HP: 120, MP_carga: 10, AM_carga: 8 },
+  Angel: { HP: 110, MP_carga: 8, AM_carga: 8 }
 };
 
-// Función para asignar una raza aleatoria
-function asignarRaza() {
-  const razasDisponibles = Object.keys(razas);
-  const razaElegida = razasDisponibles[Math.floor(Math.random() * razasDisponibles.length)];
-  return razaElegida;
+const DATA_FILE = path.join(__dirname, "combate_data.json");
+let userData = {};
+if (fs.existsSync(DATA_FILE)) {
+  userData = JSON.parse(fs.readFileSync(DATA_FILE));
 }
 
 module.exports = {
@@ -30,51 +31,52 @@ module.exports = {
     if (!usuario2) return sendReply("⚠️ Debes mencionar a alguien para pelear.");
     if (usuario1 === usuario2) return sendReply("⚠️ No puedes pelear contra ti mismo.");
     
-    // Asignar una raza aleatoria a los usuarios
-    let razaUsuario1 = asignarRaza();
-    let razaUsuario2 = asignarRaza();
+    const asignarRaza = (usuario) => {
+      if (!userData[usuario]) {
+        let razas = Object.keys(RAZAS);
+        let razaAleatoria = razas[Math.floor(Math.random() * razas.length)];
+        userData[usuario] = { raza: razaAleatoria };
+      }
+      return userData[usuario].raza;
+    };
     
-    // Datos de pelea basados en las razas
+    let raza1 = asignarRaza(usuario1);
+    let raza2 = asignarRaza(usuario2);
+    fs.writeFileSync(DATA_FILE, JSON.stringify(userData, null, 2));
+    
     let stats = {
-      [usuario1]: { ...razas[razaUsuario1] },
-      [usuario2]: { ...razas[razaUsuario2] }
+      [usuario1]: { ...RAZAS[raza1], HP_actual: RAZAS[raza1].HP, MP: 0, AM: 0 },
+      [usuario2]: { ...RAZAS[raza2], HP_actual: RAZAS[raza2].HP, MP: 0, AM: 0 }
     };
     
-    // Función para crear las barras, asegurándose de no pasar valores negativos
-    let barras = (value, symbol, emptySymbol, max = 10) => {
-      let filled = Math.max(0, Math.min(Math.round((value / 100) * max), max));
-      return symbol.repeat(filled) + emptySymbol.repeat(max - filled);
+    let barras = (value, max, symbol, emptySymbol, length = 10) => {
+      let filled = Math.round((value / max) * length);
+      return symbol.repeat(filled) + emptySymbol.repeat(length - filled);
     };
     
-    // Mensaje inicial
     let sentMessage = await sendReply(`⚔️ *¡Batalla iniciada!* ⚔️\n\n` +
-      `👤 @${usuario1.split("@")[0]} (Raza: ${razaUsuario1}) vs 👤 @${usuario2.split("@")[0]} (Raza: ${razaUsuario2})\n\n` +
-      `💥 HP:\n${barras(stats[usuario1].HP, "■", "▢")} (${stats[usuario1].HP}%)\n` +
-      `${barras(stats[usuario2].HP, "■", "▢")} (${stats[usuario2].HP}%)\n\n` +
-      `⚡ MP:\n${barras(stats[usuario1].MP, "●", "○")} (${stats[usuario1].MP}%)\n` +
-      `${barras(stats[usuario2].MP, "●", "○")} (${stats[usuario2].MP}%)\n\n` +
-      `✨ Ataque Mágico:\n${barras(stats[usuario1].AM, "★", "☆")} (${stats[usuario1].AM}%)\n` +
-      `${barras(stats[usuario2].AM, "★", "☆")} (${stats[usuario2].AM}%)\n\n` +
+      `👤 @${usuario1.split("@")[0]} (${raza1}) vs 👤 @${usuario2.split("@")[0]} (${raza2})\n\n` +
+      `💥 HP:\n${barras(stats[usuario1].HP_actual, stats[usuario1].HP, "■", "▢")} (${stats[usuario1].HP_actual}%)\n` +
+      `${barras(stats[usuario2].HP_actual, stats[usuario2].HP, "■", "▢")} (${stats[usuario2].HP_actual}%)\n\n` +
+      `⚡ MP:\n${barras(stats[usuario1].MP, 100, "●", "○")} (${stats[usuario1].MP}%)\n` +
+      `${barras(stats[usuario2].MP, 100, "●", "○")} (${stats[usuario2].MP}%)\n\n` +
+      `✨ Ataque Mágico:\n${barras(stats[usuario1].AM, 100, "★", "☆")} (${stats[usuario1].AM}%)\n` +
+      `${barras(stats[usuario2].AM, 100, "★", "☆")} (${stats[usuario2].AM}%)\n\n` +
       `⏳ *Turno en progreso...*`, { mentions: [usuario1, usuario2] }
     );
     
-    let turnos = 5; // Cantidad de turnos antes de finalizar la pelea
-    
+    let turnos = 5;
     for (let i = 0; i < turnos; i++) {
-      await new Promise(resolve => setTimeout(resolve, 2000)); // Simula tiempo entre turnos
-      
+      await new Promise(resolve => setTimeout(resolve, 2000));
       let atacante = i % 2 === 0 ? usuario1 : usuario2;
       let defensor = atacante === usuario1 ? usuario2 : usuario1;
-      
       let dano = Math.floor(Math.random() * 20) + 10;
-      let mpGanado = Math.floor(Math.random() * 15) + 5;
-      let amGanado = Math.floor(Math.random() * 20) + 10;
       
-      stats[defensor].HP = Math.max(0, stats[defensor].HP - dano);
-      stats[atacante].MP = Math.min(100, stats[atacante].MP + mpGanado);
-      stats[atacante].AM = Math.min(100, stats[atacante].AM + amGanado);
+      stats[defensor].HP_actual = Math.max(0, stats[defensor].HP_actual - dano);
+      stats[atacante].MP = Math.min(100, stats[atacante].MP + stats[atacante].MP_carga);
+      stats[atacante].AM = Math.min(100, stats[atacante].AM + stats[atacante].AM_carga);
       
-      if (stats[defensor].HP === 0) {
+      if (stats[defensor].HP_actual === 0) {
         await socket.sendMessage(remoteJid, {
           edit: sentMessage.key,
           text: `⚔️ *¡Batalla terminada!* ⚔️\n\n` +
@@ -88,26 +90,16 @@ module.exports = {
       await socket.sendMessage(remoteJid, {
         edit: sentMessage.key,
         text: `⚔️ *¡Batalla en curso!* ⚔️\n\n` +
-          `👤 @${usuario1.split("@")[0]} (Raza: ${razaUsuario1}) vs 👤 @${usuario2.split("@")[0]} (Raza: ${razaUsuario2})\n\n` +
-          `💥 HP:\n${barras(stats[usuario1].HP, "■", "▢")} (${stats[usuario1].HP}%)\n` +
-          `${barras(stats[usuario2].HP, "■", "▢")} (${stats[usuario2].HP}%)\n\n` +
-          `⚡ MP:\n${barras(stats[usuario1].MP, "●", "○")} (${stats[usuario1].MP}%)\n` +
-          `${barras(stats[usuario2].MP, "●", "○")} (${stats[usuario2].MP}%)\n\n` +
-          `✨ Ataque Mágico:\n${barras(stats[usuario1].AM, "★", "☆")} (${stats[usuario1].AM}%)\n` +
-          `${barras(stats[usuario2].AM, "★", "☆")} (${stats[usuario2].AM}%)\n\n` +
-          `⚔️ @${atacante.split("@")[0]} atacó a @${defensor.split("@")[0]} e hizo *${dano} de daño!*\n` +
-          `⚡ ¡Ganó ${mpGanado}% de MP y ${amGanado}% de Ataque Mágico!\n\n` +
-          `⏳ *Siguiente turno...*`,
+          `👤 @${usuario1.split("@")[0]} vs 👤 @${usuario2.split("@")[0]}\n\n` +
+          `💥 HP:\n${barras(stats[usuario1].HP_actual, stats[usuario1].HP, "■", "▢")} (${stats[usuario1].HP_actual}%)\n` +
+          `${barras(stats[usuario2].HP_actual, stats[usuario2].HP, "■", "▢")} (${stats[usuario2].HP_actual}%)\n\n` +
+          `⚡ MP:\n${barras(stats[usuario1].MP, 100, "●", "○")} (${stats[usuario1].MP}%)\n` +
+          `${barras(stats[usuario2].MP, 100, "●", "○")} (${stats[usuario2].MP}%)\n\n` +
+          `✨ Ataque Mágico:\n${barras(stats[usuario1].AM, 100, "★", "☆")} (${stats[usuario1].AM}%)\n` +
+          `${barras(stats[usuario2].AM, 100, "★", "☆")} (${stats[usuario2].AM}%)\n\n` +
+          `⚔️ @${atacante.split("@")[0]} atacó e hizo *${dano} de daño!*`,
         mentions: [usuario1, usuario2]
       });
     }
-    
-    let ganador = stats[usuario1].HP > stats[usuario2].HP ? usuario1 : usuario2;
-    await socket.sendMessage(remoteJid, {
-      edit: sentMessage.key,
-      text: `⚔️ *¡Batalla finalizada!* ⚔️\n\n` +
-        `🏆 *GANADOR:* @${ganador.split("@")[0]} con ${stats[ganador].HP}% de vida restante!`,
-      mentions: [usuario1, usuario2]
-    });
-  },
+  }
 };
