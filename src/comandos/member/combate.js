@@ -75,9 +75,9 @@ ${barras(stats[usuario2].AM, "★", "☆")} (${stats[usuario2].AM}%)
       let dano = Math.floor(Math.random() * 20) + 10;
       stats[defensor].HP = Math.max(0, stats[defensor].HP - dano);
 
-      // Incrementar MP y AM según la carga de la raza
-      stats[atacante].MP = Math.min(100, stats[atacante].MP + razas[await obtenerRaza(atacante)].MP_carga);
-      stats[atacante].AM = Math.min(100, stats[atacante].AM + razas[await obtenerRaza(atacante)].AM_carga);
+      // Incrementar MP y AM según la carga de la raza y asegurarse de que no excedan 100
+      stats[atacante].MP = Math.min(100, Math.max(0, stats[atacante].MP + razas[await obtenerRaza(atacante)].MP_carga));
+      stats[atacante].AM = Math.min(100, Math.max(0, stats[atacante].AM + razas[await obtenerRaza(atacante)].AM_carga));
 
       await socket.sendMessage(remoteJid, {
         edit: sentMessage.key,
