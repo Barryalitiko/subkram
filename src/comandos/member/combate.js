@@ -24,7 +24,12 @@ module.exports = {
     const obtenerRaza = (usuario) => {
       if (!jugadores[usuario]) {
         let razaAleatoria = Object.keys(razas)[Math.floor(Math.random() * Object.keys(razas).length)];
-        jugadores[usuario] = { raza: razaAleatoria, HP: razas[razaAleatoria].HP, MP: 0, AM: 0 };
+        jugadores[usuario] = { 
+          raza: razaAleatoria, 
+          HP: razas[razaAleatoria].HP, 
+          MP: 0, 
+          AM: 0 
+        };
       }
       return jugadores[usuario].raza;
     };
@@ -78,6 +83,7 @@ ${barras(stats[usuario2].AM, "★", "☆")} (${stats[usuario2].AM}%)
       let dano = Math.floor(Math.random() * 20) + 10;
       stats[defensor].HP = Math.max(0, stats[defensor].HP - dano);
 
+      // Asegurarse de que los valores de MP_carga y AM_carga estén definidos
       stats[atacante].MP = (stats[atacante].MP + (razas[stats[atacante].raza]?.MP_carga || 0)) % 101;
       stats[atacante].AM = (stats[atacante].AM + (razas[stats[atacante].raza]?.AM_carga || 0)) % 101;
 
