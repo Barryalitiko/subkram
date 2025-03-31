@@ -15,12 +15,17 @@ module.exports = {
     if (!usuario2) return sendReply("⚠️ Debes mencionar a alguien para pelear.");
     if (usuario1 === usuario2) return sendReply("⚠️ No puedes pelear contra ti mismo.");
 
+    // Rutas de archivos
     const razasPath = path.resolve(process.cwd(), "assets/razas.json");
     const jugadoresPath = path.resolve(process.cwd(), "assets/jugadores.json");
 
+    // Cargar razas
     let razas = JSON.parse(fs.readFileSync(razasPath, "utf8"));
+    
+    // Cargar jugadores
     let jugadores = fs.existsSync(jugadoresPath) ? JSON.parse(fs.readFileSync(jugadoresPath, "utf8")) : {};
 
+    // Función para obtener la raza del usuario y asignarla si no la tiene
     const obtenerRaza = (usuario) => {
       if (!jugadores[usuario]) {
         let razaAleatoria = Object.keys(razas)[Math.floor(Math.random() * Object.keys(razas).length)];
@@ -29,19 +34,23 @@ module.exports = {
       return jugadores[usuario].raza;
     };
 
+    // Asignar razas
     let raza1 = obtenerRaza(usuario1);
     let raza2 = obtenerRaza(usuario2);
 
+    // Cargar estado de los jugadores
     let stats = {
       [usuario1]: jugadores[usuario1],
       [usuario2]: jugadores[usuario2]
     };
 
+    // Función para generar las barras de estado
     let barras = (value, symbol, emptySymbol, max = 10) => {
       let filled = Math.max(0, Math.min(max, Math.round((value / 100) * max)));
       return symbol.repeat(filled) + emptySymbol.repeat(max - filled);
     };
 
+    // Mensaje inicial
     let sentMessage = await sendReply(`⚔️ *¡Batalla iniciada!* ⚔️
 👤 @${usuario1.split("@")[0]} (${raza1}) vs 👤 @${usuario2.split("@")[0]} (${raza2})
 
@@ -57,18 +66,29 @@ ${barras(stats[usuario2].MP, "●", "○")} (${stats[usuario2].MP}%)
 ${barras(stats[usuario1].AM, "★", "☆")} (${stats[usuario1].AM}%)
 ${barras(stats[usuario2].AM, "★", "☆")} (${stats[usuario2].AM}%)
 
-⏳ *Batalla en curso...*`, { mentions: [usuario1, usuario2] }
-    );
+⏳ *Batalla en curso...*`, { mentions: [usuario1, usuario2] });
 
-    while (stats[usuario1].HP > 0 && stats[usuario2].HP > 0) {
-      await new Promise(resolve => setTimeout(resolve, 3000));
+    // Iniciar intervalo de combate cada 3 segundos
+    const intervalId = setInterval(async () => {
+      if (stats[usuario1].HP <= 0 || stats[usuario2].HP <= 0) {
+        clearInterval(intervalId);
+        let ganador = stats[usuario1].HP > 0 ? usuario1 : usuario2;
+        stats[ganador].HP = razas[stats[ganador].raza].HP;
+        fs.writeFileSync(jugadoresPath, JSON.stringify(jugadores, null, 2));
+        await socket.sendMessage(remoteJid, {
+          edit: sentMessage.key,
+          text: `⚔️ *¡Batalla finalizada!* ⚔️
+🏆 *GANADOR:* @${ganador.split("@")[0]} con ${stats[ganador].HP}% de vida restaurada!`,
+          mentions: [usuario1, usuario2]
+        });
+        return;
+      }
 
       let atacante = Math.random() < 0.5 ? usuario1 : usuario2;
       let defensor = atacante === usuario1 ? usuario2 : usuario1;
 
       let dano = Math.floor(Math.random() * 20) + 10;
       stats[defensor].HP = Math.max(0, stats[defensor].HP - dano);
-
       stats[atacante].MP = (stats[atacante].MP + razas[stats[atacante].raza].MP_carga) % 101;
       stats[atacante].AM = (stats[atacante].AM + razas[stats[atacante].raza].AM_carga) % 101;
 
@@ -94,18 +114,6 @@ ${barras(stats[usuario2].AM, "★", "☆")} (${stats[usuario2].AM}%)
 ⚔️ @${atacante.split("@")[0]} atacó a @${defensor.split("@")[0]} e hizo *${dano} de daño!*`,
         mentions: [usuario1, usuario2]
       });
-    }
-
-    let ganador = stats[usuario1].HP > 0 ? usuario1 : usuario2;
-    stats[ganador].HP = razas[stats[ganador].raza].HP;
-
-    fs.writeFileSync(jugadoresPath, JSON.stringify(jugadores, null, 2));
-
-    await socket.sendMessage(remoteJid, {
-      edit: sentMessage.key,
-      text: `⚔️ *¡Batalla finalizada!* ⚔️
-🏆 *GANADOR:* @${ganador.split("@")[0]} con ${stats[ganador].HP}% de vida restaurada!`,
-      mentions: [usuario1, usuario2]
-    });
+    }, 3000);
   },
 };
