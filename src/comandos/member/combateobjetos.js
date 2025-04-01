@@ -40,33 +40,32 @@ module.exports = {
     let tiendaMessage = await sendReply(mensaje);
 
     // Esperar la respuesta del jugador para seleccionar una poción
-    socket.on("chat-update", async (message) => {
-      if (message.key.remoteJid === remoteJid) {
-        const seleccion = parseInt(message.message.conversation);
-        
-        // Verificar que la selección es válida
-        if (isNaN(seleccion) || seleccion < 1 || seleccion > pociones.length) {
-          return await socket.sendMessage(remoteJid, { text: "⚠️ Selección inválida. Por favor, elige una opción de la tienda." });
-        }
+    const respuesta = await sendReply("⚠️ Por favor, selecciona una poción con el número correspondiente.");
 
-        const pocionSeleccionada = pociones[seleccion - 1];
-        let nuevaVida = jugadores[usuario].HP + pocionSeleccionada.vida;
+    // Escuchar la respuesta del jugador (asumiendo que es un número)
+    const seleccion = parseInt(respuesta.trim());
+    
+    // Verificar que la selección es válida
+    if (isNaN(seleccion) || seleccion < 1 || seleccion > pociones.length) {
+      return await sendReply("⚠️ Selección inválida. Por favor, elige una opción de la tienda.");
+    }
 
-        // Si la vida supera el máximo, limitarla a 110
-        if (nuevaVida > 110) nuevaVida = 110;
+    const pocionSeleccionada = pociones[seleccion - 1];
+    let nuevaVida = jugadores[usuario].HP + pocionSeleccionada.vida;
 
-        // Actualizar la vida del jugador
-        jugadores[usuario].HP = nuevaVida;
+    // Si la vida supera el máximo, limitarla a 110
+    if (nuevaVida > 110) nuevaVida = 110;
 
-        // Guardar las estadísticas actualizadas
-        fs.writeFileSync(jugadoresPath, JSON.stringify(jugadores, null, 2));
+    // Actualizar la vida del jugador
+    jugadores[usuario].HP = nuevaVida;
 
-        // Enviar animación y mensaje de adquisición
-        await socket.sendMessage(remoteJid, { text: `✨ *¡Has adquirido la ${pocionSeleccionada.nombre}!*\nRecuperaste ${pocionSeleccionada.vida} puntos de vida.\n\nAhora tienes ${jugadores[usuario].HP} puntos de vida.` });
+    // Guardar las estadísticas actualizadas
+    fs.writeFileSync(jugadoresPath, JSON.stringify(jugadores, null, 2));
 
-        // Eliminar el mensaje de tienda
-        await socket.sendMessage(remoteJid, { text: "¡Gracias por tu compra!" });
-      }
-    });
+    // Enviar animación y mensaje de adquisición
+    await sendReply(`✨ *¡Has adquirido la ${pocionSeleccionada.nombre}!*\nRecuperaste ${pocionSeleccionada.vida} puntos de vida.\n\nAhora tienes ${jugadores[usuario].HP} puntos de vida.`);
+
+    // Eliminar el mensaje de tienda
+    await sendReply("¡Gracias por tu compra!");
   },
 };
