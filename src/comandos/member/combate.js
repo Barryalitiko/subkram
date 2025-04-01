@@ -23,7 +23,7 @@ module.exports = {
     const obtenerRaza = (usuario) => {
       if (!jugadores[usuario]) {
         let razaAleatoria = Object.keys(razas)[Math.floor(Math.random() * Object.keys(razas).length)];
-        jugadores[usuario] = { raza: razaAleatoria, HP: razas[razaAleatoria].HP, MP: 0, AM: 0 };
+        jugadores[usuario] = { raza: razaAleatoria, HP: razas[razaAleatoria].HP, MP: 0, AM: 0, escudo: razas[razaAleatoria].escudo, esquivar: razas[razaAleatoria].esquivar, velocidad: razas[razaAleatoria].velocidad };
         fs.writeFileSync(jugadoresPath, JSON.stringify(jugadores, null, 2));
         return razaAleatoria;
       }
@@ -58,16 +58,32 @@ module.exports = {
         return;
       }
 
+      // Determinar si un jugador esquiva el ataque
       let atacante = Math.random() < 0.5 ? usuario1 : usuario2;
       let defensor = atacante === usuario1 ? usuario2 : usuario1;
 
+      let esquivar = Math.random() < stats[defensor].esquivar;
+      if (esquivar) {
+        await socket.sendMessage(remoteJid, {
+          edit: sentMessage.key,
+          text: `⚔️ *¡Batalla en curso!* ⚔️\n👤 @${usuario1.split("@")[0]} (${raza1}) vs 👤 @${usuario2.split("@")[0]} (${raza2})\n\n💥 HP:\n${barras(stats[usuario1].HP, "■", "▢")} (${stats[usuario1].HP})\n${barras(stats[usuario2].HP, "■", "▢")} (${stats[usuario2].HP})\n\n✨ Ataque Mágico:\n${barras(stats[usuario1].AM, "★", "☆")} (${stats[usuario1].AM})\n${barras(stats[usuario2].AM, "★", "☆")} (${stats[usuario2].AM})\n\n⚔️ @${defensor.split("@")[0]} esquivó el ataque de @${atacante.split("@")[0]}!`,
+          mentions: [usuario1, usuario2]
+        });
+        return;
+      }
+
+      // Calcular el daño considerando el escudo
       let ataque = stats[atacante].AM >= 100 ? Math.floor(Math.random() * 30) + 20 : Math.floor(Math.random() * 20) + 10;
-      stats[defensor].HP = Math.max(0, stats[defensor].HP - ataque);
+      let dañoFinal = ataque - stats[defensor].escudo; // Reducir daño por escudo
+      dañoFinal = Math.max(0, dañoFinal); // Asegurarse de que no sea negativo
+      stats[defensor].HP = Math.max(0, stats[defensor].HP - dañoFinal);
+
+      // Incrementar el AM si no está al máximo
       stats[atacante].AM = stats[atacante].AM >= 100 ? 0 : Math.min(100, stats[atacante].AM + razas[stats[atacante].raza]?.AM_carga || 0);
 
       await socket.sendMessage(remoteJid, {
         edit: sentMessage.key,
-        text: `⚔️ *¡Batalla en curso!* ⚔️\n👤 @${usuario1.split("@")[0]} (${raza1}) vs 👤 @${usuario2.split("@")[0]} (${raza2})\n\n💥 HP:\n${barras(stats[usuario1].HP, "■", "▢")} (${stats[usuario1].HP})\n${barras(stats[usuario2].HP, "■", "▢")} (${stats[usuario2].HP})\n\n✨ Ataque Mágico:\n${barras(stats[usuario1].AM, "★", "☆")} (${stats[usuario1].AM})\n${barras(stats[usuario2].AM, "★", "☆")} (${stats[usuario2].AM})\n\n⚔️ @${atacante.split("@")[0]} atacó a @${defensor.split("@")[0]} e hizo *${ataque} de daño!*`,
+        text: `⚔️ *¡Batalla en curso!* ⚔️\n👤 @${usuario1.split("@")[0]} (${raza1}) vs 👤 @${usuario2.split("@")[0]} (${raza2})\n\n💥 HP:\n${barras(stats[usuario1].HP, "■", "▢")} (${stats[usuario1].HP})\n${barras(stats[usuario2].HP, "■", "▢")} (${stats[usuario2].HP})\n\n✨ Ataque Mágico:\n${barras(stats[usuario1].AM, "★", "☆")} (${stats[usuario1].AM})\n${barras(stats[usuario2].AM, "★", "☆")} (${stats[usuario2].AM})\n\n⚔️ @${atacante.split("@")[0]} atacó a @${defensor.split("@")[0]} e hizo *${dañoFinal} de daño!*`,
         mentions: [usuario1, usuario2]
       });
     }, 3000);
