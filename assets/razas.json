@@ -1,9 +1,58 @@
 {
-  "Dragón": { "HP": 110, "MP_carga": 20, "AM_carga": 12 },
-  "Caballero": { "HP": 110, "MP_carga": 20, "AM_carga": 12 },
-  "Mago": { "HP": 110, "MP_carga": 20, "AM_carga": 12 },
-  "Hada": { "HP": 110, "MP_carga": 20, "AM_carga": 12 },
-  "Demonio": { "HP": 110, "MP_carga": 20, "AM_carga": 12 },
-  "Elfo": { "HP": 110, "MP_carga": 20, "AM_carga": 12 },
-  "Ángel": { "HP": 110, "MP_carga": 20, "AM_carga": 12 }
+  "Dragón": {
+    "HP": 110,
+    "MP_carga": 20,
+    "AM_carga": 12,
+    "velocidad": 1.2,
+    "escudo": 10,
+    "esquivar": 0.15
+  },
+  "Caballero": {
+    "HP": 110,
+    "MP_carga": 20,
+    "AM_carga": 12,
+    "velocidad": 1.2,
+    "escudo": 10,
+    "esquivar": 0.15
+  },
+  "Mago": {
+    "HP": 110,
+    "MP_carga": 20,
+    "AM_carga": 12,
+    "velocidad": 1.2,
+    "escudo": 10,
+    "esquivar": 0.15
+  },
+  "Hada": {
+    "HP": 110,
+    "MP_carga": 20,
+    "AM_carga": 12,
+    "velocidad": 1.2,
+    "escudo": 10,
+    "esquivar": 0.15
+  },
+  "Demonio": {
+    "HP": 110,
+    "MP_carga": 20,
+    "AM_carga": 12,
+    "velocidad": 1.2,
+    "escudo": 10,
+    "esquivar": 0.15
+  },
+  "Elfo": {
+    "HP": 110,
+    "MP_carga": 20,
+    "AM_carga": 12,
+    "velocidad": 1.2,
+    "escudo": 10,
+    "esquivar": 0.15
+  },
+  "Ángel": {
+    "HP": 110,
+    "MP_carga": 20,
+    "AM_carga": 12,
+    "velocidad": 1.2,
+    "escudo": 10,
+    "esquivar": 0.15
+  }
 }
