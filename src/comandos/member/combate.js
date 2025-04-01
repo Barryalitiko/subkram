@@ -41,26 +41,20 @@ module.exports = {
       [usuario2]: jugadores[usuario2]
     };
 
-    // Función para mostrar las barras de HP, MP y Ataque Mágico
-    let barras = (value, symbol, emptySymbol, max = 10) => {
-      let filled = Math.max(0, Math.min(max, Math.round((value / 100) * max)));
-      return symbol.repeat(filled) + emptySymbol.repeat(max - filled);
-    };
-
     let sentMessage = await sendReply(`⚔️ *¡Batalla iniciada!* ⚔️
 👤 @${usuario1.split("@")[0]} (${raza1}) vs 👤 @${usuario2.split("@")[0]} (${raza2})
 
 💥 HP:
-${barras(stats[usuario1].HP, "■", "▢")} (${stats[usuario1].HP}%)
-${barras(stats[usuario2].HP, "■", "▢")} (${stats[usuario2].HP}%)
+${stats[usuario1].HP} HP
+${stats[usuario2].HP} HP
 
 ⚡ MP:
-${barras(stats[usuario1].MP, "●", "○")} (${stats[usuario1].MP}%)
-${barras(stats[usuario2].MP, "●", "○")} (${stats[usuario2].MP}%)
+${stats[usuario1].MP} MP
+${stats[usuario2].MP} MP
 
 ✨ Ataque Mágico:
-${barras(stats[usuario1].AM, "★", "☆")} (${stats[usuario1].AM}%)
-${barras(stats[usuario2].AM, "★", "☆")} (${stats[usuario2].AM}%)
+${stats[usuario1].AM} AM
+${stats[usuario2].AM} AM
 
 ⏳ *Batalla en curso...*`, { mentions: [usuario1, usuario2] });
 
@@ -73,7 +67,7 @@ ${barras(stats[usuario2].AM, "★", "☆")} (${stats[usuario2].AM}%)
         await socket.sendMessage(remoteJid, {
           edit: sentMessage.key,
           text: `⚔️ *¡Batalla finalizada!* ⚔️
-🏆 *GANADOR:* @${ganador.split("@")[0]} con ${stats[ganador].HP}% de vida restante!`,
+🏆 *GANADOR:* @${ganador.split("@")[0]} con ${stats[ganador].HP} HP restante!`,
           mentions: [usuario1, usuario2]
         });
         return;
@@ -96,16 +90,16 @@ ${barras(stats[usuario2].AM, "★", "☆")} (${stats[usuario2].AM}%)
 👤 @${usuario1.split("@")[0]} (${raza1}) vs 👤 @${usuario2.split("@")[0]} (${raza2})
 
 💥 HP:
-${barras(stats[usuario1].HP, "■", "▢")} (${stats[usuario1].HP}%)
-${barras(stats[usuario2].HP, "■", "▢")} (${stats[usuario2].HP}%)
+${stats[usuario1].HP} HP
+${stats[usuario2].HP} HP
 
 ⚡ MP:
-${barras(stats[usuario1].MP, "●", "○")} (${stats[usuario1].MP}%)
-${barras(stats[usuario2].MP, "●", "○")} (${stats[usuario2].MP}%)
+${stats[usuario1].MP} MP
+${stats[usuario2].MP} MP
 
 ✨ Ataque Mágico:
-${barras(stats[usuario1].AM, "★", "☆")} (${stats[usuario1].AM}%)
-${barras(stats[usuario2].AM, "★", "☆")} (${stats[usuario2].AM}%)
+${stats[usuario1].AM} AM
+${stats[usuario2].AM} AM
 
 ⚔️ @${atacante.split("@")[0]} atacó a @${defensor.split("@")[0]} e hizo *${dano} de daño!*`,
         mentions: [usuario1, usuario2]
