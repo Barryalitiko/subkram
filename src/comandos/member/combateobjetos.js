@@ -3,69 +3,52 @@ const path = require("path");
 const fs = require("fs");
 
 module.exports = {
-  name: "pociones",
-  description: "Adquiere pociones para recuperar vida.",
+  name: "tienda-pociones",
+  description: "Abre la tienda de pociones para recuperar vida.",
   commands: ["pociones"],
   usage: `${PREFIX}pociones`,
-  handle: async ({ sendReply, socket, remoteJid, webMessage }) => {
+  handle: async ({ sendReply, socket, remoteJid, webMessage, args }) => {
     let usuario = webMessage.key.participant;
-
     const jugadoresPath = path.resolve(process.cwd(), "assets/jugadores.json");
     let jugadores = fs.existsSync(jugadoresPath) ? JSON.parse(fs.readFileSync(jugadoresPath, "utf8")) : {};
 
-    // Verificar si el jugador tiene estadísticas
     if (!jugadores[usuario]) {
       return sendReply("⚠️ No se encontraron estadísticas para este jugador. Puede que no haya jugado una pelea aún.");
     }
 
-    // Verificar si el jugador está al máximo de vida
-    if (jugadores[usuario].HP >= 110) {
-      return sendReply("⚠️ ¡Ya estás al máximo de vida! No puedes adquirir más pociones.");
+    const pociones = {
+      "10": 10,
+      "20": 20,
+      "30": 30,
+      "40": 40,
+      "50": 50
+    };
+
+    if (!args[0]) {
+      let tienda = "🛒 *Tienda de Pociones* 🛒\n";
+      for (let [nombre, valor] of Object.entries(pociones)) {
+        tienda += `💊 Poción de ${nombre} HP ➝ *${PREFIX}pociones ${nombre}*\n`;
+      }
+      return sendReply(tienda);
     }
 
-    // Lista de pociones disponibles
-    const pociones = [
-      { nombre: "Poción Pequeña", vida: 10 },
-      { nombre: "Poción Media", vida: 20 },
-      { nombre: "Poción Grande", vida: 30 },
-      { nombre: "Poción Épica", vida: 50 },
-    ];
-
-    let mensaje = "🛒 **Tienda de Pociones** 🛒\n\n";
-    pociones.forEach((pocion, index) => {
-      mensaje += `${index + 1}. ${pocion.nombre} - Recupera ${pocion.vida} de vida\n`;
-    });
-
-    // Mostrar tienda de pociones
-    let tiendaMessage = await sendReply(mensaje);
-
-    // Esperar la respuesta del jugador para seleccionar una poción
-    const respuesta = await sendReply("⚠️ Por favor, selecciona una poción con el número correspondiente.");
-
-    // Escuchar la respuesta del jugador (asumiendo que es un número)
-    const seleccion = parseInt(respuesta.trim());
-    
-    // Verificar que la selección es válida
-    if (isNaN(seleccion) || seleccion < 1 || seleccion > pociones.length) {
-      return await sendReply("⚠️ Selección inválida. Por favor, elige una opción de la tienda.");
+    let seleccion = args[0];
+    if (!pociones[seleccion]) {
+      return sendReply("❌ Opción inválida. Usa el comando sin argumentos para ver la lista de pociones disponibles.");
     }
 
-    const pocionSeleccionada = pociones[seleccion - 1];
-    let nuevaVida = jugadores[usuario].HP + pocionSeleccionada.vida;
+    let cantidad = pociones[seleccion];
+    let vidaMaxima = jugadores[usuario].vidaMaxima || 110;
+    if (jugadores[usuario].HP >= vidaMaxima) {
+      return sendReply("⚠️ Ya tienes tu vida al máximo. No puedes usar una poción ahora.");
+    }
 
-    // Si la vida supera el máximo, limitarla a 110
-    if (nuevaVida > 110) nuevaVida = 110;
-
-    // Actualizar la vida del jugador
-    jugadores[usuario].HP = nuevaVida;
-
-    // Guardar las estadísticas actualizadas
+    jugadores[usuario].HP = Math.min(vidaMaxima, jugadores[usuario].HP + cantidad);
     fs.writeFileSync(jugadoresPath, JSON.stringify(jugadores, null, 2));
 
-    // Enviar animación y mensaje de adquisición
-    await sendReply(`✨ *¡Has adquirido la ${pocionSeleccionada.nombre}!*\nRecuperaste ${pocionSeleccionada.vida} puntos de vida.\n\nAhora tienes ${jugadores[usuario].HP} puntos de vida.`);
-
-    // Eliminar el mensaje de tienda
-    await sendReply("¡Gracias por tu compra!");
+    let animacion = `💊 Usando poción de ${cantidad} HP...`;
+    let mensaje = `✨ Tu vida ha aumentado en ${cantidad} puntos. Ahora tienes ${jugadores[usuario].HP} HP.`;
+    await sendReply(animacion);
+    setTimeout(() => sendReply(mensaje), 2000);
   },
 };
