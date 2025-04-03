@@ -1,6 +1,6 @@
 const { PREFIX } = require("../../krampus");
 const { WarningError } = require("../../errors/WarningError");
-const { removeBackgroundFromBuffer } = require("rembg-node"); // Cambié la importación
+const { removeBackground } = require("rembg-node"); // Usamos la función removeBackground
 const fs = require("fs");
 const path = require("path");
 
@@ -29,9 +29,10 @@ module.exports = {
       const imagePath = await downloadImage(webMessage, "temp_image");
       const outputPath = path.join(__dirname, "temp_image_nobg.png");
 
-      const inputBuffer = fs.readFileSync(imagePath);
-      const outputBuffer = await removeBackgroundFromBuffer(inputBuffer); // Usando la función correcta
-      fs.writeFileSync(outputPath, outputBuffer);
+      await removeBackground({ // Usamos removeBackground directamente
+        input: imagePath,
+        output: outputPath,
+      });
 
       await sendSuccessReact();
       await sendImageFromFile(outputPath, "Aquí tienes tu imagen sin fondo.");
