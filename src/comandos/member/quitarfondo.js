@@ -1,6 +1,7 @@
 const { PREFIX } = require("../../krampus");
 const { WarningError } = require("../../errors/WarningError");
-const { removeBackground } = require("rembg-node"); // Usamos la función removeBackground
+const { remove } = require("fs-extra");
+const { removeBackground } = require("rembg-node");
 const fs = require("fs");
 const path = require("path");
 
@@ -20,7 +21,9 @@ module.exports = {
     sendSuccessReact,
   }) => {
     if (!isReply || !isImage) {
-      throw new WarningError("Debes responder a una imagen para quitarle el fondo.");
+      throw new WarningError(
+        "Debes responder a una imagen para quitarle el fondo."
+      );
     }
 
     await sendWaitReact();
@@ -28,17 +31,14 @@ module.exports = {
     try {
       const imagePath = await downloadImage(webMessage, "temp_image");
       const outputPath = path.join(__dirname, "temp_image_nobg.png");
-
-      await removeBackground({ // Usamos removeBackground directamente
+      await removeBackground({
         input: imagePath,
         output: outputPath,
       });
-
       await sendSuccessReact();
       await sendImageFromFile(outputPath, "Aquí tienes tu imagen sin fondo.");
-
-      fs.unlinkSync(imagePath);
-      fs.unlinkSync(outputPath);
+      await remove(imagePath);
+      await remove(outputPath);
     } catch (error) {
       console.error("Error al quitar el fondo:", error);
       await sendErrorReply("Hubo un error al quitar el fondo de la imagen.");
