@@ -28,8 +28,6 @@ module.exports = {
     try {
       // Descarga la imagen
       const imagePath = await downloadImage(webMessage, "image_to_remove_bg");
-
-      // Carga la imagen en un canvas
       const image = await loadImage(imagePath);
       const canvas = createCanvas(image.width, image.height);
       const ctx = canvas.getContext("2d");
@@ -41,12 +39,20 @@ module.exports = {
       const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
       const data = imageData.data;
 
-      // Asume que el fondo es un color sólido (por ejemplo, blanco)
-      const bgColor = { r: 255, g: 255, b: 255 }; // Color blanco
-
-      // Elimina el fondo (blanco)
+      // Función para contar colores
+      const colorCount = {};
       for (let i = 0; i < data.length; i += 4) {
-        if (data[i] === bgColor.r && data[i + 1] === bgColor.g && data[i + 2] === bgColor.b) {
+        const colorKey = `${data[i]},${data[i + 1]},${data[i + 2]}`;
+        colorCount[colorKey] = (colorCount[colorKey] || 0) + 1;
+      }
+
+      // Encontrar el color más frecuente (posible fondo)
+      const mostFrequentColor = Object.entries(colorCount).reduce((a, b) => (a[1] > b[1] ? a : b))[0];
+      const [r, g, b] = mostFrequentColor.split(",").map(Number);
+
+      // Elimina el fondo basado en el color más frecuente
+      for (let i = 0; i < data.length; i += 4) {
+        if (data[i] === r && data[i + 1] === g && data[i + 2] === b) {
           data[i + 3] = 0; // Hace el fondo transparente
         }
       }
@@ -54,7 +60,7 @@ module.exports = {
       // Actualiza la imagen
       ctx.putImageData(imageData, 0, 0);
 
-      // Guarda la imagen modificada en el sistema de archivos
+      // Guarda la imagen modificada
       const outputPath = path.join(__dirname, "image_no_bg.png");
       const out = fs.createWriteStream(outputPath);
       const stream = canvas.createPNGStream();
