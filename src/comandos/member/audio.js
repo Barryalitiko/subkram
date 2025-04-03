@@ -26,18 +26,14 @@ module.exports = {
     await sendWaitReact();
 
     try {
-      console.log("🔄 Descargando audio...");
       const audioPath = await downloadAudio(webMessage, "input_audio.mp3");
-      console.log("✅ Audio descargado en:", audioPath);
-
       const outputPath = path.join(__dirname, "output_video.mp4");
-      const text = "Tu audio en video"; // Puedes cambiar el texto aquí
+      const text = "Krampus OM\nOperacion Marshall";
 
-      console.log("🔧 Configurando ffmpeg...");
       const ffmpegArgs = [
         "-y",
         "-f", "lavfi",
-        "-t", "10",  // Duración del fondo negro
+        "-t", "10",
         "-i", "color=c=black:s=720x720",
         "-i", audioPath,
         "-vf", `drawtext=text='${text}':fontcolor=white:fontsize=40:x=(w-text_w)/2:y=(h-text_h)/2`,
@@ -49,34 +45,19 @@ module.exports = {
         outputPath
       ];
 
-      console.log("⚡ Ejecutando ffmpeg con los siguientes argumentos:\n", ffmpegArgs.join(" "));
-
       const ffmpegProcess = spawn("ffmpeg", ffmpegArgs);
 
-      ffmpegProcess.stdout.on("data", (data) => {
-        console.log(`📜 STDOUT: ${data}`);
-      });
-
-      ffmpegProcess.stderr.on("data", (data) => {
-        console.error(`⚠️ STDERR: ${data}`);
-      });
-
       ffmpegProcess.on("close", async (code) => {
-        console.log(`🚪 ffmpeg salió con código: ${code}`);
-
         if (code === 0) {
-          console.log("✅ Video generado correctamente en:", outputPath);
           await sendSuccessReact();
           await sendVideoFromFile(outputPath, "Aquí tienes tu audio convertido en video.");
           fs.unlinkSync(audioPath);
           fs.unlinkSync(outputPath);
         } else {
-          console.error("❌ Error en ffmpeg, código de salida:", code);
           await sendErrorReply("Hubo un error al convertir el audio en video.");
         }
       });
     } catch (error) {
-      console.error("❌ Error inesperado:", error);
       await sendErrorReply("Ocurrió un error inesperado.");
     }
   },
