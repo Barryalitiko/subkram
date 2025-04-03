@@ -1,39 +1,37 @@
 const { PREFIX } = require("../../krampus");
-const { remove } = require("rembg-node");
+const { WarningError } = require("../../errors/WarningError");
+const { removeBackground } = require("rembg-node");
 const fs = require("fs");
 const path = require("path");
-const { WarningError } = require("../../errors/WarningError");
 
 module.exports = {
   name: "quitarfondo",
   description: "Elimina el fondo de una imagen",
-  commands: ["quitarfondo", "removebg", "nofondo"],
-  usage: `${PREFIX}quitarfondo (responde a una imagen)`,
-  handle: async ({ message, sendWaitReact, sendSuccessReact, sendImage }) => {
-    if (!message || !message.quoted || !message.quoted.hasMedia) {
-      throw new WarningError("Por favor, responde a una imagen para quitarle el fondo.");
+  commands: ["quitarfondo", "nofondo"],
+  usage: `${PREFIX}quitarfondo (responder a imagen)`,
+  handle: async ({ webMessage, isReply, isImage, downloadImage, sendImageFromFile, sendErrorReply, sendWaitReact, sendSuccessReact }) => {
+    if (!isReply || !isImage) {
+      throw new WarningError("Debes responder a una imagen para quitarle el fondo.");
     }
 
     await sendWaitReact();
 
     try {
-      const media = await message.quoted.downloadMedia();
-      const inputPath = path.join(__dirname, "input.png");
-      const outputPath = path.join(__dirname, "output.png");
+      const imagePath = await downloadImage(webMessage, "temp_image");
+      const outputPath = path.join(__dirname, "temp_image_nobg.png");
 
-      fs.writeFileSync(inputPath, media.data, "base64");
-
-      const buffer = await remove(fs.readFileSync(inputPath));
-      fs.writeFileSync(outputPath, buffer);
+      const inputBuffer = fs.readFileSync(imagePath);
+      const outputBuffer = await removeBackground(inputBuffer);
+      fs.writeFileSync(outputPath, outputBuffer);
 
       await sendSuccessReact();
-      await sendImage(outputPath);
+      await sendImageFromFile(outputPath, "Aquí tienes tu imagen sin fondo.");
 
-      fs.unlinkSync(inputPath);
+      fs.unlinkSync(imagePath);
       fs.unlinkSync(outputPath);
     } catch (error) {
       console.error("Error al quitar el fondo:", error);
-      throw new WarningError("Hubo un problema al procesar la imagen. Intenta de nuevo.");
+      await sendErrorReply("Hubo un error al quitar el fondo de la imagen.");
     }
   },
 };
