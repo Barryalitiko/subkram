@@ -1,6 +1,6 @@
 const { PREFIX } = require("../../krampus");
 const { WarningError } = require("../../errors/WarningError");
-const { removeBackground } = require("rembg-node");
+const { removeBackgroundFromBuffer } = require("rembg-node"); // Cambié la importación
 const fs = require("fs");
 const path = require("path");
 
@@ -9,7 +9,16 @@ module.exports = {
   description: "Elimina el fondo de una imagen",
   commands: ["quitarfondo", "nofondo"],
   usage: `${PREFIX}quitarfondo (responder a imagen)`,
-  handle: async ({ webMessage, isReply, isImage, downloadImage, sendImageFromFile, sendErrorReply, sendWaitReact, sendSuccessReact }) => {
+  handle: async ({
+    webMessage,
+    isReply,
+    isImage,
+    downloadImage,
+    sendImageFromFile,
+    sendErrorReply,
+    sendWaitReact,
+    sendSuccessReact,
+  }) => {
     if (!isReply || !isImage) {
       throw new WarningError("Debes responder a una imagen para quitarle el fondo.");
     }
@@ -21,7 +30,7 @@ module.exports = {
       const outputPath = path.join(__dirname, "temp_image_nobg.png");
 
       const inputBuffer = fs.readFileSync(imagePath);
-      const outputBuffer = await removeBackground(inputBuffer);
+      const outputBuffer = await removeBackgroundFromBuffer(inputBuffer); // Usando la función correcta
       fs.writeFileSync(outputPath, outputBuffer);
 
       await sendSuccessReact();
