@@ -36,9 +36,9 @@ module.exports = {
       console.log("🔧 Configurando ffmpeg...");
       const ffmpegArgs = [
         "-y",
-        "-loop", "1",
         "-f", "lavfi",
-        "-i", "color=c=black:s=720x720:d=10", // Fondo negro
+        "-t", "10",  // Duración del fondo negro
+        "-i", "color=c=black:s=720x720",
         "-i", audioPath,
         "-vf", `drawtext=text='${text}':fontcolor=white:fontsize=40:x=(w-text_w)/2:y=(h-text_h)/2`,
         "-c:v", "libx264",
