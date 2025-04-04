@@ -19,11 +19,9 @@ module.exports = {
         { text: "Genial!", sender: "other", phone: "Krampus OM", time: "10:48 AM", verified: true, reply: "Todo bien! ¿Y tú?" }
       ];
 
-      const checkSVG = await loadImage("data:image/svg+xml;charset=utf-8," +
-        encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='blue'><path d='M9 19l-5-5 1.41-1.41L9 16.17l9.59-9.58L20 8'/></svg>`));
-
-      const verifiedSVG = await loadImage("data:image/svg+xml;charset=utf-8," +
-        encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='cyan'><path d='M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z'/></svg>`));
+      // Íconos como PNG Base64 para evitar el error de SVG
+      const checkPNG = await loadImage("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAAAoLQ9TAAAAb1BMVEUAAACZmZn///+ZmZl4eHiZmZn5+flvb2+UlJTZ2dnPz8+ZmZnPz8/6+vqUlJTZ2dn7+/vT09OcnJzq6ur09PReXl5vb2+jo6OJioqjo6PKysqGhobY2NiampqDg4OYmJjT09Ozs7ODg4NjY2MSEhKSkpLZCWmAAAAMHRSTlMAB7H0GPvAvBf79e7d/wCAQeTOmS3lpaimgr+loJ91fHx7enZ0c3BfVFHAvLuqqGZcYGEYIcoAAAB6SURBVBjTbc/bDoMwDAXQBCBqCCFFpH79/38y6lwVrdzvTeRNiU7vAvVtkI2+uYmw63u3aKNmI3vLs2ymU9HiIGEk7xFboQnSR5iCRxPwiWkMsA3VkqJLDKSPtjHw7gM4xSzFDfNs3BvUalAOAA4TwS7qxVXIAAAAASUVORK5CYII=");
+      const verifiedPNG = await loadImage("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAAAoLQ9TAAAAZlBMVEUAAABVVVUAAAD///+qqqr///////9UVFT///+tra3///////+goKBgYGD///+6urrMzMzb29uDg4O2trbm5ub///+kpKS2trZ/f3+Ojo7Dw8Pj4+Nubm6cnJwXFxeZmZnf398gICB+fn5JSUllZWW/v78uLi4iIiIRERGR2QBPAAAALHRSTlMAIQQJERo1Q0xvfoGCrbK3x8nKzdDg5Ofr7fLz+Pn6+/z9/pHXv7lEAAAAiUlEQVQY042P2w7CMBBF3yYyBLNDXNWn+/7/TUwlgz9fQL0KnkuUZo5SRPRLhV+TsyJYdyuqEKNqVQOJCPGKdDJQtgP3ULmOY+Hni5dAIxgBT7wEBxyKzrABdCCUg6nYK52gKUsDbSCkp8RPgaV3oJ5AkD3A7AZTzFKZJgAAAABJRU5ErkJggg==");
 
       const canvas = createCanvas(400, messages.length * 80 + 20);
       const ctx = canvas.getContext("2d");
@@ -47,7 +45,7 @@ module.exports = {
           ctx.fillStyle = "#53BDEB";
           ctx.fillText(msg.phone, x + 5, y + 5);
           if (msg.verified) {
-            ctx.drawImage(verifiedSVG, x + 5 + ctx.measureText(msg.phone).width + 8, y + 3, 14, 14);
+            ctx.drawImage(verifiedPNG, x + 5 + ctx.measureText(msg.phone).width + 8, y + 3, 14, 14);
           }
           ctx.fillStyle = "white";
         }
@@ -66,7 +64,7 @@ module.exports = {
         ctx.fillText(msg.time, x + width - 50, y + height - 15);
 
         if (msg.sender === "me" && msg.seen) {
-          ctx.drawImage(checkSVG, x + width - 20, y + height - 17, 14, 14);
+          ctx.drawImage(checkPNG, x + width - 20, y + height - 17, 14, 14);
         }
       }
 
@@ -83,7 +81,7 @@ module.exports = {
       });
 
     } catch (error) {
-      console.error("Error al generar el chat falso con SVG:", error);
+      console.error("Error al generar el chat falso con PNG:", error);
       await sendErrorReply("Ocurrió un error al generar el chat.");
     }
   },
