@@ -1,87 +1,90 @@
 const { PREFIX } = require("../../krampus");
-const ytSearch = require("yt-search");
-const { downloadMusic } = require("../../services/ytdpl");
 const fs = require("fs");
 const path = require("path");
+const ytSearch = require("yt-search");
 const { exec } = require("child_process");
+const axios = require("axios");
 
 module.exports = {
-  name: "imagenmusical",
-  description: "Crea un video con una imagen y 20s de música",
-  commands: ["imagenmusical", "imgmusic"],
-  usage: `${PREFIX}imagenmusical <nombre de canción> (responde a una imagen)`,
+  name: "musical",
+  description: "Convierte una imagen en un video con música de 20 segundos",
+  commands: ["musical"],
+  usage: `${PREFIX}musical <nombre de la canción> (responde a una imagen)`,
   handle: async ({
     socket,
     remoteJid,
     sendReply,
-    sendWaitReact,
-    sendSuccessReact,
-    isReply,
-    isImage,
-    downloadImage,
     args,
     webMessage,
-    sendMessage,
+    sendWaitReact,
+    sendSuccessReact,
   }) => {
     try {
-      if (!isReply || !isImage) {
+      if (!webMessage.message?.extendedTextMessage?.contextInfo?.quotedMessage?.imageMessage) {
         return await sendReply("❌ Debes responder a una imagen para usar este comando.");
       }
 
+      const quotedMessage = webMessage.message.extendedTextMessage.contextInfo.quotedMessage;
+
+      const mediaBuffer = await socket.downloadMediaMessage({
+        message: quotedMessage,
+      });
+
       const query = args.join(" ");
-      if (!query) {
-        return await sendReply("❌ Debes escribir el nombre de la canción después del comando.");
-      }
+      if (!query) return await sendReply("❌ Debes indicar el nombre de la canción.");
 
-      await sendWaitReact("🎶");
+      await sendWaitReact("🎵");
 
-      // Buscar la canción en YouTube
       const search = await ytSearch(query);
       const video = search.videos[0];
-      if (!video) return await sendReply("❌ No encontré resultados para esa canción.");
+      if (!video) return await sendReply("❌ No se encontró ningún video.");
 
-      // Descargar imagen
-      const imagePath = path.join(__dirname, "../../temp/img-" + Date.now() + ".jpg");
-      const buffer = await downloadImage();
-      fs.writeFileSync(imagePath, buffer);
+      const videoUrl = video.url;
+      const audioPath = path.join(__dirname, "../../temp/audio-" + Date.now() + ".mp3");
 
-      // Descargar música
-      const audioPathFull = await downloadMusic(video.url);
-      const audioCropped = audioPathFull.replace(".mp4", "-20s.mp4");
-
-      // Recortar los primeros 20 segundos
+      // Descargar audio de 20s
       await new Promise((resolve, reject) => {
-        exec(
-          `ffmpeg -i "${audioPathFull}" -t 20 -c copy "${audioCropped}" -y`,
-          (err) => (err ? reject(err) : resolve())
-        );
+        const command = `yt-dlp -f bestaudio -x --audio-format mp3 --postprocessor-args "-t 20" -o "${audioPath}" "${videoUrl}"`;
+        exec(command, (err, stdout, stderr) => {
+          if (err) {
+            console.error("Error al descargar audio:", err);
+            return reject(err);
+          }
+          resolve();
+        });
       });
 
-      // Combinar imagen + audio
+      const imagePath = path.join(__dirname, "../../temp/image-" + Date.now() + ".jpg");
+      fs.writeFileSync(imagePath, mediaBuffer);
+
       const outputPath = path.join(__dirname, "../../temp/video-" + Date.now() + ".mp4");
 
+      // Combinar imagen + audio en video
       await new Promise((resolve, reject) => {
-        exec(
-          `ffmpeg -loop 1 -i "${imagePath}" -i "${audioCropped}" -c:v libx264 -t 20 -pix_fmt yuv420p -vf scale=512:-1 "${outputPath}" -y`,
-          (err) => (err ? reject(err) : resolve())
-        );
+        const ffmpegCmd = `ffmpeg -loop 1 -i "${imagePath}" -i "${audioPath}" -c:v libx264 -t 20 -pix_fmt yuv420p -vf "scale=512:512" -y "${outputPath}"`;
+        exec(ffmpegCmd, (err, stdout, stderr) => {
+          if (err) {
+            console.error("Error al generar el video:", err);
+            return reject(err);
+          }
+          resolve();
+        });
       });
 
-      await sendSuccessReact("✅");
-      await sendMessage({
-        messageType: "video",
-        url: outputPath,
-        caption: `🎵 Video generado con: ${video.title}`,
+      await sendSuccessReact("🎬");
+
+      await socket.sendMessage(remoteJid, {
+        video: fs.readFileSync(outputPath),
+        caption: `🎶 Video creado con: ${video.title}`,
+        mimetype: "video/mp4",
       });
 
-      // Limpieza
+      fs.unlinkSync(audioPath);
       fs.unlinkSync(imagePath);
-      fs.unlinkSync(audioPathFull);
-      fs.unlinkSync(audioCropped);
       fs.unlinkSync(outputPath);
     } catch (error) {
-      console.error("❌ Error al generar el video:", error);
-      await sendReply("❌ Hubo un error al crear el video con música.");
+      console.error("Error en comando musical:", error);
+      await sendReply("❌ Error al generar el video.");
     }
   },
 };
