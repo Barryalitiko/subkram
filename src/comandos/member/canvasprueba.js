@@ -1,7 +1,7 @@
 const { createCanvas, loadImage } = require("canvas");
 const fs = require("fs");
 const path = require("path");
-const { PREFIX } = require("../../../krampus");
+const { PREFIX } = require("../../krampus");
 const { WarningError } = require("../../../errors/WarningError");
 
 module.exports = {
