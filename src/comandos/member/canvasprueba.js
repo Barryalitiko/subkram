@@ -1,102 +1,121 @@
-const { PREFIX } = require("../../krampus");
-const { WarningError } = require("../../errors/WarningError");
 const { createCanvas, loadImage } = require("canvas");
 const fs = require("fs");
 const path = require("path");
+const { PREFIX } = require("../../../krampus");
+const { WarningError } = require("../../../errors/WarningError");
 
 module.exports = {
-  name: "chatfalso",
-  description: "Genera una imagen de chat falso estilo WhatsApp",
-  commands: ["chatfalso", "fakemsg"],
+  name: "canvaschat",
+  description: "Genera un chat falso al estilo WhatsApp",
+  commands: ["chatfalso", "fakechats"],
   usage: `${PREFIX}chatfalso`,
   handle: async ({
     sendImageFromFile,
-    sendWaitReact,
     sendSuccessReact,
     sendErrorReply,
+    sendWaitReact,
   }) => {
     await sendWaitReact();
 
     try {
-      // Mensajes de ejemplo (puedes modificarlos o hacerlos dinámicos después)
       const messages = [
-        { text: "Hola! ¿Cómo están?", sender: "me", phone: "Tú", time: "10:45 AM", seen: true },
-        { text: "Todo bien! ¿Y tú?", sender: "other", phone: "+34 678 901 234", time: "10:46 AM", reply: "Hola! ¿Cómo están?" },
-        { text: "También bien, gracias!", sender: "me", phone: "Tú", time: "10:47 AM", seen: false },
-        { text: "Genial!", sender: "other", phone: "Krampus OM", time: "10:48 AM", verified: true, reply: "Todo bien! ¿Y tú?" }
+        { text: "Hola! ¿Cómo están?", sender: "me", phone: "Tú", time: "10:45", seen: true },
+        { text: "Todo bien! ¿Y tú?", sender: "other", phone: "+34 678 901 234", time: "10:46", reply: "Hola! ¿Cómo están?" },
+        { text: "También bien, gracias!", sender: "me", phone: "Tú", time: "10:47", seen: false },
+        { text: "Genial!", sender: "other", phone: "Krampus OM", time: "10:48", verified: true, reply: "Todo bien! ¿Y tú?" }
       ];
 
-      // Crear canvas
-      const canvas = createCanvas(400, messages.length * 80 + 20);
+      const canvas = createCanvas(1080, messages.length * 140);
       const ctx = canvas.getContext("2d");
 
-      // Cargar imágenes
-      const checkImage = await loadImage(path.resolve(__dirname, "../../../assets/images/check.png"));
-      const verifiedImage = await loadImage(path.resolve(__dirname, "../../../assets/images/verificado.png"));
+      // Cargar iconos PNG
+      const checkPath = path.resolve(__dirname, "../../../assets/images/checkpng.png");
+      const verifiedPath = path.resolve(__dirname, "../../../assets/images/verificado.png");
 
-      // Fondo general
+      const checkImg = await loadImage(checkPath);
+      const verifiedImg = await loadImage(verifiedPath);
+
+      // Fondo del chat
       ctx.fillStyle = "#111B21";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      ctx.font = "14px sans-serif";
       ctx.textBaseline = "top";
 
-      for (let index = 0; index < messages.length; index++) {
-        const msg = messages[index];
-        const x = msg.sender === "me" ? 200 : 10;
-        const y = index * 80 + 10;
-        const width = 180;
-        const height = msg.reply ? 70 : 50;
+      ctx.font = "18px 'Segoe UI', Arial, sans-serif";
 
-        // Burbuja
+      for (let i = 0; i < messages.length; i++) {
+        const msg = messages[i];
+        const x = msg.sender === "me" ? canvas.width - 650 : 50;
+        const y = i * 140 + 40;
+        const bubbleWidth = 600;
+        const padding = 20;
+
+        // Burbujas
         ctx.fillStyle = msg.sender === "me" ? "#005C4B" : "#202C33";
-        ctx.fillRect(x, y, width, height);
+        ctx.beginPath();
+        ctx.moveTo(x + 20, y);
+        ctx.lineTo(x + bubbleWidth - 20, y);
+        ctx.quadraticCurveTo(x + bubbleWidth, y, x + bubbleWidth, y + 20);
+        ctx.lineTo(x + bubbleWidth, y + 100);
+        ctx.quadraticCurveTo(x + bubbleWidth, y + 120, x + bubbleWidth - 20, y + 120);
+        ctx.lineTo(x + 20, y + 120);
+        ctx.quadraticCurveTo(x, y + 120, x, y + 100);
+        ctx.lineTo(x, y + 20);
+        ctx.quadraticCurveTo(x, y, x + 20, y);
+        ctx.closePath();
+        ctx.fill();
 
-        // Número/Nombre + verificado
-        if (msg.sender !== "me") {
+        let currentY = y + padding;
+
+        // Nombre del remitente
+        if (msg.sender === "other") {
           ctx.fillStyle = "#53BDEB";
-          ctx.fillText(msg.phone, x + 5, y + 5);
+          ctx.fillText(msg.phone, x + padding, currentY);
           if (msg.verified) {
-            ctx.drawImage(verifiedImage, x + ctx.measureText(msg.phone).width + 10, y + 3, 14, 14);
+            ctx.drawImage(verifiedImg, x + padding + ctx.measureText(msg.phone).width + 10, currentY, 18, 18);
           }
+          currentY += 28;
         }
 
-        // Respuesta
+        // Texto de respuesta
         if (msg.reply) {
           ctx.fillStyle = "#3B4A54";
-          ctx.fillRect(x + 5, y + 20, width - 10, 20);
+          ctx.fillRect(x + padding, currentY, bubbleWidth - 2 * padding, 28);
           ctx.fillStyle = "#53BDEB";
-          ctx.fillText(msg.reply, x + 10, y + 25);
+          ctx.fillText(msg.reply, x + padding + 5, currentY + 5);
+          currentY += 35;
         }
 
-        // Texto principal
+        // Texto del mensaje
         ctx.fillStyle = "white";
-        ctx.fillText(msg.text, x + 5, y + (msg.reply ? 45 : 20));
+        ctx.fillText(msg.text, x + padding, currentY);
+        currentY += 32;
 
         // Hora
-        ctx.fillStyle = "gray";
-        ctx.fillText(msg.time, x + width - 50, y + height - 15);
+        ctx.fillStyle = "#B0B3B5";
+        ctx.font = "14px 'Segoe UI', Arial";
+        ctx.fillText(msg.time, x + bubbleWidth - 70, y + 95);
 
-        // Check azul si es tuyo
+        // Checks
         if (msg.sender === "me" && msg.seen) {
-          ctx.drawImage(checkImage, x + width - 20, y + height - 15, 14, 14);
+          ctx.drawImage(checkImg, x + bubbleWidth - 30, y + 95, 18, 18);
         }
+
+        ctx.font = "18px 'Segoe UI', Arial, sans-serif"; // Reset font size
       }
 
-      // Guardar imagen
-      const outputPath = path.join(__dirname, "chatfalso_output.png");
+      const outputPath = path.resolve(__dirname, "../../../assets/temp/chat.png");
       const out = fs.createWriteStream(outputPath);
       const stream = canvas.createPNGStream();
       stream.pipe(out);
-
       out.on("finish", async () => {
         await sendSuccessReact();
-        await sendImageFromFile(outputPath, "💬 Aquí tienes tu chat falso estilo WhatsApp.\n\nKrampus OM bot");
+        await sendImageFromFile(outputPath, "Aquí tienes tu chat falso estilo WhatsApp.");
         fs.unlinkSync(outputPath);
       });
-    } catch (error) {
-      console.error("Error al generar el chat falso:", error);
-      await sendErrorReply("Hubo un error al generar la imagen del chat falso.");
+
+    } catch (err) {
+      console.error("Error al generar el chat falso:", err);
+      await sendErrorReply("Error al generar el chat falso.");
     }
   },
 };
