@@ -29,16 +29,17 @@ const store = makeInMemoryStore({
   logger: pino().child({ level: "silent", stream: "store" }),
 });
 
+// Esta función obtiene un mensaje del almacenamiento del socket
 async function getMessage(key) {
   if (!store) {
     return proto.Message.fromObject({});
   }
 
   const msg = await store.loadMessage(key.remoteJid, key.id);
-
   return msg ? msg.message : undefined;
 }
 
+// Función principal de conexión
 async function connect() {
   const { state, saveCreds } = await useMultiFileAuthState(
     path.resolve(__dirname, "..", "assets", "auth", "baileys")
@@ -61,6 +62,7 @@ async function connect() {
     getMessage,
   });
 
+  // Si las credenciales no están configuradas, generamos un código de vinculación
   if (!socket.authState.creds.registered) {
     warningLog("Credenciales no configuradas!");
 
@@ -76,21 +78,25 @@ async function connect() {
       process.exit(1);
     }
 
+    // Generar el código de emparejamiento
     const code = await socket.requestPairingCode(onlyNumbers(phoneNumber));
 
-    // Guardamos el código de emparejamiento en un archivo temporal
-    const botName = 'nombreDelSubbot'; // Personaliza el nombre del subbot si es necesario
+    // Guardar el código de emparejamiento en un archivo específico
+    const botName = phoneNumber;  // Usamos el número de teléfono como nombre para identificar al subbot
     const filePath = path.resolve(__dirname, "..", "subbots", "pending_codes", `${botName}.txt`);
 
+    // Guardamos el código en un archivo
     fs.writeFile(filePath, `Código de emparejamiento: ${code}`, (err) => {
       if (err) {
         errorLog("Error al guardar el código en el archivo temporal.");
         return;
       }
       successLog(`Código de emparejamiento guardado en ${filePath}`);
+      sayLog(`Código de emparejamiento generado para el número ${phoneNumber}: ${code}`);
     });
   }
 
+  // Monitorear los eventos de conexión
   socket.ev.on("connection.update", async (update) => {
     const { connection, lastDisconnect } = update;
 
