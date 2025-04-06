@@ -38,12 +38,12 @@ module.exports = {
     }
 
     let cantidad = pociones[seleccion];
-    let vidaMaxima = jugadores[usuario].vidaMaxima || 110;
-    if (jugadores[usuario].HP >= vidaMaxima) {
+    let maxCorazones = jugadores[usuario].maxCorazones || 110; // Usar maxCorazones si está presente
+    if (jugadores[usuario].HP >= maxCorazones) {
       return sendReply("⚠️ Ya tienes tu vida al máximo. No puedes usar una poción ahora.");
     }
 
-    jugadores[usuario].HP = Math.min(vidaMaxima, jugadores[usuario].HP + cantidad);
+    jugadores[usuario].HP = Math.min(maxCorazones, jugadores[usuario].HP + cantidad);
     fs.writeFileSync(jugadoresPath, JSON.stringify(jugadores, null, 2));
 
     let animacion = `💊 Usando poción de ${cantidad} HP...`;
