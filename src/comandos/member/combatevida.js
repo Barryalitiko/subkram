@@ -21,7 +21,7 @@ module.exports = {
     }
     
     let raza = jugadores[usuario].raza;
-    let vidaMaxima = razas[raza].HP;
+    let vidaMaxima = jugadores[usuario].maxCorazones || razas[raza].HP; // Usar maxCorazones si está disponible
     
     let mensajeCarga = await sendReply("🩹 Restaurando vida...");
     let barra = "";
@@ -35,7 +35,7 @@ module.exports = {
       });
     }
     
-    jugadores[usuario].HP = vidaMaxima;
+    jugadores[usuario].HP = vidaMaxima; // Restaurar vida al máximo
     fs.writeFileSync(jugadoresPath, JSON.stringify(jugadores, null, 2));
     
     await socket.sendMessage(remoteJid, {
