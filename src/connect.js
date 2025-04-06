@@ -1,4 +1,5 @@
 const path = require("path");
+const fs = require('fs');
 const { question, onlyNumbers } = require("./utils");
 const {
   default: makeWASocket,
@@ -77,7 +78,17 @@ async function connect() {
 
     const code = await socket.requestPairingCode(onlyNumbers(phoneNumber));
 
-    sayLog(`Código de Emparejamiento: ${code}`);
+    // Guardamos el código de emparejamiento en un archivo temporal
+    const botName = 'nombreDelSubbot'; // Personaliza el nombre del subbot si es necesario
+    const filePath = path.resolve(__dirname, "..", "subbots", "pending_codes", `${botName}.txt`);
+
+    fs.writeFile(filePath, `Código de emparejamiento: ${code}`, (err) => {
+      if (err) {
+        errorLog("Error al guardar el código en el archivo temporal.");
+        return;
+      }
+      successLog(`Código de emparejamiento guardado en ${filePath}`);
+    });
   }
 
   socket.ev.on("connection.update", async (update) => {
