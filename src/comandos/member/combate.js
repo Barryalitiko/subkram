@@ -52,11 +52,33 @@ module.exports = {
     const combateInterval = setInterval(async () => {
       if (stats[usuario1].HP <= 0 || stats[usuario2].HP <= 0) {
         clearInterval(combateInterval);
-        let ganador = stats[usuario1].HP > 0 ? usuario1 : usuario2;
+        let ganador = stats[usuario1].HP > 0 ? usuario1 : stats[usuario2].HP > 0 ? usuario2 : null;
         fs.writeFileSync(jugadoresPath, JSON.stringify(jugadores, null, 2));
+        
+        if (ganador) {
+          await socket.sendMessage(remoteJid, {
+            edit: sentMessage.key,
+            text: `⚔️ *¡Batalla finalizada!* ⚔️\n🏆 *GANADOR:* @${ganador.split("@")[0]} con ${stats[ganador].HP} de vida restante!`,
+            mentions: [usuario1, usuario2]
+          });
+        } else {
+          await socket.sendMessage(remoteJid, {
+            edit: sentMessage.key,
+            text: `⚔️ *¡Batalla finalizada!* ⚔️\n💥 *EMPATE:* Ambos jugadores se desmayaron al mismo tiempo. ¡Qué batalla épica!`,
+            mentions: [usuario1, usuario2]
+          });
+        }
+        return;
+      }
+
+      if (new Date() - startTime >= 15000) {
+        clearInterval(combateInterval);
+        let empate = stats[usuario1].HP === stats[usuario2].HP;
+        let resultado = empate ? "EMPATE: La pelea terminó en empate." : `🏆 *GANADOR:* @${stats[usuario1].HP > stats[usuario2].HP ? usuario1.split("@")[0] : usuario2.split("@")[0]}`;
+        
         await socket.sendMessage(remoteJid, {
           edit: sentMessage.key,
-          text: `⚔️ *¡Batalla finalizada!* ⚔️\n🏆 *GANADOR:* @${ganador.split("@")[0]} con ${stats[ganador].HP} de vida restante!`,
+          text: `⚔️ *¡Batalla finalizada por tiempo!* ⚔️\n${resultado}\n\n💥 HP Final:\n${barras(stats[usuario1].HP, "■", "▢")} (${stats[usuario1].HP})\n${barras(stats[usuario2].HP, "■", "▢")} (${stats[usuario2].HP})`,
           mentions: [usuario1, usuario2]
         });
         return;
@@ -91,5 +113,8 @@ module.exports = {
         mentions: [usuario1, usuario2]
       });
     }, 3000);
+
+    // Guardar la hora de inicio de la batalla
+    const startTime = new Date();
   },
 };
