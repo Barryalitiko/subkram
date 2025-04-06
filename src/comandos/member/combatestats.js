@@ -22,10 +22,11 @@ module.exports = {
       
       let jugador = jugadores[usuario];
       let raza = jugador.raza;
+      let maxHP = jugador.maxCorazones || razas[raza].HP; // Considera maxCorazones si está presente
       let stats = `
       **Estadísticas de @${usuario.split("@")[0]}**
       🏷️ *Raza*: ${raza}
-      💥 *HP*: ${jugador.HP} / ${razas[raza].HP}
+      💥 *HP*: ${jugador.HP} / ${maxHP}
       ⚡ *MP*: ${jugador.MP} / 100
       ✨ *Ataque Mágico (AM)*: ${jugador.AM} / 100
       🛡️ *Escudo*: ${jugador.escudo}
