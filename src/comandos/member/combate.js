@@ -33,13 +33,17 @@ module.exports = {
     let raza1 = obtenerRaza(usuario1);
     let raza2 = obtenerRaza(usuario2);
 
+    // Usar maxCorazones si está presente, si no usar el valor de la raza
+    let maxHP1 = jugadores[usuario1].maxCorazones || razas[raza1].HP;
+    let maxHP2 = jugadores[usuario2].maxCorazones || razas[raza2].HP;
+
     let stats = {
-      [usuario1]: jugadores[usuario1],
-      [usuario2]: jugadores[usuario2]
+      [usuario1]: { ...jugadores[usuario1], HP: maxHP1 },
+      [usuario2]: { ...jugadores[usuario2], HP: maxHP2 }
     };
 
     let barras = (value, symbol, emptySymbol, max = 10) => {
-      let filled = Math.max(0, Math.min(max, Math.round((value / razas[stats[usuario1].raza].HP) * max)));
+      let filled = Math.max(0, Math.min(max, Math.round((value / max) * max)));
       return symbol.repeat(filled) + emptySymbol.repeat(max - filled);
     };
 
