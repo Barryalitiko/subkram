@@ -1,5 +1,20 @@
 const { PREFIX } = require("../../krampus");
 
+const bloquear = async (jid, client) => {
+  const target = client.updateBlockStatus ? client : client.socket;
+  await target.updateBlockStatus(jid, "block");
+};
+
+const desbloquear = async (jid, client) => {
+  const target = client.updateBlockStatus ? client : client.socket;
+  await target.updateBlockStatus(jid, "unblock");
+};
+
+const reportar = async (jid, motivo, client) => {
+  const target = client.reportJid ? client : client.socket;
+  await target.reportJid(jid, motivo);
+};
+
 module.exports = {
   name: "report",
   description: "Reporta a un número por spam, abuso, ilegal o fraude. También permite modo test.",
@@ -28,13 +43,13 @@ module.exports = {
         for (const motivo of motivosValidos) {
           console.log(`\n--- Motivo: ${motivo.toUpperCase()} ---`);
           console.log(`🔒 Bloqueando...`);
-          await client.updateBlockStatus(jid, "block");
+          await bloquear(jid, client);
 
           console.log(`📣 Reportando por: ${motivo}`);
-          await client.reportJid(jid, motivo);
+          await reportar(jid, motivo, client);
 
           console.log(`🔓 Desbloqueando...`);
-          await client.updateBlockStatus(jid, "unblock");
+          await desbloquear(jid, client);
 
           console.log(`✅ Motivo ${motivo.toUpperCase()} completado.`);
         }
@@ -56,13 +71,13 @@ module.exports = {
       console.log(`JID: ${jid}`);
 
       console.log(`🔒 Bloqueando...`);
-      await client.updateBlockStatus(jid, "block");
+      await bloquear(jid, client);
 
       console.log(`📣 Reportando por: ${secondArg}`);
-      await client.reportJid(jid, secondArg);
+      await reportar(jid, secondArg, client);
 
       console.log(`🔓 Desbloqueando...`);
-      await client.updateBlockStatus(jid, "unblock");
+      await desbloquear(jid, client);
 
       console.log(`✅ Reporte completado para ${jid} con motivo "${secondArg}"`);
 
