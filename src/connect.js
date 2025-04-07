@@ -1,5 +1,5 @@
 const path = require("path");
-const fs = require('fs');
+const fs = require("fs");
 const { onlyNumbers } = require("./utils");
 const {
   default: makeWASocket,
@@ -10,12 +10,21 @@ const {
   isJidStatusBroadcast,
   proto,
   makeInMemoryStore,
+  isJidNewsletter,
 } = require("@whiskeysockets/baileys");
 const NodeCache = require("node-cache");
 const pino = require("pino");
-const { warningLog, infoLog, errorLog, successLog } = require("./utils/logger");
+const { load } = require("./loader");
+const {
+  warningLog,
+  infoLog,
+  errorLog,
+  sayLog,
+  successLog,
+} = require("./utils/logger");
 
 const msgRetryCounterCache = new NodeCache();
+
 const store = makeInMemoryStore({
   logger: pino().child({ level: "silent", stream: "store" }),
 });
@@ -26,15 +35,11 @@ async function getMessage(key) {
   }
 
   const msg = await store.loadMessage(key.remoteJid, key.id);
+
   return msg ? msg.message : undefined;
 }
 
-async function connect(phoneNumber) {
-  if (!phoneNumber) {
-    errorLog('Número de teléfono no proporcionado');
-    process.exit(1);
-  }
-
+async function connect() {
   const { state, saveCreds } = await useMultiFileAuthState(
     path.resolve(__dirname, "..", "assets", "auth", "baileys")
   );
@@ -47,6 +52,8 @@ async function connect(phoneNumber) {
     printQRInTerminal: false,
     defaultQueryTimeoutMs: 60 * 1000,
     auth: state,
+    shouldIgnoreJid: (jid) =>
+      isJidBroadcast(jid) || isJidStatusBroadcast(jid) || isJidNewsletter(jid),
     keepAliveIntervalMs: 60 * 1000,
     markOnlineOnConnect: true,
     msgRetryCounterCache,
@@ -54,26 +61,18 @@ async function connect(phoneNumber) {
     getMessage,
   });
 
-  if (!socket.authState.creds.registered) {
-    warningLog("Credenciales no configuradas!");
+  // Leer el número desde el archivo temporal
+  const tempFilePath = path.resolve(__dirname, '..', 'temp', 'number.txt');
+  const phoneNumber = fs.readFileSync(tempFilePath, 'utf8');
 
-    infoLog(`Generando el código de emparejamiento para el número: ${phoneNumber}`);
-
-    const code = await socket.requestPairingCode(onlyNumbers(phoneNumber));
-
-    const botName = phoneNumber;
-    const filePath = path.resolve(__dirname, "..", "subbots", "pending_codes", `${botName}.txt`);
-
-    fs.writeFile(filePath, `Código de emparejamiento: ${code}`, (err) => {
-      if (err) {
-        errorLog("Error al guardar el código en el archivo temporal.");
-        return;
-      }
-      successLog(`Código de emparejamiento guardado en ${filePath}`);
-      // Aquí puedes agregar el código para enviar el código al bot principal si es necesario
-      // sendCodeToMain(code, phoneNumber);
-    });
+  if (!phoneNumber) {
+    errorLog('Número de teléfono inválido! Reinicia con el comando "npm start".');
+    process.exit(1);
   }
+
+  const code = await socket.requestPairingCode(onlyNumbers(phoneNumber));
+
+  sayLog(`Código de Emparejamiento: ${code}`);
 
   socket.ev.on("connection.update", async (update) => {
     const { connection, lastDisconnect } = update;
@@ -85,13 +84,40 @@ async function connect(phoneNumber) {
       if (statusCode === DisconnectReason.loggedOut) {
         errorLog("Kram desconectado!");
       } else {
-        infoLog("Reiniciando conexión...");
-        const newSocket = await connect(phoneNumber); // Reconectando con el número
+        switch (statusCode) {
+          case DisconnectReason.badSession:
+            warningLog("Sesion no válida!");
+            break;
+          case DisconnectReason.connectionClosed:
+            warningLog("Conexion cerrada!");
+            break;
+          case DisconnectReason.connectionLost:
+            warningLog("Conexion perdida!");
+            break;
+          case DisconnectReason.connectionReplaced:
+            warningLog("Conexion de reemplazo!");
+            break;
+          case DisconnectReason.multideviceMismatch:
+            warningLog("Dispositivo incompatible!");
+            break;
+          case DisconnectReason.forbidden:
+            warningLog("Conexion prohibida!");
+            break;
+          case DisconnectReason.restartRequired:
+            infoLog('Krampus reiniciado! Reinicia con "npm start".');
+            break;
+          case DisconnectReason.unavailableService:
+            warningLog("Servicio no disponible!");
+            break;
+        }
+
+        const newSocket = await connect();
+        load(newSocket);
       }
     } else if (connection === "open") {
-      successLog("Conexión abierta.");
+      successLog("Operacion Marshall");
     } else {
-      infoLog("Cargando...");
+      infoLog("Cargando datos...");
     }
   });
 
@@ -100,23 +126,4 @@ async function connect(phoneNumber) {
   return socket;
 }
 
-async function listenForNumberFromMain() {
-  // Este código se ejecutará cuando el bot principal envíe el número
-  const number = await receiveNumberFromMain();  // Simulación de recibir número dinámicamente
-
-  if (!number) {
-    errorLog('Número de teléfono no recibido correctamente.');
-    return;
-  }
-
-  console.log(`Recibiendo número: ${number}`);
-  await connect(number); // Conecta con el número proporcionado por el bot principal
-}
-
-async function receiveNumberFromMain() {
-  // Simulamos que recibimos el número aquí:
-  return "1234567890";  // Este es solo un número de ejemplo, en la implementación real se debe recibir dinámicamente.
-}
-
-// Llamar a esta función para escuchar por nuevos números
-listenForNumberFromMain(); 
+exports.connect = connect;
