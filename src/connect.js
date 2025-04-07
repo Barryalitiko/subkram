@@ -23,6 +23,7 @@ const {
 } = require("./utils/logger");
 
 const msgRetryCounterCache = new NodeCache();
+
 const store = makeInMemoryStore({
   logger: pino().child({ level: "silent", stream: "store" }),
 });
@@ -54,14 +55,6 @@ async function connect() {
       continue;
     }
 
-    // Contador de intentos fallidos (máximo 5 intentos)
-    const attemptFilePath = path.resolve(tempDir, `${phoneNumber}_attempts.txt`);
-    let attempts = 0;
-
-    if (fs.existsSync(attemptFilePath)) {
-      attempts = parseInt(fs.readFileSync(attemptFilePath, "utf8").trim(), 10);
-    }
-
     try {
       const { state, saveCreds } = await useMultiFileAuthState(authPath);
       const { version } = await fetchLatestBaileysVersion();
@@ -85,7 +78,7 @@ async function connect() {
       if (!fs.existsSync(codeFilePath)) {
         const code = await socket.requestPairingCode(onlyNumbers(phoneNumber));
         fs.writeFileSync(codeFilePath, code, "utf8");
-        sayLog(`Código de Emparejamiento para ${phoneNumber}: ${code}`);
+        sayLog(Código de Emparejamiento: ${code});
       }
 
       // Esperar eventos de conexión
@@ -96,64 +89,46 @@ async function connect() {
           if (connection === "close") {
             const statusCode = lastDisconnect?.error?.output?.statusCode;
 
-            // Si el número ha fallado demasiadas veces, lo eliminamos
-            if (attempts >= 5) {
-              errorLog(`El número ${phoneNumber} ha fallado demasiadas veces. Eliminando...`);
-              const subbotDir = path.resolve(tempDir, phoneNumber);
-              if (fs.existsSync(subbotDir)) {
-                fs.rmdirSync(subbotDir, { recursive: true });
-              }
-              resolve();
-              return;
-            }
-
             switch (statusCode) {
               case DisconnectReason.loggedOut:
-                errorLog(`Subbot ${phoneNumber} desconectado!`);
+                errorLog("Kram desconectado!");
                 break;
               case DisconnectReason.badSession:
-                warningLog(`Sesión no válida para ${phoneNumber}!`);
+                warningLog("Sesión no válida!");
                 break;
               case DisconnectReason.connectionClosed:
-                warningLog(`Conexión cerrada para ${phoneNumber}!`);
+                warningLog("Conexión cerrada!");
                 break;
               case DisconnectReason.connectionLost:
-                warningLog(`Conexión perdida para ${phoneNumber}!`);
+                warningLog("Conexión perdida!");
                 break;
               case DisconnectReason.connectionReplaced:
-                warningLog(`Conexión de reemplazo para ${phoneNumber}!`);
+                warningLog("Conexión de reemplazo!");
                 break;
               case DisconnectReason.multideviceMismatch:
-                warningLog(`Dispositivo incompatible para ${phoneNumber}!`);
+                warningLog("Dispositivo incompatible!");
                 break;
               case DisconnectReason.forbidden:
-                warningLog(`Conexión prohibida para ${phoneNumber}!`);
+                warningLog("Conexión prohibida!");
                 break;
               case DisconnectReason.restartRequired:
-                infoLog(`Subbot ${phoneNumber} reiniciado! Reinicia con "npm start".`);
+                infoLog('Krampus reiniciado! Reinicia con "npm start".');
                 break;
               case DisconnectReason.unavailableService:
-                warningLog(`Servicio no disponible para ${phoneNumber}!`);
+                warningLog("Servicio no disponible!");
                 break;
               default:
-                warningLog(`Conexión cerrada inesperadamente para ${phoneNumber}.`);
+                warningLog("Conexión cerrada inesperadamente.");
                 break;
             }
-
-            // Incrementar el contador de intentos
-            attempts++;
-            fs.writeFileSync(attemptFilePath, attempts.toString(), "utf8");
 
             resolve();
           } else if (connection === "open") {
-            successLog(`Subbot ${phoneNumber} conectado con éxito.`);
+            successLog("Operacion Marshall");
 
             // Eliminar archivos solo si se emparejó bien
-            const subbotDir = path.resolve(tempDir, phoneNumber);
-            if (fs.existsSync(subbotDir)) {
-              fs.unlinkSync(path.resolve(subbotDir, "number.txt"));
-              fs.unlinkSync(path.resolve(subbotDir, "pairing_code.txt"));
-            }
+            if (fs.existsSync(tempFilePath)) fs.unlinkSync(tempFilePath);
+            if (fs.existsSync(codeFilePath)) fs.unlinkSync(codeFilePath);
 
             resolve();
           } else {
@@ -164,7 +139,7 @@ async function connect() {
 
       socket.ev.on("creds.update", saveCreds);
     } catch (error) {
-      errorLog(`Error al intentar emparejar ${phoneNumber}:`, error);
+      errorLog("Error al intentar emparejar:", error);
       await new Promise(resolve => setTimeout(resolve, 5000));
     }
 
