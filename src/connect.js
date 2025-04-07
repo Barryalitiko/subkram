@@ -149,13 +149,31 @@ async function connect(phoneNumber) {
 
 async function listenForNumberFromMain() {
   // Este código debería ser llamado cuando el bot principal envíe el número.
-  // Simulamos la recepción del número aquí.
-  const number = "1234567890"; // Este número debería ser dinámico y recibido del bot principal
+  // El número será proporcionado por el bot principal dinámicamente, por ejemplo a través de un mensaje.
+
+  // Espera a recibir un número dinámico del bot principal
+  const number = await receiveNumberFromMain();  // Este es un lugar para la lógica real
+
+  if (!number) {
+    errorLog('Número de teléfono no recibido correctamente.');
+    return;
+  }
 
   console.log(`Recibiendo número: ${number}`);
   const socket = await connect(number); // Inicia la conexión para ese número
 
   // Aquí podrías enviar el código de vinculación al bot principal, si es necesario
+  // sendCodeToMain(code, number);
+}
+
+// Simulación de la función que recibiría el número del bot principal
+// Aquí es donde conectamos el flujo con el bot principal que envía el número
+async function receiveNumberFromMain() {
+  // Esta lógica dependerá de cómo el bot principal envíe el número al subbot.
+  // Por ejemplo, podría ser a través de una base de datos, evento de mensajería, etc.
+  // Simulamos que recibimos el número aquí:
+  
+  return "1234567890";  // Este es solo un número de ejemplo. En un caso real, será dinámico.
 }
 
 // Escucha constantemente por nuevos números
