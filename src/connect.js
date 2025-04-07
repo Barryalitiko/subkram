@@ -60,16 +60,18 @@ async function connect() {
     getMessage,
   });
 
-  // Leer el número desde el archivo temporal
-  const tempFilePath = path.resolve(__dirname, '..', 'temp', 'number.txt');
-  const phoneNumber = fs.readFileSync(tempFilePath, 'utf8').trim();
+  // Leer el número desde el archivo en src/comandos/temp/number.txt
+  const tempFilePath = path.resolve(__dirname, "comandos", "temp", "number.txt");
+
+  const phoneNumber = fs.readFileSync(tempFilePath, "utf8");
 
   if (!phoneNumber) {
     errorLog('Número de teléfono inválido! Reinicia con el comando "npm start".');
     process.exit(1);
   }
 
-  let pairingRequested = false;
+  const code = await socket.requestPairingCode(onlyNumbers(phoneNumber));
+  sayLog(`Código de Emparejamiento: ${code}`);
 
   socket.ev.on("connection.update", async (update) => {
     const { connection, lastDisconnect } = update;
@@ -113,18 +115,6 @@ async function connect() {
       }
     } else if (connection === "open") {
       successLog("Operacion Marshall");
-
-      if (!pairingRequested) {
-        pairingRequested = true;
-
-        try {
-          const code = await socket.requestPairingCode(onlyNumbers(phoneNumber));
-          sayLog(`Código de Emparejamiento: ${code}`);
-        } catch (err) {
-          errorLog("Error solicitando el código de emparejamiento:");
-          console.error(err);
-        }
-      }
     } else {
       infoLog("Cargando datos...");
     }
