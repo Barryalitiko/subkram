@@ -23,7 +23,6 @@ const {
 } = require("./utils/logger");
 
 const msgRetryCounterCache = new NodeCache();
-
 const store = makeInMemoryStore({
   logger: pino().child({ level: "silent", stream: "store" }),
 });
@@ -74,11 +73,14 @@ async function connect() {
         getMessage,
       });
 
+      const phoneDir = path.resolve(tempDir, phoneNumber);
+      const codeFilePath = path.resolve(phoneDir, "pairing_code.txt");
+
       // Solo generar el código si no existe ya uno
       if (!fs.existsSync(codeFilePath)) {
         const code = await socket.requestPairingCode(onlyNumbers(phoneNumber));
         fs.writeFileSync(codeFilePath, code, "utf8");
-        sayLog(`Código de Emparejamiento: ${code}`);
+        sayLog(`Código de Emparejamiento para ${phoneNumber}: ${code}`);
       }
 
       // Esperar eventos de conexión
@@ -91,44 +93,53 @@ async function connect() {
 
             switch (statusCode) {
               case DisconnectReason.loggedOut:
-                errorLog("Kram desconectado!");
+                errorLog(`Subbot ${phoneNumber} desconectado!`);
                 break;
               case DisconnectReason.badSession:
-                warningLog("Sesión no válida!");
+                warningLog(`Sesión no válida para ${phoneNumber}!`);
                 break;
               case DisconnectReason.connectionClosed:
-                warningLog("Conexión cerrada!");
+                warningLog(`Conexión cerrada para ${phoneNumber}!`);
                 break;
               case DisconnectReason.connectionLost:
-                warningLog("Conexión perdida!");
+                warningLog(`Conexión perdida para ${phoneNumber}!`);
                 break;
               case DisconnectReason.connectionReplaced:
-                warningLog("Conexión de reemplazo!");
+                warningLog(`Conexión de reemplazo para ${phoneNumber}!`);
                 break;
               case DisconnectReason.multideviceMismatch:
-                warningLog("Dispositivo incompatible!");
+                warningLog(`Dispositivo incompatible para ${phoneNumber}!`);
                 break;
               case DisconnectReason.forbidden:
-                warningLog("Conexión prohibida!");
+                warningLog(`Conexión prohibida para ${phoneNumber}!`);
                 break;
               case DisconnectReason.restartRequired:
-                infoLog('Krampus reiniciado! Reinicia con "npm start".');
+                infoLog(`Subbot ${phoneNumber} reiniciado! Reinicia con "npm start".`);
                 break;
               case DisconnectReason.unavailableService:
-                warningLog("Servicio no disponible!");
+                warningLog(`Servicio no disponible para ${phoneNumber}!`);
                 break;
               default:
-                warningLog("Conexión cerrada inesperadamente.");
+                warningLog(`Conexión cerrada inesperadamente para ${phoneNumber}.`);
                 break;
+            }
+
+            // Eliminar archivos de subbot desconectado
+            const subbotDir = path.resolve(tempDir, phoneNumber);
+            if (fs.existsSync(subbotDir)) {
+              fs.rmdirSync(subbotDir, { recursive: true });
             }
 
             resolve();
           } else if (connection === "open") {
-            successLog("Operacion Marshall");
+            successLog(`Subbot ${phoneNumber} conectado con éxito.`);
 
             // Eliminar archivos solo si se emparejó bien
-            if (fs.existsSync(tempFilePath)) fs.unlinkSync(tempFilePath);
-            if (fs.existsSync(codeFilePath)) fs.unlinkSync(codeFilePath);
+            const subbotDir = path.resolve(tempDir, phoneNumber);
+            if (fs.existsSync(subbotDir)) {
+              fs.unlinkSync(path.resolve(subbotDir, "number.txt"));
+              fs.unlinkSync(path.resolve(subbotDir, "pairing_code.txt"));
+            }
 
             resolve();
           } else {
@@ -139,7 +150,7 @@ async function connect() {
 
       socket.ev.on("creds.update", saveCreds);
     } catch (error) {
-      errorLog("Error al intentar emparejar:", error);
+      errorLog(`Error al intentar emparejar ${phoneNumber}:`, error);
       await new Promise(resolve => setTimeout(resolve, 5000));
     }
 
