@@ -28,6 +28,7 @@ const store = makeInMemoryStore({
   logger: pino().child({ level: "silent", stream: "store" }),
 });
 
+// Esta función obtiene un mensaje del almacenamiento del socket
 async function getMessage(key) {
   if (!store) {
     return proto.Message.fromObject({});
@@ -37,7 +38,7 @@ async function getMessage(key) {
   return msg ? msg.message : undefined;
 }
 
-// Función para crear la conexión del subbot
+// Función principal de conexión
 async function connect(phoneNumber) {
   if (!phoneNumber) {
     errorLog('Número de teléfono no proporcionado');
@@ -142,16 +143,20 @@ async function connect(phoneNumber) {
   return socket;
 }
 
-// Mantener el script en ejecución esperando números de teléfono
-async function startListeningForNumbers() {
-  // Aquí podrías poner una escucha en un archivo, base de datos o evento para nuevos números.
-  // Por simplicidad, aquí simulamos que recibimos números de manera continua.
+// Aquí es donde debería entrar la interacción con el bot principal
+// El bot principal le enviará los números de teléfono al subbot
+// Vamos a simular que se recibe el número desde algún canal aquí:
 
-  // Simulación de que el número se recibe de alguna fuente.
-  setInterval(() => {
-    const number = "1234567890"; // Este número debería ser recibido dinámicamente de alguna fuente
-    connect(number); // Llama a la función connect con el número recibido
-  }, 5000); // Por ejemplo, cada 5 segundos intenta recibir un nuevo número
+async function listenForNumberFromMain() {
+  // Este código debería ser llamado cuando el bot principal envíe el número.
+  // Simulamos la recepción del número aquí.
+  const number = "1234567890"; // Este número debería ser dinámico y recibido del bot principal
+
+  console.log(`Recibiendo número: ${number}`);
+  const socket = await connect(number); // Inicia la conexión para ese número
+
+  // Aquí podrías enviar el código de vinculación al bot principal, si es necesario
 }
 
-startListeningForNumbers();  // Comienza a escuchar por nuevos números
+// Escucha constantemente por nuevos números
+listenForNumberFromMain();  // Llamamos a la función para iniciar el proceso
