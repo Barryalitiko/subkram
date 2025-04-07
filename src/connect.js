@@ -78,7 +78,7 @@ async function connect() {
       if (!fs.existsSync(codeFilePath)) {
         const code = await socket.requestPairingCode(onlyNumbers(phoneNumber));
         fs.writeFileSync(codeFilePath, code, "utf8");
-        sayLog(Código de Emparejamiento: ${code});
+        sayLog(`Código de Emparejamiento: ${code}`);
       }
 
       // Esperar eventos de conexión
