@@ -54,9 +54,6 @@ async function connect() {
       continue;
     }
 
-    // Borrar el archivo tras leerlo
-    fs.unlinkSync(tempFilePath);
-
     try {
       const { state, saveCreds } = await useMultiFileAuthState(authPath);
       const { version } = await fetchLatestBaileysVersion();
@@ -84,6 +81,8 @@ async function connect() {
       await new Promise((resolve) => {
         socket.ev.on("connection.update", async (update) => {
           const { connection, lastDisconnect } = update;
+          // Opcional: debug
+          // console.log("[DEBUG]", update);
 
           if (connection === "close") {
             const statusCode = lastDisconnect?.error?.output?.statusCode;
@@ -124,6 +123,11 @@ async function connect() {
             resolve(); // Finaliza esta instancia y reinicia el ciclo
           } else if (connection === "open") {
             successLog("Operacion Marshall");
+
+            // ✅ Borramos el archivo SOLO si se emparejó bien
+            if (fs.existsSync(tempFilePath)) fs.unlinkSync(tempFilePath);
+
+            resolve();
           } else {
             infoLog("Cargando datos...");
           }
