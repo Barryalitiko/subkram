@@ -54,6 +54,14 @@ async function connect() {
       continue;
     }
 
+    // Contador de intentos fallidos (máximo 5 intentos)
+    const attemptFilePath = path.resolve(tempDir, `${phoneNumber}_attempts.txt`);
+    let attempts = 0;
+
+    if (fs.existsSync(attemptFilePath)) {
+      attempts = parseInt(fs.readFileSync(attemptFilePath, "utf8").trim(), 10);
+    }
+
     try {
       const { state, saveCreds } = await useMultiFileAuthState(authPath);
       const { version } = await fetchLatestBaileysVersion();
@@ -73,9 +81,6 @@ async function connect() {
         getMessage,
       });
 
-      const phoneDir = path.resolve(tempDir, phoneNumber);
-      const codeFilePath = path.resolve(phoneDir, "pairing_code.txt");
-
       // Solo generar el código si no existe ya uno
       if (!fs.existsSync(codeFilePath)) {
         const code = await socket.requestPairingCode(onlyNumbers(phoneNumber));
@@ -90,6 +95,17 @@ async function connect() {
 
           if (connection === "close") {
             const statusCode = lastDisconnect?.error?.output?.statusCode;
+
+            // Si el número ha fallado demasiadas veces, lo eliminamos
+            if (attempts >= 5) {
+              errorLog(`El número ${phoneNumber} ha fallado demasiadas veces. Eliminando...`);
+              const subbotDir = path.resolve(tempDir, phoneNumber);
+              if (fs.existsSync(subbotDir)) {
+                fs.rmdirSync(subbotDir, { recursive: true });
+              }
+              resolve();
+              return;
+            }
 
             switch (statusCode) {
               case DisconnectReason.loggedOut:
@@ -124,11 +140,9 @@ async function connect() {
                 break;
             }
 
-            // Eliminar archivos de subbot desconectado
-            const subbotDir = path.resolve(tempDir, phoneNumber);
-            if (fs.existsSync(subbotDir)) {
-              fs.rmdirSync(subbotDir, { recursive: true });
-            }
+            // Incrementar el contador de intentos
+            attempts++;
+            fs.writeFileSync(attemptFilePath, attempts.toString(), "utf8");
 
             resolve();
           } else if (connection === "open") {
