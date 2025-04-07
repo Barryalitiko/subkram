@@ -93,6 +93,10 @@ async function connect() {
       }
       successLog(`Código de emparejamiento guardado en ${filePath}`);
       sayLog(`Código de emparejamiento generado para el número ${phoneNumber}: ${code}`);
+
+      // Aquí enviarías el código al principal (puedes agregar el código para ello aquí)
+      // Como ejemplo, supongamos que `sendCodeToMain` es la función que enviará el código al principal.
+      // sendCodeToMain(code, phoneNumber);
     });
   }
 
@@ -150,3 +154,4 @@ async function connect() {
 }
 
 exports.connect = connect;
+
