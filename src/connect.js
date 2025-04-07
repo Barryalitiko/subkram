@@ -1,6 +1,6 @@
 const path = require("path");
 const fs = require('fs');
-const { question, onlyNumbers } = require("./utils");
+const { onlyNumbers } = require("./utils");
 const {
   default: makeWASocket,
   DisconnectReason,
@@ -40,7 +40,12 @@ async function getMessage(key) {
 }
 
 // Función principal de conexión
-async function connect() {
+async function connect(phoneNumber) {
+  if (!phoneNumber) {
+    errorLog('Número de teléfono no proporcionado');
+    process.exit(1);
+  }
+
   const { state, saveCreds } = await useMultiFileAuthState(
     path.resolve(__dirname, "..", "assets", "auth", "baileys")
   );
@@ -62,23 +67,12 @@ async function connect() {
     getMessage,
   });
 
-  // Si las credenciales no están configuradas, generamos un código de vinculación
+  // Si las credenciales no están configuradas, generamos un código de emparejamiento
   if (!socket.authState.creds.registered) {
     warningLog("Credenciales no configuradas!");
 
-    infoLog('Ingrese su numero sin el + (ejemplo: "13733665556"):');
+    infoLog(`Generando el código de emparejamiento para el número: ${phoneNumber}`);
 
-    const phoneNumber = await question("Ingresa el numero: ");
-
-    if (!phoneNumber) {
-      errorLog(
-        'Numero de telefono inválido! Reinicia con el comando "npm start".'
-      );
-
-      process.exit(1);
-    }
-
-    // Generar el código de emparejamiento
     const code = await socket.requestPairingCode(onlyNumbers(phoneNumber));
 
     // Guardar el código de emparejamiento en un archivo específico
@@ -138,11 +132,11 @@ async function connect() {
             break;
         }
 
-        const newSocket = await connect();
+        const newSocket = await connect(phoneNumber); // Pasamos el número al reconectar
         load(newSocket);
       }
     } else if (connection === "open") {
-      successLog("Operacion Marshall");
+      successLog("Operación Marshall");
     } else {
       infoLog("Cargando datos...");
     }
@@ -154,4 +148,3 @@ async function connect() {
 }
 
 exports.connect = connect;
-
