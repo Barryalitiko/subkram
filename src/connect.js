@@ -10,25 +10,16 @@ const {
   isJidStatusBroadcast,
   proto,
   makeInMemoryStore,
-  isJidNewsletter,
 } = require("@whiskeysockets/baileys");
 const NodeCache = require("node-cache");
 const pino = require("pino");
-const { load } = require("./loader");
-const {
-  warningLog,
-  infoLog,
-  errorLog,
-  sayLog,
-  successLog,
-} = require("./utils/logger");
+const { warningLog, infoLog, errorLog, successLog } = require("./utils/logger");
 
 const msgRetryCounterCache = new NodeCache();
 const store = makeInMemoryStore({
   logger: pino().child({ level: "silent", stream: "store" }),
 });
 
-// Esta función obtiene un mensaje del almacenamiento del socket
 async function getMessage(key) {
   if (!store) {
     return proto.Message.fromObject({});
@@ -38,7 +29,6 @@ async function getMessage(key) {
   return msg ? msg.message : undefined;
 }
 
-// Función principal de conexión
 async function connect(phoneNumber) {
   if (!phoneNumber) {
     errorLog('Número de teléfono no proporcionado');
@@ -57,8 +47,6 @@ async function connect(phoneNumber) {
     printQRInTerminal: false,
     defaultQueryTimeoutMs: 60 * 1000,
     auth: state,
-    shouldIgnoreJid: (jid) =>
-      isJidBroadcast(jid) || isJidStatusBroadcast(jid) || isJidNewsletter(jid),
     keepAliveIntervalMs: 60 * 1000,
     markOnlineOnConnect: true,
     msgRetryCounterCache,
@@ -66,7 +54,6 @@ async function connect(phoneNumber) {
     getMessage,
   });
 
-  // Si las credenciales no están configuradas, generamos un código de emparejamiento
   if (!socket.authState.creds.registered) {
     warningLog("Credenciales no configuradas!");
 
@@ -74,7 +61,7 @@ async function connect(phoneNumber) {
 
     const code = await socket.requestPairingCode(onlyNumbers(phoneNumber));
 
-    const botName = phoneNumber;  // Usamos el número de teléfono como nombre para identificar al subbot
+    const botName = phoneNumber;
     const filePath = path.resolve(__dirname, "..", "subbots", "pending_codes", `${botName}.txt`);
 
     fs.writeFile(filePath, `Código de emparejamiento: ${code}`, (err) => {
@@ -83,14 +70,11 @@ async function connect(phoneNumber) {
         return;
       }
       successLog(`Código de emparejamiento guardado en ${filePath}`);
-      sayLog(`Código de emparejamiento generado para el número ${phoneNumber}: ${code}`);
-
       // Aquí puedes agregar el código para enviar el código al bot principal si es necesario
       // sendCodeToMain(code, phoneNumber);
     });
   }
 
-  // Monitorear los eventos de conexión
   socket.ev.on("connection.update", async (update) => {
     const { connection, lastDisconnect } = update;
 
@@ -101,40 +85,13 @@ async function connect(phoneNumber) {
       if (statusCode === DisconnectReason.loggedOut) {
         errorLog("Kram desconectado!");
       } else {
-        switch (statusCode) {
-          case DisconnectReason.badSession:
-            warningLog("Sesion no válida!");
-            break;
-          case DisconnectReason.connectionClosed:
-            warningLog("Conexion cerrada!");
-            break;
-          case DisconnectReason.connectionLost:
-            warningLog("Conexion perdida!");
-            break;
-          case DisconnectReason.connectionReplaced:
-            warningLog("Conexion de reemplazo!");
-            break;
-          case DisconnectReason.multideviceMismatch:
-            warningLog("Dispositivo incompatible!");
-            break;
-          case DisconnectReason.forbidden:
-            warningLog("Conexion prohibida!");
-            break;
-          case DisconnectReason.restartRequired:
-            infoLog('Krampus reiniciado! Reinicia con "npm start".');
-            break;
-          case DisconnectReason.unavailableService:
-            warningLog("Servicio no disponible!");
-            break;
-        }
-
-        const newSocket = await connect(phoneNumber); // Pasamos el número al reconectar
-        load(newSocket);
+        infoLog("Reiniciando conexión...");
+        const newSocket = await connect(phoneNumber); // Reconectando con el número
       }
     } else if (connection === "open") {
-      successLog("Operación Marshall");
+      successLog("Conexión abierta.");
     } else {
-      infoLog("Cargando datos...");
+      infoLog("Cargando...");
     }
   });
 
@@ -143,16 +100,9 @@ async function connect(phoneNumber) {
   return socket;
 }
 
-// Aquí es donde debería entrar la interacción con el bot principal
-// El bot principal le enviará los números de teléfono al subbot
-// Vamos a simular que se recibe el número desde algún canal aquí:
-
 async function listenForNumberFromMain() {
-  // Este código debería ser llamado cuando el bot principal envíe el número.
-  // El número será proporcionado por el bot principal dinámicamente, por ejemplo a través de un mensaje.
-
-  // Espera a recibir un número dinámico del bot principal
-  const number = await receiveNumberFromMain();  // Este es un lugar para la lógica real
+  // Este código se ejecutará cuando el bot principal envíe el número
+  const number = await receiveNumberFromMain();  // Simulación de recibir número dinámicamente
 
   if (!number) {
     errorLog('Número de teléfono no recibido correctamente.');
@@ -160,21 +110,13 @@ async function listenForNumberFromMain() {
   }
 
   console.log(`Recibiendo número: ${number}`);
-  const socket = await connect(number); // Inicia la conexión para ese número
-
-  // Aquí podrías enviar el código de vinculación al bot principal, si es necesario
-  // sendCodeToMain(code, number);
+  await connect(number); // Conecta con el número proporcionado por el bot principal
 }
 
-// Simulación de la función que recibiría el número del bot principal
-// Aquí es donde conectamos el flujo con el bot principal que envía el número
 async function receiveNumberFromMain() {
-  // Esta lógica dependerá de cómo el bot principal envíe el número al subbot.
-  // Por ejemplo, podría ser a través de una base de datos, evento de mensajería, etc.
   // Simulamos que recibimos el número aquí:
-  
-  return "1234567890";  // Este es solo un número de ejemplo. En un caso real, será dinámico.
+  return "1234567890";  // Este es solo un número de ejemplo, en la implementación real se debe recibir dinámicamente.
 }
 
-// Escucha constantemente por nuevos números
-listenForNumberFromMain();  // Llamamos a la función para iniciar el proceso
+// Llamar a esta función para escuchar por nuevos números
+listenForNumberFromMain(); 
