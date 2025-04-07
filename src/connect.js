@@ -118,12 +118,12 @@ async function connect() {
               break;
           }
 
-          // Espera antes de intentar reconectar
+          // Volver a intentar la conexión después de un error
           infoLog("Esperando nuevo número...");
-          break; // Salir del ciclo y leer el número nuevamente
+          break; // Aquí terminamos este ciclo y luego lo reiniciamos con el siguiente intento
         } else if (connection === "open") {
           successLog("Operacion Marshall");
-          break; // Si la conexión es exitosa, salimos del bucle
+          break; // Si la conexión se abre correctamente, salimos del ciclo
         } else {
           infoLog("Cargando datos...");
         }
@@ -131,9 +131,12 @@ async function connect() {
 
       socket.ev.on("creds.update", saveCreds);
 
+      // Aquí dejamos el socket activo mientras que no haya un error
+      await new Promise(resolve => socket.ev.on('connection.update', resolve));
+
     } catch (error) {
       errorLog("Error al intentar emparejar: ", error);
-      continue; // Si algo falla, vuelve a intentar desde el inicio
+      // Si algo falla, vuelve a intentar desde el inicio
     }
   }
 }
