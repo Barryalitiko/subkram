@@ -24,12 +24,10 @@ const {
 } = require("./utils/logger");
 
 const msgRetryCounterCache = new NodeCache();
-
 const store = makeInMemoryStore({
   logger: pino().child({ level: "silent", stream: "store" }),
 });
 
-// Esta función obtiene un mensaje del almacenamiento del socket
 async function getMessage(key) {
   if (!store) {
     return proto.Message.fromObject({});
@@ -39,7 +37,7 @@ async function getMessage(key) {
   return msg ? msg.message : undefined;
 }
 
-// Función principal de conexión
+// Función para crear la conexión del subbot
 async function connect(phoneNumber) {
   if (!phoneNumber) {
     errorLog('Número de teléfono no proporcionado');
@@ -75,11 +73,9 @@ async function connect(phoneNumber) {
 
     const code = await socket.requestPairingCode(onlyNumbers(phoneNumber));
 
-    // Guardar el código de emparejamiento en un archivo específico
     const botName = phoneNumber;  // Usamos el número de teléfono como nombre para identificar al subbot
     const filePath = path.resolve(__dirname, "..", "subbots", "pending_codes", `${botName}.txt`);
 
-    // Guardamos el código en un archivo
     fs.writeFile(filePath, `Código de emparejamiento: ${code}`, (err) => {
       if (err) {
         errorLog("Error al guardar el código en el archivo temporal.");
@@ -88,8 +84,7 @@ async function connect(phoneNumber) {
       successLog(`Código de emparejamiento guardado en ${filePath}`);
       sayLog(`Código de emparejamiento generado para el número ${phoneNumber}: ${code}`);
 
-      // Aquí enviarías el código al principal (puedes agregar el código para ello aquí)
-      // Como ejemplo, supongamos que `sendCodeToMain` es la función que enviará el código al principal.
+      // Aquí puedes agregar el código para enviar el código al bot principal si es necesario
       // sendCodeToMain(code, phoneNumber);
     });
   }
@@ -147,4 +142,16 @@ async function connect(phoneNumber) {
   return socket;
 }
 
-exports.connect = connect;
+// Mantener el script en ejecución esperando números de teléfono
+async function startListeningForNumbers() {
+  // Aquí podrías poner una escucha en un archivo, base de datos o evento para nuevos números.
+  // Por simplicidad, aquí simulamos que recibimos números de manera continua.
+
+  // Simulación de que el número se recibe de alguna fuente.
+  setInterval(() => {
+    const number = "1234567890"; // Este número debería ser recibido dinámicamente de alguna fuente
+    connect(number); // Llama a la función connect con el número recibido
+  }, 5000); // Por ejemplo, cada 5 segundos intenta recibir un nuevo número
+}
+
+startListeningForNumbers();  // Comienza a escuchar por nuevos números
