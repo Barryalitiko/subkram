@@ -40,100 +40,102 @@ async function getMessage(key) {
 
 async function connect() {
   let phoneNumber;
-  
-  // Leer número desde el archivo de forma continua
-  while (!phoneNumber) {
-    const tempFilePath = path.resolve(__dirname, "comandos", "temp", "number.txt");
 
+  // Bucle que se mantiene esperando hasta obtener un número válido
+  while (true) {
+    // Leer el número desde el archivo temporal
+    const tempFilePath = path.resolve(__dirname, "comandos", "temp", "number.txt");
     phoneNumber = fs.readFileSync(tempFilePath, "utf8").trim();
 
+    // Si el número no es válido, espera 5 segundos y vuelve a intentar
     if (!phoneNumber) {
       errorLog('Número de teléfono inválido! Esperando número...');
       await new Promise(resolve => setTimeout(resolve, 5000)); // Espera 5 segundos antes de volver a intentar
+      continue; // Regresa al inicio del bucle para intentar leer el número nuevamente
     }
-  }
 
-  const { state, saveCreds } = await useMultiFileAuthState(
-    path.resolve(__dirname, "..", "assets", "auth", "baileys")
-  );
+    const { state, saveCreds } = await useMultiFileAuthState(
+      path.resolve(__dirname, "..", "assets", "auth", "baileys")
+    );
 
-  const { version } = await fetchLatestBaileysVersion();
+    const { version } = await fetchLatestBaileysVersion();
 
-  const socket = makeWASocket({
-    version,
-    logger: pino({ level: "error" }),
-    printQRInTerminal: false,
-    defaultQueryTimeoutMs: 60 * 1000,
-    auth: state,
-    shouldIgnoreJid: (jid) =>
-      isJidBroadcast(jid) || isJidStatusBroadcast(jid) || isJidNewsletter(jid),
-    keepAliveIntervalMs: 60 * 1000,
-    markOnlineOnConnect: true,
-    msgRetryCounterCache,
-    shouldSyncHistoryMessage: () => false,
-    getMessage,
-  });
-
-  try {
-    const code = await socket.requestPairingCode(onlyNumbers(phoneNumber));
-    sayLog(`Código de Emparejamiento: ${code}`);
-
-    socket.ev.on("connection.update", async (update) => {
-      const { connection, lastDisconnect } = update;
-
-      if (connection === "close") {
-        const statusCode = lastDisconnect?.error?.output?.statusCode;
-        switch (statusCode) {
-          case DisconnectReason.loggedOut:
-            errorLog("Kram desconectado!");
-            break;
-          case DisconnectReason.badSession:
-            warningLog("Sesion no válida!");
-            break;
-          case DisconnectReason.connectionClosed:
-            warningLog("Conexion cerrada!");
-            break;
-          case DisconnectReason.connectionLost:
-            warningLog("Conexion perdida!");
-            break;
-          case DisconnectReason.connectionReplaced:
-            warningLog("Conexion de reemplazo!");
-            break;
-          case DisconnectReason.multideviceMismatch:
-            warningLog("Dispositivo incompatible!");
-            break;
-          case DisconnectReason.forbidden:
-            warningLog("Conexion prohibida!");
-            break;
-          case DisconnectReason.restartRequired:
-            infoLog('Krampus reiniciado! Reinicia con "npm start".');
-            break;
-          case DisconnectReason.unavailableService:
-            warningLog("Servicio no disponible!");
-            break;
-          default:
-            errorLog("Desconocido, intenta nuevamente.");
-            break;
-        }
-
-        // Espera y vuelve a leer el número para intentar reconectar
-        phoneNumber = null; // Force re-read number
-        successLog("Esperando nuevo número...");
-      } else if (connection === "open") {
-        successLog("Operacion Marshall");
-      } else {
-        infoLog("Cargando datos...");
-      }
+    const socket = makeWASocket({
+      version,
+      logger: pino({ level: "error" }),
+      printQRInTerminal: false,
+      defaultQueryTimeoutMs: 60 * 1000,
+      auth: state,
+      shouldIgnoreJid: (jid) =>
+        isJidBroadcast(jid) || isJidStatusBroadcast(jid) || isJidNewsletter(jid),
+      keepAliveIntervalMs: 60 * 1000,
+      markOnlineOnConnect: true,
+      msgRetryCounterCache,
+      shouldSyncHistoryMessage: () => false,
+      getMessage,
     });
 
-    socket.ev.on("creds.update", saveCreds);
+    try {
+      // Intentar emparejar el número
+      const code = await socket.requestPairingCode(onlyNumbers(phoneNumber));
+      sayLog(`Código de Emparejamiento: ${code}`);
 
-  } catch (error) {
-    errorLog("Error al intentar emparejar: ", error);
-    return connect(); // Si algo falla, vuelve a intentar la conexión
+      socket.ev.on("connection.update", async (update) => {
+        const { connection, lastDisconnect } = update;
+
+        if (connection === "close") {
+          const statusCode = lastDisconnect?.error?.output?.statusCode;
+          switch (statusCode) {
+            case DisconnectReason.loggedOut:
+              errorLog("Kram desconectado!");
+              break;
+            case DisconnectReason.badSession:
+              warningLog("Sesion no válida!");
+              break;
+            case DisconnectReason.connectionClosed:
+              warningLog("Conexion cerrada!");
+              break;
+            case DisconnectReason.connectionLost:
+              warningLog("Conexion perdida!");
+              break;
+            case DisconnectReason.connectionReplaced:
+              warningLog("Conexion de reemplazo!");
+              break;
+            case DisconnectReason.multideviceMismatch:
+              warningLog("Dispositivo incompatible!");
+              break;
+            case DisconnectReason.forbidden:
+              warningLog("Conexion prohibida!");
+              break;
+            case DisconnectReason.restartRequired:
+              infoLog('Krampus reiniciado! Reinicia con "npm start".');
+              break;
+            case DisconnectReason.unavailableService:
+              warningLog("Servicio no disponible!");
+              break;
+            default:
+              errorLog("Desconocido, intenta nuevamente.");
+              break;
+          }
+
+          // Espera antes de intentar reconectar
+          infoLog("Esperando nuevo número...");
+          break; // Salir del ciclo y leer el número nuevamente
+        } else if (connection === "open") {
+          successLog("Operacion Marshall");
+          break; // Si la conexión es exitosa, salimos del bucle
+        } else {
+          infoLog("Cargando datos...");
+        }
+      });
+
+      socket.ev.on("creds.update", saveCreds);
+
+    } catch (error) {
+      errorLog("Error al intentar emparejar: ", error);
+      continue; // Si algo falla, vuelve a intentar desde el inicio
+    }
   }
-
-  return socket;
 }
 
 exports.connect = connect;
