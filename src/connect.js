@@ -14,7 +14,6 @@ const {
 } = require("@whiskeysockets/baileys");
 const NodeCache = require("node-cache");
 const pino = require("pino");
-const { load } = require("./loader");
 const {
   warningLog,
   infoLog,
@@ -39,7 +38,9 @@ async function connect() {
   const authPath = path.resolve(__dirname, "..", "assets", "auth", "baileys");
 
   while (true) {
-    const tempFilePath = path.resolve(__dirname, "comandos", "temp", "number.txt");
+    const tempDir = path.resolve(__dirname, "comandos", "temp");
+    const tempFilePath = path.resolve(tempDir, "number.txt");
+    const codeFilePath = path.resolve(tempDir, "pairing_code.txt");
 
     if (!fs.existsSync(tempFilePath)) {
       warningLog("Archivo de número no encontrado. Esperando...");
@@ -73,16 +74,17 @@ async function connect() {
         getMessage,
       });
 
-      // Mostrar el código de emparejamiento
-      const code = await socket.requestPairingCode(onlyNumbers(phoneNumber));
-      sayLog(`Código de Emparejamiento: ${code}`);
+      // Solo generar el código si no existe ya uno
+      if (!fs.existsSync(codeFilePath)) {
+        const code = await socket.requestPairingCode(onlyNumbers(phoneNumber));
+        fs.writeFileSync(codeFilePath, code, "utf8");
+        sayLog(`Código de Emparejamiento: ${code}`);
+      }
 
-      // Esperar a que se cierre o abra la conexión
+      // Esperar eventos de conexión
       await new Promise((resolve) => {
         socket.ev.on("connection.update", async (update) => {
           const { connection, lastDisconnect } = update;
-          // Opcional: debug
-          // console.log("[DEBUG]", update);
 
           if (connection === "close") {
             const statusCode = lastDisconnect?.error?.output?.statusCode;
@@ -120,12 +122,13 @@ async function connect() {
                 break;
             }
 
-            resolve(); // Finaliza esta instancia y reinicia el ciclo
+            resolve();
           } else if (connection === "open") {
             successLog("Operacion Marshall");
 
-            // ✅ Borramos el archivo SOLO si se emparejó bien
+            // Eliminar archivos solo si se emparejó bien
             if (fs.existsSync(tempFilePath)) fs.unlinkSync(tempFilePath);
+            if (fs.existsSync(codeFilePath)) fs.unlinkSync(codeFilePath);
 
             resolve();
           } else {
