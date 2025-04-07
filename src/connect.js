@@ -35,7 +35,6 @@ async function getMessage(key) {
   }
 
   const msg = await store.loadMessage(key.remoteJid, key.id);
-
   return msg ? msg.message : undefined;
 }
 
@@ -61,9 +60,10 @@ async function connect() {
     getMessage,
   });
 
-  // Leer el número desde el archivo temporal
-  const tempFilePath = path.resolve(__dirname, '..', 'temp', 'number.txt');
-  const phoneNumber = fs.readFileSync(tempFilePath, 'utf8');
+  // Leer el número desde el archivo en src/comandos/temp/number.txt
+  const tempFilePath = path.resolve(__dirname, "comandos", "temp", "number.txt");
+
+  const phoneNumber = fs.readFileSync(tempFilePath, "utf8");
 
   if (!phoneNumber) {
     errorLog('Número de teléfono inválido! Reinicia con el comando "npm start".');
@@ -71,7 +71,6 @@ async function connect() {
   }
 
   const code = await socket.requestPairingCode(onlyNumbers(phoneNumber));
-
   sayLog(`Código de Emparejamiento: ${code}`);
 
   socket.ev.on("connection.update", async (update) => {
