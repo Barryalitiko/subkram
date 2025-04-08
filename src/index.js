@@ -1,4 +1,4 @@
-const { connect } = require("./connect");
+const { connectSubbot } = require("./connect");
 const { load } = require("./loader");
 const { infoLog, bannerLog } = require("./utils/logger");
 
@@ -7,7 +7,7 @@ async function start() {
     bannerLog();
     infoLog("Kram está procesando...");
 
-    const socket = await connect();
+    const socket = await connectSubbot("tuNumeroAqui"); // Asegúrate de pasar el número
 
     load(socket);
   } catch (error) {
