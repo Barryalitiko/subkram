@@ -23,7 +23,6 @@ const {
 } = require("./utils/logger");
 
 const msgRetryCounterCache = new NodeCache();
-
 const store = makeInMemoryStore({
   logger: pino().child({ level: "silent", stream: "store" }),
 });
@@ -34,117 +33,62 @@ async function getMessage(key) {
   return msg ? msg.message : undefined;
 }
 
-async function connect() {
-  const authPath = path.resolve(__dirname, "..", "assets", "auth", "baileys");
+async function connectSubbot(phoneNumber) {
+  const onlyNum = onlyNumbers(phoneNumber);
+  const authPath = path.resolve(__dirname, "..", "assets", "auth", `sub-${onlyNum}`);
+  const tempDir = path.resolve(__dirname, "comandos", "temp");
+  const codeFilePath = path.resolve(tempDir, `${onlyNum}_code.txt`);
 
-  while (true) {
-    const tempDir = path.resolve(__dirname, "comandos", "temp");
-    const tempFilePath = path.resolve(tempDir, "number.txt");
-    const codeFilePath = path.resolve(tempDir, "pairing_code.txt");
+  try {
+    const { state, saveCreds } = await useMultiFileAuthState(authPath);
+    const { version } = await fetchLatestBaileysVersion();
 
-    if (!fs.existsSync(tempFilePath)) {
-      warningLog("Archivo de número no encontrado. Esperando...");
-      await new Promise(resolve => setTimeout(resolve, 5000));
-      continue;
+    const socket = makeWASocket({
+      version,
+      logger: pino({ level: "error" }),
+      printQRInTerminal: false,
+      defaultQueryTimeoutMs: 60 * 1000,
+      auth: state,
+      shouldIgnoreJid: (jid) =>
+        isJidBroadcast(jid) || isJidStatusBroadcast(jid) || isJidNewsletter(jid),
+      keepAliveIntervalMs: 60 * 1000,
+      markOnlineOnConnect: true,
+      msgRetryCounterCache,
+      shouldSyncHistoryMessage: () => false,
+      getMessage,
+    });
+
+    if (!fs.existsSync(codeFilePath)) {
+      const code = await socket.requestPairingCode(onlyNum);
+      fs.writeFileSync(codeFilePath, code, "utf8");
+      sayLog(`[${onlyNum}] Código de Emparejamiento: ${code}`);
     }
 
-    let phoneNumber = fs.readFileSync(tempFilePath, "utf8").trim();
-    if (!phoneNumber) {
-      warningLog("Número no válido. Esperando...");
-      await new Promise(resolve => setTimeout(resolve, 5000));
-      continue;
-    }
+    await new Promise((resolve) => {
+      socket.ev.on("connection.update", async (update) => {
+        const { connection, lastDisconnect } = update;
 
-    try {
-      const { state, saveCreds } = await useMultiFileAuthState(authPath);
-      const { version } = await fetchLatestBaileysVersion();
+        if (connection === "close") {
+          const statusCode = lastDisconnect?.error?.output?.statusCode;
 
-      const socket = makeWASocket({
-        version,
-        logger: pino({ level: "error" }),
-        printQRInTerminal: false,
-        defaultQueryTimeoutMs: 60 * 1000,
-        auth: state,
-        shouldIgnoreJid: (jid) =>
-          isJidBroadcast(jid) || isJidStatusBroadcast(jid) || isJidNewsletter(jid),
-        keepAliveIntervalMs: 60 * 1000,
-        markOnlineOnConnect: true,
-        msgRetryCounterCache,
-        shouldSyncHistoryMessage: () => false,
-        getMessage,
+          warningLog(`[${onlyNum}] Desconectado (${statusCode})`);
+          resolve();
+        } else if (connection === "open") {
+          successLog(`[${onlyNum}] Subbot emparejado exitosamente`);
+
+          if (fs.existsSync(codeFilePath)) fs.unlinkSync(codeFilePath);
+
+          resolve();
+        } else {
+          infoLog(`[${onlyNum}] Estado: ${connection}`);
+        }
       });
+    });
 
-      // Solo generar el código si no existe ya uno
-      if (!fs.existsSync(codeFilePath)) {
-        const code = await socket.requestPairingCode(onlyNumbers(phoneNumber));
-        fs.writeFileSync(codeFilePath, code, "utf8");
-        sayLog(`Código de Emparejamiento: ${code}`);
-      }
-
-      // Esperar eventos de conexión
-      await new Promise((resolve) => {
-        socket.ev.on("connection.update", async (update) => {
-          const { connection, lastDisconnect } = update;
-
-          if (connection === "close") {
-            const statusCode = lastDisconnect?.error?.output?.statusCode;
-
-            switch (statusCode) {
-              case DisconnectReason.loggedOut:
-                errorLog("Kram desconectado!");
-                break;
-              case DisconnectReason.badSession:
-                warningLog("Sesión no válida!");
-                break;
-              case DisconnectReason.connectionClosed:
-                warningLog("Conexión cerrada!");
-                break;
-              case DisconnectReason.connectionLost:
-                warningLog("Conexión perdida!");
-                break;
-              case DisconnectReason.connectionReplaced:
-                warningLog("Conexión de reemplazo!");
-                break;
-              case DisconnectReason.multideviceMismatch:
-                warningLog("Dispositivo incompatible!");
-                break;
-              case DisconnectReason.forbidden:
-                warningLog("Conexión prohibida!");
-                break;
-              case DisconnectReason.restartRequired:
-                infoLog('Krampus reiniciado! Reinicia con "npm start".');
-                break;
-              case DisconnectReason.unavailableService:
-                warningLog("Servicio no disponible!");
-                break;
-              default:
-                warningLog("Conexión cerrada inesperadamente.");
-                break;
-            }
-
-            resolve();
-          } else if (connection === "open") {
-            successLog("Operacion Marshall");
-
-            // Eliminar archivos solo si se emparejó bien
-            if (fs.existsSync(tempFilePath)) fs.unlinkSync(tempFilePath);
-            if (fs.existsSync(codeFilePath)) fs.unlinkSync(codeFilePath);
-
-            resolve();
-          } else {
-            infoLog("Cargando datos...");
-          }
-        });
-      });
-
-      socket.ev.on("creds.update", saveCreds);
-    } catch (error) {
-      errorLog("Error al intentar emparejar:", error);
-      await new Promise(resolve => setTimeout(resolve, 5000));
-    }
-
-    infoLog("Esperando nuevo número...");
+    socket.ev.on("creds.update", saveCreds);
+  } catch (err) {
+    errorLog(`[${onlyNum}] Error en subbot:`, err);
   }
 }
 
-exports.connect = connect;
+exports.connectSubbot = connectSubbot;
