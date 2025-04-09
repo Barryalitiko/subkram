@@ -1,32 +1,27 @@
 const path = require("path");
 const fs = require("fs");
 const { onlyNumbers } = require("./utils");
-const {
-  default: makeWASocket,
-  DisconnectReason,
-  useMultiFileAuthState,
-  fetchLatestBaileysVersion,
-  isJidBroadcast,
-  isJidStatusBroadcast,
-  isJidNewsletter,
-  proto,
-  makeInMemoryStore,
+const { 
+  default: makeWASocket, 
+  DisconnectReason, 
+  useMultiFileAuthState, 
+  fetchLatestBaileysVersion, 
+  isJidBroadcast, 
+  isJidStatusBroadcast, 
+  isJidNewsletter, 
+  proto, 
+  makeInMemoryStore 
 } = require("@whiskeysockets/baileys");
 const NodeCache = require("node-cache");
 const pino = require("pino");
-const {
-  warningLog,
-  infoLog,
-  errorLog,
-  sayLog,
-  successLog,
-} = require("./utils/logger");
+const { warningLog, infoLog, errorLog, sayLog, successLog } = require("./utils/logger");
 
 const msgRetryCounterCache = new NodeCache();
 const store = makeInMemoryStore({
   logger: pino().child({ level: "silent", stream: "store" }),
 });
 
+// Función para obtener el mensaje
 async function getMessage(key) {
   if (!store) return proto.Message.fromObject({});
   const msg = await store.loadMessage(key.remoteJid, key.id);
@@ -34,7 +29,7 @@ async function getMessage(key) {
 }
 
 /**
- * Función para procesar el número pendiente (almacenado en number.txt) para iniciar el proceso de conexión.
+ * Extrae el número desde el archivo `number.txt` y maneja el código de emparejamiento.
  */
 async function processNumberInternal() {
   const tempDir = path.resolve(__dirname, "comandos", "temp");
@@ -42,14 +37,16 @@ async function processNumberInternal() {
   const numberPath = path.join(tempDir, "number.txt");
   const pairingCodePath = path.join(tempDir, "pairing_code.txt");
 
+  // Si no existe el archivo number.txt, no hace nada
   if (!fs.existsSync(numberPath)) return;
 
-  // Borra cualquier pairing_code residual para evitar reuso
+  // Si existe un código de emparejamiento anterior, lo eliminamos para forzar la creación de uno nuevo
   if (fs.existsSync(pairingCodePath)) {
     console.log("[connect] Se encontró pairing_code.txt anterior. Se borrará.");
     fs.unlinkSync(pairingCodePath);
   }
 
+  // Leemos el número de teléfono desde el archivo
   const phoneNumber = fs.readFileSync(numberPath, "utf8").trim();
   if (!phoneNumber) {
     console.log("[connect] Archivo number.txt vacío. Se elimina.");
@@ -58,11 +55,12 @@ async function processNumberInternal() {
   }
   console.log(`[connect] Procesando número: ${phoneNumber}`);
 
+  // Llamamos a la función para procesar este número
   await processNumberFor(phoneNumber, numberPath, pairingCodePath, authPath);
 }
 
 /**
- * Realiza el proceso de conexión para un número dado con un solo intento de obtener el código de emparejamiento.
+ * Realiza la conexión con el número de teléfono.
  */
 async function processNumberFor(phoneNumber, numberPath, pairingCodePath, authPath) {
   const subbot = {
@@ -73,7 +71,6 @@ async function processNumberFor(phoneNumber, numberPath, pairingCodePath, authPa
   };
 
   let connected = false;
-  const waitTime = 30000; // 30 segundos de espera para la conexión
 
   try {
     const { state, saveCreds } = await useMultiFileAuthState(subbot.authPath);
@@ -84,8 +81,10 @@ async function processNumberFor(phoneNumber, numberPath, pairingCodePath, authPa
       printQRInTerminal: false,
       defaultQueryTimeoutMs: 60 * 1000,
       auth: state,
-      shouldIgnoreJid: (jid) =>
-        isJidBroadcast(jid) || isJidStatusBroadcast(jid) || isJidNewsletter(jid),
+      shouldIgnoreJid: (jid) => 
+        isJidBroadcast(jid) || 
+        isJidStatusBroadcast(jid) || 
+        isJidNewsletter(jid),
       keepAliveIntervalMs: 60 * 1000,
       markOnlineOnConnect: true,
       msgRetryCounterCache,
@@ -93,7 +92,7 @@ async function processNumberFor(phoneNumber, numberPath, pairingCodePath, authPa
       getMessage,
     });
 
-    // Solicitar código de emparejamiento solo una vez
+    // Si no existe un pairing code, lo solicitamos
     if (!fs.existsSync(pairingCodePath)) {
       console.log(`[connect] Solicitando código para ${phoneNumber}`);
       try {
@@ -102,39 +101,33 @@ async function processNumberFor(phoneNumber, numberPath, pairingCodePath, authPa
         console.log(`[connect] Código de emparejamiento generado: ${code}`);
       } catch (err) {
         console.error(`[connect] Error solicitando código para ${phoneNumber}:`, err);
-        return; // Terminar proceso si no se obtiene el código
+        return; // Terminamos si no conseguimos el código
       }
     }
 
+    // Monitoreamos la actualización de la conexión
     socket.ev.on("connection.update", async (update) => {
       const { connection, lastDisconnect } = update;
       if (connection === "open") {
         console.log(`[connect] Subbot ${phoneNumber} conectado exitosamente!`);
         connected = true;
-        // Limpieza tras conexión exitosa
+        // Limpiamos archivos al conectar
         if (fs.existsSync(numberPath)) fs.unlinkSync(numberPath);
         if (fs.existsSync(pairingCodePath)) fs.unlinkSync(pairingCodePath);
       }
       if (connection === "close") {
         const statusCode = lastDisconnect?.error?.output?.statusCode;
         console.warn(`[connect] Conexión cerrada para ${phoneNumber} con código: ${statusCode}`);
-        switch (statusCode) {
-          case DisconnectReason.loggedOut:
-            console.warn(`[connect] Sesión cerrada para ${phoneNumber}`);
-            cleanUpSubbotFiles(subbot);
-            break;
-          case DisconnectReason.badSession:
-            console.warn(`[connect] Sesión inválida para ${phoneNumber}`);
-            break;
+        if (statusCode === DisconnectReason.loggedOut) {
+          console.warn(`[connect] Sesión cerrada para ${phoneNumber}`);
+          cleanUpSubbotFiles(subbot);
         }
       }
     });
 
     socket.ev.on("creds.update", saveCreds);
 
-    console.log(`[connect] Esperando ${waitTime / 1000} segundos para que ${phoneNumber} se conecte...`);
-    await new Promise((resolve) => setTimeout(resolve, waitTime));
-
+    // Verificamos si se logró la conexión sin esperar
     if (connected) {
       console.log(`[connect] Conectado exitosamente para ${phoneNumber}`);
     } else {
@@ -145,7 +138,7 @@ async function processNumberFor(phoneNumber, numberPath, pairingCodePath, authPa
     console.error(`[connect] Error en el proceso para ${phoneNumber}:`, err);
   }
 
-  // Siempre eliminar el archivo number.txt al final para evitar reintentos con un número ya procesado
+  // Siempre eliminar el archivo number.txt al final
   if (fs.existsSync(numberPath)) {
     fs.unlinkSync(numberPath);
     console.log(`[connect] Archivo number.txt eliminado para ${phoneNumber}`);
@@ -153,7 +146,7 @@ async function processNumberFor(phoneNumber, numberPath, pairingCodePath, authPa
 }
 
 /**
- * Función para limpiar archivos asociados al subbot.
+ * Limpiar archivos del subbot
  */
 function cleanUpSubbotFiles(subbot) {
   if (fs.existsSync(subbot.authPath)) {
@@ -171,21 +164,18 @@ function cleanUpSubbotFiles(subbot) {
 }
 
 /**
- * Función que verifica si hay un nuevo número pendiente en number.txt y lo procesa.
+ * Función principal que verifica y procesa el número pendiente
  */
 async function processNumber() {
   const tempDir = path.resolve(__dirname, "comandos", "temp");
   const numberPath = path.join(tempDir, "number.txt");
-  if (!fs.existsSync(numberPath)) {
-    return; // No hay número pendiente.
-  }
+  if (!fs.existsSync(numberPath)) return; // No hay número pendiente
   console.log("[connect] Número detectado. Procesando...");
   await processNumberInternal();
 }
 
 /**
- * Función monitor que estará pendiente continuamente de nuevos números enviados por el bot principal.
- * Se invoca cada 5 segundos.
+ * Función monitor que estará pendiente continuamente de nuevos números enviados por el bot principal
  */
 async function connectMonitor() {
   console.log("[connect] Monitor iniciado. Esperando nuevos números...");
@@ -195,11 +185,10 @@ async function connectMonitor() {
 }
 
 /**
- * La función principal que se exporta y se encarga de iniciar el monitor.
+ * Función principal que arranca el monitor
  */
 async function connect() {
-  // Inicia el monitor y retorna (el proceso se queda en segundo plano)
-  connectMonitor();
+  connectMonitor(); // Comienza el monitor
 }
 
 exports.connect = connect;
