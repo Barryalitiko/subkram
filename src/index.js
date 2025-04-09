@@ -1,5 +1,4 @@
 const { connect } = require("./connect");
-const { load } = require("./loader");
 const { infoLog, bannerLog } = require("./utils/logger");
 
 async function start() {
@@ -9,7 +8,7 @@ async function start() {
 
     const socket = await connect();
 
-    load(socket);
+    // Ya no es necesario llamar a load aquí, lo hacemos en el evento "open" en connect.js
   } catch (error) {
     console.log(error);
   }
