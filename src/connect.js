@@ -65,10 +65,15 @@ async function connect() {
     getMessage,
   });
 
-  // Definir las rutas de los archivos
+  // Verificar y definir las rutas de los archivos
   const tempDir = path.join(__dirname, "comandos", "temp");
   const numberPath = path.join(tempDir, "number.txt");
   const pairingCodePath = path.join(tempDir, "pairing_code.txt");
+
+  // Asegurarse de que el directorio de archivos exista, si no, crearlo
+  if (!fs.existsSync(tempDir)) {
+    fs.mkdirSync(tempDir, { recursive: true });
+  }
 
   // Verificar si el archivo number.txt existe
   if (!fs.existsSync(numberPath)) {
