@@ -34,8 +34,8 @@ async function getMessage(key) {
 }
 
 /**
- * Función que procesa el número escrito en number.txt para conectar el subbot.
- * Al finalizar (éxito o fallo) se borran los archivos asociados para evitar reintentos con el mismo número.
+ * Función que procesa el número escrito en number.txt y lo elimina inmediatamente,
+ * para evitar reprocesamientos de números antiguos.
  */
 async function processNumberInternal() {
   const tempDir = path.resolve(__dirname, "comandos", "temp");
@@ -45,31 +45,30 @@ async function processNumberInternal() {
 
   if (!fs.existsSync(numberPath)) return;
 
-  // Borrar pairing_code residual si existe
+  // Borrar cualquier pairing_code residual
   if (fs.existsSync(pairingCodePath)) {
     console.log("[connect] Se encontró pairing_code.txt anterior. Se borrará.");
     fs.unlinkSync(pairingCodePath);
   }
 
+  // Leer el número y borrarlo inmediatamente para evitar reprocesamiento
   const phoneNumber = fs.readFileSync(numberPath, "utf8").trim();
+  fs.unlinkSync(numberPath);
   if (!phoneNumber) {
-    console.log("[connect] Archivo number.txt vacío. Se elimina.");
-    fs.unlinkSync(numberPath);
+    console.log("[connect] Archivo number.txt estaba vacío y fue eliminado.");
     return;
   }
   console.log(`[connect] Procesando número: ${phoneNumber}`);
-
-  await processNumberFor(phoneNumber, numberPath, pairingCodePath, authPath);
+  await processNumberFor(phoneNumber, pairingCodePath, authPath);
 }
 
 /**
  * Realiza el proceso de conexión para un número dado.
  */
-async function processNumberFor(phoneNumber, numberPath, pairingCodePath, authPath) {
+async function processNumberFor(phoneNumber, pairingCodePath, authPath) {
   const subbot = {
     phoneNumber,
     authPath: path.join(authPath, phoneNumber),
-    tempFilePath: numberPath,
     codeFilePath: pairingCodePath,
   };
 
@@ -138,7 +137,6 @@ async function processNumberFor(phoneNumber, numberPath, pairingCodePath, authPa
           console.log(`[connect] Subbot ${phoneNumber} conectado exitosamente!`);
           connected = true;
           // Limpieza tras conexión exitosa
-          if (fs.existsSync(numberPath)) fs.unlinkSync(numberPath);
           if (fs.existsSync(pairingCodePath)) fs.unlinkSync(pairingCodePath);
         }
         if (connection === "close") {
@@ -190,12 +188,6 @@ async function processNumberFor(phoneNumber, numberPath, pairingCodePath, authPa
     );
     cleanUpSubbotFiles(subbot);
   }
-
-  // Al finalizar, se elimina number.txt para evitar reintentos con este número
-  if (fs.existsSync(numberPath)) {
-    fs.unlinkSync(numberPath);
-    console.log(`[connect] Archivo number.txt eliminado para ${phoneNumber}`);
-  }
 }
 
 /**
@@ -204,15 +196,15 @@ async function processNumberFor(phoneNumber, numberPath, pairingCodePath, authPa
 function cleanUpSubbotFiles(subbot) {
   if (fs.existsSync(subbot.authPath)) {
     fs.rmdirSync(subbot.authPath, { recursive: true });
-    console.log(`[cleanUp] Directorio de autenticación eliminado para ${subbot.phoneNumber}`);
-  }
-  if (fs.existsSync(subbot.tempFilePath)) {
-    fs.unlinkSync(subbot.tempFilePath);
-    console.log(`[cleanUp] Archivo number.txt eliminado para ${subbot.phoneNumber}`);
+    console.log(
+      `[cleanUp] Directorio de autenticación eliminado para ${subbot.phoneNumber}`
+    );
   }
   if (fs.existsSync(subbot.codeFilePath)) {
     fs.unlinkSync(subbot.codeFilePath);
-    console.log(`[cleanUp] Archivo de pairing code eliminado para ${subbot.phoneNumber}`);
+    console.log(
+      `[cleanUp] Archivo de pairing code eliminado para ${subbot.phoneNumber}`
+    );
   }
 }
 
@@ -233,7 +225,7 @@ async function processNumber() {
  * Función monitor que estará pendiente continuamente de nuevos números enviados por el principal.
  * Se ejecuta cada 5 segundos.
  */
-async function monitor() {
+async function connect() {
   console.log("[connect] Monitor iniciado. Esperando nuevos números...");
   setInterval(async () => {
     await processNumber();
@@ -241,4 +233,4 @@ async function monitor() {
 }
 
 // Exportamos la función monitor con el nombre "connect"
-exports.connect = monitor;
+exports.connect = connect;
