@@ -179,7 +179,8 @@ async function connectSubbot(subbot) {
       // Tiempo de espera para que se conecte
       await new Promise((resolve) => setTimeout(resolve, waitTime));
 
-      if (socket.isConnected()) {
+      // Verificar si está conectado
+      if (socket.ws.readyState === socket.ws.OPEN) {
         successLog(`Subbot ${subbot.phoneNumber} conectado correctamente!`);
         return;
       } else {
