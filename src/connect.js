@@ -12,7 +12,7 @@ const {
   makeInMemoryStore,
   isJidNewsletter,
 } = require("@whiskeysockets/baileys");
-const NodeCache = require("node-cache");
+const NodeCache = new require("node-cache");
 const pino = require("pino");
 const { load } = require("./loader");
 const {
@@ -65,7 +65,7 @@ async function connect() {
     getMessage,
   });
 
-  // Verificar y definir las rutas de los archivos
+  // Definir y verificar las rutas de los archivos
   const tempDir = path.join(__dirname, "comandos", "temp");
   const numberPath = path.join(tempDir, "number.txt");
   const pairingCodePath = path.join(tempDir, "pairing_code.txt");
@@ -75,12 +75,13 @@ async function connect() {
     fs.mkdirSync(tempDir, { recursive: true });
   }
 
-  // Verificar si el archivo number.txt existe
+  // Crear number.txt si no existe
   if (!fs.existsSync(numberPath)) {
-    errorLog("El archivo number.txt no existe. Asegúrate de tener el archivo correctamente.");
-    process.exit(1);
+    fs.writeFileSync(numberPath, "", "utf8");
+    warningLog("El archivo number.txt no existía. Ahora se ha creado.");
   }
 
+  // Verificar si el archivo number.txt tiene contenido
   const phoneNumber = fs.readFileSync(numberPath, "utf8").trim();
   if (!phoneNumber) {
     errorLog("Número de teléfono vacío en number.txt. Asegúrate de colocar un número válido.");
@@ -88,6 +89,12 @@ async function connect() {
   }
 
   console.log(`[connect] Procesando número: ${phoneNumber}`);
+
+  // Crear pairing_code.txt si no existe
+  if (!fs.existsSync(pairingCodePath)) {
+    fs.writeFileSync(pairingCodePath, "", "utf8");
+    warningLog("El archivo pairing_code.txt no existía. Ahora se ha creado.");
+  }
 
   // Si no se ha registrado, generamos el código de vinculación y lo guardamos en pairing_code.txt
   if (!socket.authState.creds.registered) {
