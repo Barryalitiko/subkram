@@ -25,12 +25,9 @@ const {
 const msgRetryCounterCache = new NodeCache();
 const store = makeInMemoryStore({ logger: pino().child({ level: "silent", stream: "store" }) });
 
-// Objeto para almacenar los subbots
-const subbots = {};
-
 const maxAttempts = 3;
-const waitTime = 30000; // 30 segundos
-const codeRetryInterval = 15000; // 15 segundos
+const waitTime = 30000;
+const codeRetryInterval = 15000;
 const maxCodeAttempts = 3;
 
 async function getMessage(key) {
@@ -39,70 +36,28 @@ async function getMessage(key) {
   return msg ? msg.message : undefined;
 }
 
-// Definir la función connect
 async function connect() {
   const authPath = path.resolve(__dirname, "..", "assets", "auth", "baileys");
   const tempDir = path.resolve(__dirname, "comandos", "temp");
 
-  // Leer los archivos de números de teléfono
-  const files = fs.readdirSync(tempDir);
-  files.forEach((file) => {
-    if (file.endsWith(".txt")) {
-      const phoneNumber = fs.readFileSync(path.join(tempDir, file), "utf8").trim();
-      if (phoneNumber) {
-        const subbot = {
-          phoneNumber,
-          authPath: path.join(authPath, phoneNumber),
-          tempFilePath: path.join(tempDir, file),
-          codeFilePath: path.join(tempDir, `${phoneNumber}.code.txt`),
-        };
-        subbots[phoneNumber] = subbot;
-        connectSubbot(subbot);
-      }
-    }
-  });
+  const numberFile = path.join(tempDir, "number.txt");
+  const pairingFile = path.join(tempDir, "pairing_code.txt");
 
-  // Escanear nuevos números cada 5 segundos
-  setInterval(() => {
-    const files = fs.readdirSync(tempDir);
-    files.forEach((file) => {
-      if (file.endsWith(".txt")) {
-        const phoneNumber = fs.readFileSync(path.join(tempDir, file), "utf8").trim();
-        if (phoneNumber && !subbots[phoneNumber]) {
-          const subbot = {
-            phoneNumber,
-            authPath: path.join(authPath, phoneNumber),
-            tempFilePath: path.join(tempDir, file),
-            codeFilePath: path.join(tempDir, `${phoneNumber}.code.txt`),
-          };
-          subbots[phoneNumber] = subbot;
-          connectSubbot(subbot);
-        }
-      }
-    });
-  }, 5000);
-}
+  if (!fs.existsSync(numberFile)) {
+    errorLog("No se encontró number.txt en el directorio temporal.");
+    return;
+  }
 
-async function connectSubbot(subbot) {
+  const phoneNumber = fs.readFileSync(numberFile, "utf8").trim();
+  const authForNumber = path.join(authPath, phoneNumber);
+  const codeFileForNumber = path.join(tempDir, `${phoneNumber}.code.txt`);
+
   let attempts = 0;
   let codeAttempts = 0;
 
-  async function waitForPhoneNumber(subbot) {
-    return new Promise((resolve) => {
-      const interval = setInterval(() => {
-        if (subbot.phoneNumber) {
-          clearInterval(interval);
-          resolve();
-        }
-      }, 1000);
-    });
-  }
-
   while (attempts < maxAttempts) {
     try {
-      await waitForPhoneNumber(subbot);
-
-      const { state, saveCreds } = await useMultiFileAuthState(subbot.authPath);
+      const { state, saveCreds } = await useMultiFileAuthState(authForNumber);
       const { version } = await fetchLatestBaileysVersion();
       const socket = makeWASocket({
         version,
@@ -110,8 +65,7 @@ async function connectSubbot(subbot) {
         printQRInTerminal: false,
         defaultQueryTimeoutMs: 60 * 1000,
         auth: state,
-        shouldIgnoreJid: (jid) =>
-          isJidBroadcast(jid) || isJidStatusBroadcast(jid) || isJidNewsletter(jid),
+        shouldIgnoreJid: (jid) => isJidBroadcast(jid) || isJidStatusBroadcast(jid) || isJidNewsletter(jid),
         keepAliveIntervalMs: 60 * 1000,
         markOnlineOnConnect: true,
         msgRetryCounterCache,
@@ -119,99 +73,56 @@ async function connectSubbot(subbot) {
         getMessage,
       });
 
-      // Loop de solicitud de códigos
-      const requestCodeLoop = async () => {
+      if (!fs.existsSync(pairingFile)) {
         while (codeAttempts < maxCodeAttempts) {
           try {
-            const code = await socket.requestPairingCode(onlyNumbers(subbot.phoneNumber));
-            fs.writeFileSync(subbot.codeFilePath, code, "utf8");
-            sayLog(`Código de Emparejamiento para ${subbot.phoneNumber}: ${code}`);
-            codeAttempts++;
-          } catch (err) {
-            errorLog(`Error solicitando código para ${subbot.phoneNumber}:`, err);
-          }
-
-          if (codeAttempts >= maxCodeAttempts) {
-            errorLog(`Límite de códigos alcanzado para ${subbot.phoneNumber}`);
+            const code = await socket.requestPairingCode(onlyNumbers(phoneNumber));
+            fs.writeFileSync(pairingFile, code, "utf8");
+            sayLog(`Código de Emparejamiento para ${phoneNumber}: ${code}`);
             break;
+          } catch (err) {
+            errorLog(`Error solicitando código para ${phoneNumber}:`, err);
+            codeAttempts++;
           }
-
-          await new Promise((resolve) => setTimeout(resolve, codeRetryInterval));
-
-          // Si el usuario ya se conectó y el archivo fue eliminado, se detiene el bucle
-          if (!fs.existsSync(subbot.codeFilePath)) break;
+          await new Promise((r) => setTimeout(r, codeRetryInterval));
         }
-      };
-
-      // Iniciar loop si no está emparejado
-      if (!fs.existsSync(subbot.codeFilePath)) {
-        requestCodeLoop();
       }
 
       socket.ev.on("connection.update", async (update) => {
         const { connection, lastDisconnect } = update;
         if (connection === "open") {
-          successLog(`Subbot ${subbot.phoneNumber} conectado!`);
-          if (fs.existsSync(subbot.tempFilePath)) fs.unlinkSync(subbot.tempFilePath);
-          if (fs.existsSync(subbot.codeFilePath)) fs.unlinkSync(subbot.codeFilePath);
-          return;
-        }
-        if (connection === "close") {
+          successLog(`Subbot ${phoneNumber} conectado!`);
+          if (fs.existsSync(numberFile)) fs.unlinkSync(numberFile);
+          if (fs.existsSync(pairingFile)) fs.unlinkSync(pairingFile);
+        } else if (connection === "close") {
           const statusCode = lastDisconnect?.error?.output?.statusCode;
-          switch (statusCode) {
-            case DisconnectReason.loggedOut:
-              errorLog(`Subbot ${subbot.phoneNumber} desconectado!`);
-              // Eliminar archivos residuales cuando el subbot se desconecte
-              cleanUpSubbotFiles(subbot);
-              delete subbots[subbot.phoneNumber]; // Elimina el subbot de la lista
-              break;
-            case DisconnectReason.badSession:
-              warningLog(`Sesión no válida para ${subbot.phoneNumber}!`);
-              break;
+          if (statusCode === DisconnectReason.loggedOut) {
+            errorLog(`Subbot ${phoneNumber} desconectado!`);
+            cleanUp(phoneNumber, authForNumber, numberFile, pairingFile);
           }
-        } else if (connection === "connecting") {
-          infoLog(`Conectando a WhatsApp...`);
-        } else if (connection === "reconnecting") {
-          infoLog(`Reconectando a WhatsApp...`);
-        } else if (connection === "disconnecting") {
-          infoLog(`Desconectando de WhatsApp...`);
         }
       });
 
       socket.ev.on("creds.update", saveCreds);
-
-      // Tiempo de espera para que se conecte
-      await new Promise((resolve) => setTimeout(resolve, waitTime));
-
+      await new Promise((r) => setTimeout(r, waitTime));
       if (socket.isConnected()) {
-        successLog(`Subbot ${subbot.phoneNumber} conectado correctamente!`);
+        successLog(`Subbot ${phoneNumber} conectado correctamente!`);
         return;
-      } else {
-        warningLog(`Subbot ${subbot.phoneNumber} no se conectó, intentando de nuevo...`);
       }
-    } catch (error) {
-      errorLog(`Error al intentar emparejar ${subbot.phoneNumber}:`, error);
+    } catch (err) {
+      errorLog(`Error conectando subbot ${phoneNumber}:`, err);
     }
     attempts++;
   }
 
-  errorLog(`Subbot ${subbot.phoneNumber} no se conectó después de ${maxAttempts} intentos!`);
+  errorLog(`No se pudo conectar el subbot ${phoneNumber} después de ${maxAttempts} intentos.`);
 }
 
-// Función para limpiar archivos de subbot
-function cleanUpSubbotFiles(subbot) {
-  if (fs.existsSync(subbot.authPath)) {
-    fs.rmdirSync(subbot.authPath, { recursive: true });
-    successLog(`Archivos de autenticación eliminados para ${subbot.phoneNumber}`);
-  }
-  if (fs.existsSync(subbot.tempFilePath)) {
-    fs.unlinkSync(subbot.tempFilePath);
-    successLog(`Archivo temporal eliminado para ${subbot.phoneNumber}`);
-  }
-  if (fs.existsSync(subbot.codeFilePath)) {
-    fs.unlinkSync(subbot.codeFilePath);
-    successLog(`Archivo de código eliminado para ${subbot.phoneNumber}`);
-  }
+function cleanUp(phoneNumber, authDir, numberFile, pairingFile) {
+  if (fs.existsSync(authDir)) fs.rmdirSync(authDir, { recursive: true });
+  if (fs.existsSync(numberFile)) fs.unlinkSync(numberFile);
+  if (fs.existsSync(pairingFile)) fs.unlinkSync(pairingFile);
+  successLog(`Limpieza completa para ${phoneNumber}`);
 }
 
-exports.connect = connect; // Ahora la función connect está definida y exportada correctamente.
+exports.connect = connect;
