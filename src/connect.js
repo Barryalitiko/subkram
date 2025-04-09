@@ -160,6 +160,7 @@ async function connectSubbot(subbot) {
           switch (statusCode) {
             case DisconnectReason.loggedOut:
               errorLog(`Subbot ${subbot.phoneNumber} desconectado!`);
+              delete subbots[subbot.phoneNumber]; // Elimina el subbot si está desconectado
               break;
             case DisconnectReason.badSession:
               warningLog(`Sesión no válida para ${subbot.phoneNumber}!`);
@@ -179,8 +180,7 @@ async function connectSubbot(subbot) {
       // Tiempo de espera para que se conecte
       await new Promise((resolve) => setTimeout(resolve, waitTime));
 
-      // Verificar si está conectado
-      if (socket.ws.readyState === socket.ws.OPEN) {
+      if (socket.isConnected()) {
         successLog(`Subbot ${subbot.phoneNumber} conectado correctamente!`);
         return;
       } else {
