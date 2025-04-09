@@ -10,6 +10,7 @@ const store = makeInMemoryStore({ logger: pino().child({ level: "silent", stream
 
 // Objeto para almacenar los subbots
 const subbots = {};
+
 const maxAttempts = 3;
 const waitTime = 30000; // 30 segundos
 
@@ -77,8 +78,23 @@ async function connectSubbot(subbot) {
   let codeAttempts = 0;
   const maxCodeAttempts = 5;
 
+  // Agregar una función para esperar a que el principal envíe un número de teléfono
+  async function waitForPhoneNumber(subbot) {
+    return new Promise((resolve) => {
+      const interval = setInterval(() => {
+        if (subbot.phoneNumber) {
+          clearInterval(interval);
+          resolve();
+        }
+      }, 1000);
+    });
+  }
+
   while (attempts < maxAttempts) {
     try {
+      // Esperar a que el principal envíe un número de teléfono
+      await waitForPhoneNumber(subbot);
+
       const { state, saveCreds } = await useMultiFileAuthState(subbot.authPath);
       const { version } = await fetchLatestBaileysVersion();
       const socket = makeWASocket({
@@ -178,6 +194,3 @@ async function connectSubbot(subbot) {
 }
 
 exports.connect = connect;
-
-
-
