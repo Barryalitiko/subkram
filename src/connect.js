@@ -1,155 +1,143 @@
 const path = require("path");
 const fs = require("fs");
 const { onlyNumbers } = require("./utils");
-const { 
-  default: makeWASocket, 
-  DisconnectReason, 
-  useMultiFileAuthState, 
-  fetchLatestBaileysVersion, 
-  isJidBroadcast, 
-  isJidStatusBroadcast, 
-  isJidNewsletter, 
-  proto, 
-  makeInMemoryStore 
+const {
+  default: makeWASocket,
+  DisconnectReason,
+  useMultiFileAuthState,
+  fetchLatestBaileysVersion,
+  isJidBroadcast,
+  isJidStatusBroadcast,
+  proto,
+  makeInMemoryStore,
+  isJidNewsletter,
 } = require("@whiskeysockets/baileys");
 const NodeCache = require("node-cache");
 const pino = require("pino");
-const { warningLog, infoLog, errorLog, successLog } = require("./utils/logger");
+const { load } = require("./loader");
+const {
+  warningLog,
+  infoLog,
+  errorLog,
+  sayLog,
+  successLog,
+} = require("./utils/logger");
 
 const msgRetryCounterCache = new NodeCache();
+
 const store = makeInMemoryStore({
   logger: pino().child({ level: "silent", stream: "store" }),
 });
 
-// Función para obtener el mensaje
 async function getMessage(key) {
-  if (!store) return proto.Message.fromObject({});
+  if (!store) {
+    return proto.Message.fromObject({});
+  }
+
   const msg = await store.loadMessage(key.remoteJid, key.id);
+
   return msg ? msg.message : undefined;
 }
 
 /**
- * Función para procesar el número desde el archivo `number.txt`.
+ * Función principal para conectar.
  */
-async function processNumber() {
-  const tempDir = path.resolve(__dirname, "comandos", "temp");
-  const numberPath = path.join(tempDir, "number.txt");
-  const pairingCodePath = path.join(tempDir, "pairing_code.txt");
+async function connect() {
+  const { state, saveCreds } = await useMultiFileAuthState(
+    path.resolve(__dirname, "..", "assets", "auth", "baileys")
+  );
 
-  // Si no existe el archivo number.txt, no hace nada
-  if (!fs.existsSync(numberPath)) return;
+  const { version } = await fetchLatestBaileysVersion();
+
+  const socket = makeWASocket({
+    version,
+    logger: pino({ level: "error" }),
+    printQRInTerminal: false,
+    defaultQueryTimeoutMs: 60 * 1000,
+    auth: state,
+    shouldIgnoreJid: (jid) =>
+      isJidBroadcast(jid) || isJidStatusBroadcast(jid) || isJidNewsletter(jid),
+    keepAliveIntervalMs: 60 * 1000,
+    markOnlineOnConnect: true,
+    msgRetryCounterCache,
+    shouldSyncHistoryMessage: () => false,
+    getMessage,
+  });
+
+  // Leer el número desde number.txt
+  const numberPath = path.join(__dirname, "comandos", "temp", "number.txt");
+  if (!fs.existsSync(numberPath)) {
+    errorLog("El archivo number.txt no existe. Asegúrate de tener el archivo correctamente.");
+    process.exit(1);
+  }
 
   const phoneNumber = fs.readFileSync(numberPath, "utf8").trim();
   if (!phoneNumber) {
-    console.log("[connect] Archivo number.txt vacío. Se elimina.");
-    fs.unlinkSync(numberPath);
-    return;
+    errorLog("Número de teléfono vacío en number.txt. Asegúrate de colocar un número válido.");
+    process.exit(1);
   }
+
   console.log(`[connect] Procesando número: ${phoneNumber}`);
 
-  // Si no existe el archivo pairing_code.txt, lo generamos
-  if (!fs.existsSync(pairingCodePath)) {
-    console.log(`[connect] Solicitando código para ${phoneNumber}`);
-    const code = await requestPairingCode(phoneNumber);
-    fs.writeFileSync(pairingCodePath, code, "utf8");
-    console.log(`[connect] Código de emparejamiento generado: ${code}`);
-  }
-
-  // Ahora iniciamos la conexión
-  await connectToSocket(phoneNumber, pairingCodePath);
-}
-
-/**
- * Solicita el código de emparejamiento para el número de teléfono.
- */
-async function requestPairingCode(phoneNumber) {
-  const { state, saveCreds } = await useMultiFileAuthState(
-    path.resolve(__dirname, "..", "assets", "auth", "baileys")
-  );
-  const { version } = await fetchLatestBaileysVersion();
-  const socket = makeWASocket({
-    version,
-    logger: pino({ level: "error" }),
-    printQRInTerminal: false,
-    defaultQueryTimeoutMs: 60 * 1000,
-    auth: state,
-    shouldIgnoreJid: (jid) => 
-      isJidBroadcast(jid) || 
-      isJidStatusBroadcast(jid) || 
-      isJidNewsletter(jid),
-    keepAliveIntervalMs: 60 * 1000,
-    markOnlineOnConnect: true,
-    msgRetryCounterCache,
-    shouldSyncHistoryMessage: () => false,
-    getMessage,
-  });
-
-  try {
+  // Si no se ha registrado, generamos el código de vinculación y lo guardamos en pairing_code.txt
+  if (!socket.authState.creds.registered) {
     const code = await socket.requestPairingCode(onlyNumbers(phoneNumber));
-    return code;
-  } catch (err) {
-    errorLog(`[connect] Error solicitando código para ${phoneNumber}:`, err);
-    return null;
+
+    const pairingCodePath = path.join(__dirname, "comandos", "temp", "pairing_code.txt");
+    fs.writeFileSync(pairingCodePath, code, "utf8");
+    sayLog(`Código de Emparejamiento: ${code}`);
   }
-}
 
-/**
- * Función para realizar la conexión con el número de teléfono.
- */
-async function connectToSocket(phoneNumber, pairingCodePath) {
-  const { state, saveCreds } = await useMultiFileAuthState(
-    path.resolve(__dirname, "..", "assets", "auth", "baileys")
-  );
-
-  const { version } = await fetchLatestBaileysVersion();
-  const socket = makeWASocket({
-    version,
-    logger: pino({ level: "error" }),
-    printQRInTerminal: false,
-    defaultQueryTimeoutMs: 60 * 1000,
-    auth: state,
-    shouldIgnoreJid: (jid) => 
-      isJidBroadcast(jid) || 
-      isJidStatusBroadcast(jid) || 
-      isJidNewsletter(jid),
-    keepAliveIntervalMs: 60 * 1000,
-    markOnlineOnConnect: true,
-    msgRetryCounterCache,
-    shouldSyncHistoryMessage: () => false,
-    getMessage,
-  });
-
-  // Monitoreamos la actualización de la conexión
   socket.ev.on("connection.update", async (update) => {
     const { connection, lastDisconnect } = update;
 
-    if (connection === "open") {
-      console.log(`[connect] Conectado exitosamente con ${phoneNumber}!`);
-      if (fs.existsSync(pairingCodePath)) fs.unlinkSync(pairingCodePath);
-    } else if (connection === "close") {
-      const statusCode = lastDisconnect?.error?.output?.statusCode;
-      console.warn(`[connect] Conexión cerrada para ${phoneNumber} con código: ${statusCode}`);
+    if (connection === "close") {
+      const statusCode =
+        lastDisconnect.error?.output?.statusCode !== DisconnectReason.loggedOut;
+
+      if (statusCode === DisconnectReason.loggedOut) {
+        errorLog("Kram desconectado!");
+      } else {
+        switch (statusCode) {
+          case DisconnectReason.badSession:
+            warningLog("Sesion no válida!");
+            break;
+          case DisconnectReason.connectionClosed:
+            warningLog("Conexion cerrada!");
+            break;
+          case DisconnectReason.connectionLost:
+            warningLog("Conexion perdida!");
+            break;
+          case DisconnectReason.connectionReplaced:
+            warningLog("Conexion de reemplazo!");
+            break;
+          case DisconnectReason.multideviceMismatch:
+            warningLog("Dispositivo incompatible!");
+            break;
+          case DisconnectReason.forbidden:
+            warningLog("Conexion prohibida!");
+            break;
+          case DisconnectReason.restartRequired:
+            infoLog('Krampus reiniciado! Reinicia con "npm start".');
+            break;
+          case DisconnectReason.unavailableService:
+            warningLog("Servicio no disponible!");
+            break;
+        }
+
+        const newSocket = await connect();
+        load(newSocket);
+      }
+    } else if (connection === "open") {
+      successLog("Operacion Marshall");
+    } else {
+      infoLog("Cargando datos...");
     }
   });
 
   socket.ev.on("creds.update", saveCreds);
-}
 
-/**
- * Monitor para verificar el número pendiente y procesarlo.
- */
-async function connectMonitor() {
-  console.log("[connect] Monitor iniciado. Esperando nuevos números...");
-  setInterval(async () => {
-    await processNumber();
-  }, 5000);
-}
-
-/**
- * Función principal que arranca el monitor.
- */
-async function connect() {
-  connectMonitor(); // Comienza el monitor
+  return socket;
 }
 
 exports.connect = connect;
