@@ -5,10 +5,18 @@ async function start() {
   try {
     bannerLog();
     infoLog("Kram está procesando...");
-
     const socket = await connect();
 
-    // Ya no es necesario llamar a load aquí, lo hacemos en el evento "open" en connect.js
+    // Agregar manejo de eventos para la conexión y desconexión del socket
+    socket.ev.on("connection.update", (update) => {
+      console.log("Conexión actualizada:", update);
+    });
+    socket.ev.on("disconnect", () => {
+      console.log("Desconectado");
+    });
+
+    // Utilizar el socket para enviar o recibir mensajes según sea necesario
+    // ...
   } catch (error) {
     console.log(error);
   }
