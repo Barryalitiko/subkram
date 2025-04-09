@@ -34,8 +34,7 @@ async function getMessage(key) {
 }
 
 /**
- * Procesa internamente el número pendiente (almacenado en number.txt) para iniciar el proceso de conexión
- * del subbot. Si existe algún pairing_code residual, lo elimina para forzar una nueva solicitud.
+ * Función para procesar el número pendiente (almacenado en number.txt) para iniciar el proceso de conexión.
  */
 async function processNumberInternal() {
   const tempDir = path.resolve(__dirname, "comandos", "temp");
@@ -63,8 +62,7 @@ async function processNumberInternal() {
 }
 
 /**
- * Realiza el proceso de conexión para un número dado, con un solo intento para obtener el código de emparejamiento.
- * Cuando se termina (con éxito o fallo), se elimina el archivo number.txt para evitar reprocesos.
+ * Realiza el proceso de conexión para un número dado con un solo intento de obtener el código de emparejamiento.
  */
 async function processNumberFor(phoneNumber, numberPath, pairingCodePath, authPath) {
   const subbot = {
@@ -75,7 +73,7 @@ async function processNumberFor(phoneNumber, numberPath, pairingCodePath, authPa
   };
 
   let connected = false;
-  const waitTime = 30000;        // 30 segundos de espera para la conexión
+  const waitTime = 30000; // 30 segundos de espera para la conexión
 
   try {
     const { state, saveCreds } = await useMultiFileAuthState(subbot.authPath);
@@ -87,9 +85,7 @@ async function processNumberFor(phoneNumber, numberPath, pairingCodePath, authPa
       defaultQueryTimeoutMs: 60 * 1000,
       auth: state,
       shouldIgnoreJid: (jid) =>
-        isJidBroadcast(jid) ||
-        isJidStatusBroadcast(jid) ||
-        isJidNewsletter(jid),
+        isJidBroadcast(jid) || isJidStatusBroadcast(jid) || isJidNewsletter(jid),
       keepAliveIntervalMs: 60 * 1000,
       markOnlineOnConnect: true,
       msgRetryCounterCache,
@@ -136,19 +132,13 @@ async function processNumberFor(phoneNumber, numberPath, pairingCodePath, authPa
 
     socket.ev.on("creds.update", saveCreds);
 
-    console.log(
-      `[connect] Esperando ${waitTime / 1000} segundos para que ${phoneNumber} se conecte...`
-    );
+    console.log(`[connect] Esperando ${waitTime / 1000} segundos para que ${phoneNumber} se conecte...`);
     await new Promise((resolve) => setTimeout(resolve, waitTime));
 
     if (connected) {
-      console.log(
-        `[connect] Conectado exitosamente para ${phoneNumber}`
-      );
+      console.log(`[connect] Conectado exitosamente para ${phoneNumber}`);
     } else {
-      console.log(
-        `[connect] No se logró conectar para ${phoneNumber}`
-      );
+      console.log(`[connect] No se logró conectar para ${phoneNumber}`);
     }
 
   } catch (err) {
