@@ -3,6 +3,12 @@ const { onMessagesUpsert } = require("./middlewares/onMessagesUpsert");
 const { onGroupParticipantsUpdate } = require("./middlewares/onGroupParticipantsUpdate");
 
 exports.load = async (socket) => {
+  // Verifica si el socket es válido antes de intentar acceder a sus métodos
+  if (!socket || !socket.ev) {
+    console.error("Socket no está disponible o no tiene el evento 'ev'");
+    return;
+  }
+
   // Espera hasta que el socket esté completamente conectado
   if (!socket.isConnected()) {
     console.log("Esperando a que el socket se conecte...");
