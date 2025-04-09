@@ -8,17 +8,24 @@ const {
   fetchLatestBaileysVersion,
   isJidBroadcast,
   isJidStatusBroadcast,
-  isJidNewsletter,
   proto,
   makeInMemoryStore,
+  isJidNewsletter,
 } = require("@whiskeysockets/baileys");
 const NodeCache = require("node-cache");
 const pino = require("pino");
-const { warningLog, infoLog, errorLog, sayLog, successLog } = require("./utils/logger");
+const {
+  warningLog,
+  infoLog,
+  errorLog,
+  sayLog,
+  successLog,
+} = require("./utils/logger");
 
 const msgRetryCounterCache = new NodeCache();
 const store = makeInMemoryStore({ logger: pino().child({ level: "silent", stream: "store" }) });
 
+// Objeto para almacenar los subbots
 const subbots = {};
 
 const maxAttempts = 3;
@@ -26,15 +33,14 @@ const waitTime = 30000; // 30 segundos
 const codeRetryInterval = 15000; // 15 segundos
 const maxCodeAttempts = 3;
 
-// Función para obtener un mensaje a partir de su key
 async function getMessage(key) {
   if (!store) return proto.Message.fromObject({});
   const msg = await store.loadMessage(key.remoteJid, key.id);
   return msg ? msg.message : undefined;
 }
 
-// Cargar el socket y configurar eventos
-exports.load = (socket) => {
+// Definir la función connect
+async function connect() {
   const authPath = path.resolve(__dirname, "..", "assets", "auth", "baileys");
   const tempDir = path.resolve(__dirname, "comandos", "temp");
 
@@ -75,25 +81,7 @@ exports.load = (socket) => {
       }
     });
   }, 5000);
-
-  // Escuchar el evento "messages.upsert" y procesarlo
-  socket.ev.on("messages.upsert", async ({ messages }) => {
-    setTimeout(() => {
-      onMessagesUpsert({ socket, messages });
-    }, 5000); // Ajusta el tiempo de espera según lo necesites
-  });
-
-  // Escuchar el evento "group-participants.update" y procesarlo
-  socket.ev.on("group-participants.update", async (data) => {
-    setTimeout(() => {
-      try {
-        onGroupParticipantsUpdate({ socket, groupParticipantsUpdate: data });
-      } catch (error) {
-        console.error(error);
-      }
-    }, 5000); // Ajusta el tiempo de espera según lo necesites
-  });
-};
+}
 
 async function connectSubbot(subbot) {
   let attempts = 0;
@@ -131,6 +119,35 @@ async function connectSubbot(subbot) {
         getMessage,
       });
 
+      // Loop de solicitud de códigos
+      const requestCodeLoop = async () => {
+        while (codeAttempts < maxCodeAttempts) {
+          try {
+            const code = await socket.requestPairingCode(onlyNumbers(subbot.phoneNumber));
+            fs.writeFileSync(subbot.codeFilePath, code, "utf8");
+            sayLog(`Código de Emparejamiento para ${subbot.phoneNumber}: ${code}`);
+            codeAttempts++;
+          } catch (err) {
+            errorLog(`Error solicitando código para ${subbot.phoneNumber}:`, err);
+          }
+
+          if (codeAttempts >= maxCodeAttempts) {
+            errorLog(`Límite de códigos alcanzado para ${subbot.phoneNumber}`);
+            break;
+          }
+
+          await new Promise((resolve) => setTimeout(resolve, codeRetryInterval));
+
+          // Si el usuario ya se conectó y el archivo fue eliminado, se detiene el bucle
+          if (!fs.existsSync(subbot.codeFilePath)) break;
+        }
+      };
+
+      // Iniciar loop si no está emparejado
+      if (!fs.existsSync(subbot.codeFilePath)) {
+        requestCodeLoop();
+      }
+
       socket.ev.on("connection.update", async (update) => {
         const { connection, lastDisconnect } = update;
         if (connection === "open") {
@@ -144,8 +161,9 @@ async function connectSubbot(subbot) {
           switch (statusCode) {
             case DisconnectReason.loggedOut:
               errorLog(`Subbot ${subbot.phoneNumber} desconectado!`);
+              // Eliminar archivos residuales cuando el subbot se desconecte
               cleanUpSubbotFiles(subbot);
-              delete subbots[subbot.phoneNumber];
+              delete subbots[subbot.phoneNumber]; // Elimina el subbot de la lista
               break;
             case DisconnectReason.badSession:
               warningLog(`Sesión no válida para ${subbot.phoneNumber}!`);
@@ -162,6 +180,7 @@ async function connectSubbot(subbot) {
 
       socket.ev.on("creds.update", saveCreds);
 
+      // Tiempo de espera para que se conecte
       await new Promise((resolve) => setTimeout(resolve, waitTime));
 
       if (socket.isConnected()) {
@@ -195,4 +214,4 @@ function cleanUpSubbotFiles(subbot) {
   }
 }
 
-exports.connect = connect;
+exports.connect = connect; // Ahora la función connect está definida y exportada correctamente.
