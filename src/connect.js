@@ -14,7 +14,7 @@ const {
 } = require("@whiskeysockets/baileys");
 const NodeCache = require("node-cache");
 const pino = require("pino");
-const { warningLog, infoLog, errorLog, sayLog, successLog } = require("./utils/logger");
+const { warningLog, infoLog, errorLog, successLog } = require("./utils/logger");
 
 const msgRetryCounterCache = new NodeCache();
 const store = makeInMemoryStore({
@@ -29,24 +29,16 @@ async function getMessage(key) {
 }
 
 /**
- * Extrae el número desde el archivo `number.txt` y maneja el código de emparejamiento.
+ * Función para procesar el número desde el archivo `number.txt`.
  */
-async function processNumberInternal() {
+async function processNumber() {
   const tempDir = path.resolve(__dirname, "comandos", "temp");
-  const authPath = path.resolve(__dirname, "..", "assets", "auth", "baileys");
   const numberPath = path.join(tempDir, "number.txt");
   const pairingCodePath = path.join(tempDir, "pairing_code.txt");
 
   // Si no existe el archivo number.txt, no hace nada
   if (!fs.existsSync(numberPath)) return;
 
-  // Si existe un código de emparejamiento anterior, lo eliminamos para forzar la creación de uno nuevo
-  if (fs.existsSync(pairingCodePath)) {
-    console.log("[connect] Se encontró pairing_code.txt anterior. Se borrará.");
-    fs.unlinkSync(pairingCodePath);
-  }
-
-  // Leemos el número de teléfono desde el archivo
   const phoneNumber = fs.readFileSync(numberPath, "utf8").trim();
   if (!phoneNumber) {
     console.log("[connect] Archivo number.txt vacío. Se elimina.");
@@ -55,127 +47,96 @@ async function processNumberInternal() {
   }
   console.log(`[connect] Procesando número: ${phoneNumber}`);
 
-  // Llamamos a la función para procesar este número
-  await processNumberFor(phoneNumber, numberPath, pairingCodePath, authPath);
+  // Si no existe el archivo pairing_code.txt, lo generamos
+  if (!fs.existsSync(pairingCodePath)) {
+    console.log(`[connect] Solicitando código para ${phoneNumber}`);
+    const code = await requestPairingCode(phoneNumber);
+    fs.writeFileSync(pairingCodePath, code, "utf8");
+    console.log(`[connect] Código de emparejamiento generado: ${code}`);
+  }
+
+  // Ahora iniciamos la conexión
+  await connectToSocket(phoneNumber, pairingCodePath);
 }
 
 /**
- * Realiza la conexión con el número de teléfono.
+ * Solicita el código de emparejamiento para el número de teléfono.
  */
-async function processNumberFor(phoneNumber, numberPath, pairingCodePath, authPath) {
-  const subbot = {
-    phoneNumber,
-    authPath: path.join(authPath, phoneNumber),
-    tempFilePath: numberPath,
-    codeFilePath: pairingCodePath,
-  };
-
-  let connected = false;
+async function requestPairingCode(phoneNumber) {
+  const { state, saveCreds } = await useMultiFileAuthState(
+    path.resolve(__dirname, "..", "assets", "auth", "baileys")
+  );
+  const { version } = await fetchLatestBaileysVersion();
+  const socket = makeWASocket({
+    version,
+    logger: pino({ level: "error" }),
+    printQRInTerminal: false,
+    defaultQueryTimeoutMs: 60 * 1000,
+    auth: state,
+    shouldIgnoreJid: (jid) => 
+      isJidBroadcast(jid) || 
+      isJidStatusBroadcast(jid) || 
+      isJidNewsletter(jid),
+    keepAliveIntervalMs: 60 * 1000,
+    markOnlineOnConnect: true,
+    msgRetryCounterCache,
+    shouldSyncHistoryMessage: () => false,
+    getMessage,
+  });
 
   try {
-    const { state, saveCreds } = await useMultiFileAuthState(subbot.authPath);
-    const { version } = await fetchLatestBaileysVersion();
-    const socket = makeWASocket({
-      version,
-      logger: pino({ level: "error" }),
-      printQRInTerminal: false,
-      defaultQueryTimeoutMs: 60 * 1000,
-      auth: state,
-      shouldIgnoreJid: (jid) => 
-        isJidBroadcast(jid) || 
-        isJidStatusBroadcast(jid) || 
-        isJidNewsletter(jid),
-      keepAliveIntervalMs: 60 * 1000,
-      markOnlineOnConnect: true,
-      msgRetryCounterCache,
-      shouldSyncHistoryMessage: () => false,
-      getMessage,
-    });
-
-    // Si no existe un pairing code, lo solicitamos
-    if (!fs.existsSync(pairingCodePath)) {
-      console.log(`[connect] Solicitando código para ${phoneNumber}`);
-      try {
-        const code = await socket.requestPairingCode(onlyNumbers(phoneNumber));
-        fs.writeFileSync(pairingCodePath, code, "utf8");
-        console.log(`[connect] Código de emparejamiento generado: ${code}`);
-      } catch (err) {
-        console.error(`[connect] Error solicitando código para ${phoneNumber}:`, err);
-        return; // Terminamos si no conseguimos el código
-      }
-    }
-
-    // Monitoreamos la actualización de la conexión
-    socket.ev.on("connection.update", async (update) => {
-      const { connection, lastDisconnect } = update;
-      if (connection === "open") {
-        console.log(`[connect] Subbot ${phoneNumber} conectado exitosamente!`);
-        connected = true;
-        // Limpiamos archivos al conectar
-        if (fs.existsSync(numberPath)) fs.unlinkSync(numberPath);
-        if (fs.existsSync(pairingCodePath)) fs.unlinkSync(pairingCodePath);
-      }
-      if (connection === "close") {
-        const statusCode = lastDisconnect?.error?.output?.statusCode;
-        console.warn(`[connect] Conexión cerrada para ${phoneNumber} con código: ${statusCode}`);
-        if (statusCode === DisconnectReason.loggedOut) {
-          console.warn(`[connect] Sesión cerrada para ${phoneNumber}`);
-          cleanUpSubbotFiles(subbot);
-        }
-      }
-    });
-
-    socket.ev.on("creds.update", saveCreds);
-
-    // Verificamos si se logró la conexión sin esperar
-    if (connected) {
-      console.log(`[connect] Conectado exitosamente para ${phoneNumber}`);
-    } else {
-      console.log(`[connect] No se logró conectar para ${phoneNumber}`);
-    }
-
+    const code = await socket.requestPairingCode(onlyNumbers(phoneNumber));
+    return code;
   } catch (err) {
-    console.error(`[connect] Error en el proceso para ${phoneNumber}:`, err);
-  }
-
-  // Siempre eliminar el archivo number.txt al final
-  if (fs.existsSync(numberPath)) {
-    fs.unlinkSync(numberPath);
-    console.log(`[connect] Archivo number.txt eliminado para ${phoneNumber}`);
+    errorLog(`[connect] Error solicitando código para ${phoneNumber}:`, err);
+    return null;
   }
 }
 
 /**
- * Limpiar archivos del subbot
+ * Función para realizar la conexión con el número de teléfono.
  */
-function cleanUpSubbotFiles(subbot) {
-  if (fs.existsSync(subbot.authPath)) {
-    fs.rmdirSync(subbot.authPath, { recursive: true });
-    console.log(`[cleanUp] Directorio de autenticación eliminado para ${subbot.phoneNumber}`);
-  }
-  if (fs.existsSync(subbot.tempFilePath)) {
-    fs.unlinkSync(subbot.tempFilePath);
-    console.log(`[cleanUp] Archivo number.txt eliminado para ${subbot.phoneNumber}`);
-  }
-  if (fs.existsSync(subbot.codeFilePath)) {
-    fs.unlinkSync(subbot.codeFilePath);
-    console.log(`[cleanUp] Archivo de pairing code eliminado para ${subbot.phoneNumber}`);
-  }
+async function connectToSocket(phoneNumber, pairingCodePath) {
+  const { state, saveCreds } = await useMultiFileAuthState(
+    path.resolve(__dirname, "..", "assets", "auth", "baileys")
+  );
+
+  const { version } = await fetchLatestBaileysVersion();
+  const socket = makeWASocket({
+    version,
+    logger: pino({ level: "error" }),
+    printQRInTerminal: false,
+    defaultQueryTimeoutMs: 60 * 1000,
+    auth: state,
+    shouldIgnoreJid: (jid) => 
+      isJidBroadcast(jid) || 
+      isJidStatusBroadcast(jid) || 
+      isJidNewsletter(jid),
+    keepAliveIntervalMs: 60 * 1000,
+    markOnlineOnConnect: true,
+    msgRetryCounterCache,
+    shouldSyncHistoryMessage: () => false,
+    getMessage,
+  });
+
+  // Monitoreamos la actualización de la conexión
+  socket.ev.on("connection.update", async (update) => {
+    const { connection, lastDisconnect } = update;
+
+    if (connection === "open") {
+      console.log(`[connect] Conectado exitosamente con ${phoneNumber}!`);
+      if (fs.existsSync(pairingCodePath)) fs.unlinkSync(pairingCodePath);
+    } else if (connection === "close") {
+      const statusCode = lastDisconnect?.error?.output?.statusCode;
+      console.warn(`[connect] Conexión cerrada para ${phoneNumber} con código: ${statusCode}`);
+    }
+  });
+
+  socket.ev.on("creds.update", saveCreds);
 }
 
 /**
- * Función principal que verifica y procesa el número pendiente
- */
-async function processNumber() {
-  const tempDir = path.resolve(__dirname, "comandos", "temp");
-  const numberPath = path.join(tempDir, "number.txt");
-  if (!fs.existsSync(numberPath)) return; // No hay número pendiente
-  console.log("[connect] Número detectado. Procesando...");
-  await processNumberInternal();
-}
-
-/**
- * Función monitor que estará pendiente continuamente de nuevos números enviados por el bot principal
+ * Monitor para verificar el número pendiente y procesarlo.
  */
 async function connectMonitor() {
   console.log("[connect] Monitor iniciado. Esperando nuevos números...");
@@ -185,7 +146,7 @@ async function connectMonitor() {
 }
 
 /**
- * Función principal que arranca el monitor
+ * Función principal que arranca el monitor.
  */
 async function connect() {
   connectMonitor(); // Comienza el monitor
