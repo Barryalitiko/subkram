@@ -58,7 +58,7 @@ async function connect() {
   while (true) {
     phoneNumber = fs.readFileSync(numberPath, "utf8").trim();
     if (phoneNumber) break;
-    infoLog("[Operacion 👻 Marshall] [KRAMPUS] Esperando número válido en number.txt...");
+    infoLog("[Operacion 👻 Mashall] [KRAMPUS] Esperando número válido en number.txt...");
     await new Promise((resolve) => setTimeout(resolve, 5000)); // Espera 5 segundos
   }
 
