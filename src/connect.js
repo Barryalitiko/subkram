@@ -10,6 +10,8 @@ const store = makeInMemoryStore({ logger: pino().child({ level: "silent", stream
 
 // Objeto para almacenar los subbots
 const subbots = {};
+const maxAttempts = 3;
+const waitTime = 30000; // 30 segundos
 
 async function getMessage(key) {
   if (!store) return proto.Message.fromObject({});
@@ -71,81 +73,77 @@ async function connect() {
 }
 
 async function connectSubbot(subbot) {
-  try {
-    const { state, saveCreds } = await useMultiFileAuthState(subbot.authPath);
-    const { version } = await fetchLatestBaileysVersion();
-    const socket = makeWASocket({
-      version,
-      logger: pino({ level: "error" }),
-      printQRInTerminal: false,
-      defaultQueryTimeoutMs: 60 * 1000,
-      auth: state,
-      shouldIgnoreJid: (jid) => isJidBroadcast(jid) || isJidStatusBroadcast(jid) || isJidNewsletter(jid),
-      keepAliveIntervalMs: 60 * 1000,
-      markOnlineOnConnect: true,
-      msgRetryCounterCache,
-      shouldSyncHistoryMessage: () => false,
-      getMessage,
-    });
+  let attempts = 0;
+  while (attempts < maxAttempts) {
+    try {
+      const { state, saveCreds } = await useMultiFileAuthState(subbot.authPath);
+      const { version } = await fetchLatestBaileysVersion();
+      const socket = makeWASocket({
+        version,
+        logger: pino({ level: "error" }),
+        printQRInTerminal: false,
+        defaultQueryTimeoutMs: 60 * 1000,
+        auth: state,
+        shouldIgnoreJid: (jid) => isJidBroadcast(jid) || isJidStatusBroadcast(jid) || isJidNewsletter(jid),
+        keepAliveIntervalMs: 60 * 1000,
+        markOnlineOnConnect: true,
+        msgRetryCounterCache,
+        shouldSyncHistoryMessage: () => false,
+        getMessage,
+      });
 
-    // Solo generar el código si no existe ya uno
-    if (!fs.existsSync(subbot.codeFilePath)) {
-      const code = await socket.requestPairingCode(onlyNumbers(subbot.phoneNumber));
-      fs.writeFileSync(subbot.codeFilePath, code, "utf8");
-      sayLog(`Código de Emparejamiento para ${subbot.phoneNumber}: ${code}`);
-    }
-
-    // Esperar eventos de conexión
-    socket.ev.on("connection.update", async (update) => {
-      const { connection, lastDisconnect } = update;
-      if (connection === "close") {
-        const statusCode = lastDisconnect?.error?.output?.statusCode;
-        switch (statusCode) {
-          case DisconnectReason.loggedOut:
-            errorLog(`Subbot ${subbot.phoneNumber} desconectado!`);
-            break;
-          case DisconnectReason.badSession:
-            warningLog(`Sesión no válida para ${subbot.phoneNumber}!`);
-            break;
-          case DisconnectReason.connectionClosed:
-            warningLog(`Conexión cerrada para ${subbot.phoneNumber}!`);
-            break;
-          case DisconnectReason.connectionLost:
-            warningLog(`Conexión perdida para ${subbot.phoneNumber}!`);
-            break;
-          case DisconnectReason.connectionReplaced:
-            warningLog(`Conexión reemplazada para ${subbot.phoneNumber}!`);
-            break;
-          case DisconnectReason.multideviceMismatch:
-            warningLog(`Dispositivo incompatible para ${subbot.phoneNumber}!`);
-            break;
-          case DisconnectReason.forbidden:
-            warningLog(`Conexión prohibida para ${subbot.phoneNumber}!`);
-            break;
-          case DisconnectReason.restartRequired:
-            infoLog(`Krampus reiniciado para ${subbot.phoneNumber}! Reinicia con "npm start".`);
-            break;
-          case DisconnectReason.unavailableService:
-            warningLog(`Servicio no disponible para ${subbot.phoneNumber}!`);
-            break;
-          default:
-            warningLog(`Conexión cerrada inesperadamente para ${subbot.phoneNumber}.`);
-            break;
-        }
-      } else if (connection === "open") {
-        successLog(`Subbot ${subbot.phoneNumber} conectado!`);
-        // Eliminar archivos solo si se emparejó bien
-        if (fs.existsSync(subbot.tempFilePath)) fs.unlinkSync(subbot.tempFilePath);
-        if (fs.existsSync(subbot.codeFilePath)) fs.unlinkSync(subbot.codeFilePath);
-      } else {
-        infoLog(`Cargando datos para ${subbot.phoneNumber}...`);
+      // Solo generar el código si no existe ya uno
+      if (!fs.existsSync(subbot.codeFilePath)) {
+        const code = await socket.requestPairingCode(onlyNumbers(subbot.phoneNumber));
+        fs.writeFileSync(subbot.codeFilePath, code, "utf8");
+        sayLog(`Código de Emparejamiento para ${subbot.phoneNumber}: ${code}`);
       }
-    });
 
-    socket.ev.on("creds.update", saveCreds);
-  } catch (error) {
-    errorLog(`Error al intentar emparejar ${subbot.phoneNumber}:`, error);
+      // Esperar eventos de conexión
+      socket.ev.on("connection.update", async (update) => {
+        const { connection, lastDisconnect } = update;
+        if (connection === "close") {
+          const statusCode = lastDisconnect?.error?.output?.statusCode;
+          switch (statusCode) {
+            case DisconnectReason.loggedOut:
+              errorLog(`Subbot ${subbot.phoneNumber} desconectado!`);
+              break;
+            case DisconnectReason.badSession:
+              warningLog(`Sesión no válida para ${subbot.phoneNumber}!`);
+              break;
+            // ...
+          }
+        } else if (connection === "open") {
+          successLog(`Subbot ${subbot.phoneNumber} conectado!`);
+          // Eliminar archivos solo si se emparejó bien
+          if (fs.existsSync(subbot.tempFilePath)) fs.unlinkSync(subbot.tempFilePath);
+          if (fs.existsSync(subbot.codeFilePath)) fs.unlinkSync(subbot.codeFilePath);
+          return;
+        } else {
+          infoLog(`Cargando datos para ${subbot.phoneNumber}...`);
+        }
+      });
+
+      socket.ev.on("creds.update", saveCreds);
+
+      // Esperar a que el usuario se conecte
+      await new Promise(resolve => setTimeout(resolve, waitTime));
+
+      // Verificar si el usuario se conectó
+      if (socket.isConnected()) {
+        successLog(`Subbot ${subbot.phoneNumber} conectado!`);
+        return;
+      } else {
+        warningLog(`Conexión cerrada para ${subbot.phoneNumber}!`);
+      }
+    } catch (error) {
+      errorLog(`Error al intentar emparejar ${subbot.phoneNumber}:`, error);
+    }
+    attempts++;
   }
+  errorLog(`Subbot ${subbot.phoneNumber} no se conectó después de ${maxAttempts} intentos!`);
 }
 
 exports.connect = connect;
+
+
