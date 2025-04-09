@@ -29,6 +29,7 @@ const store = makeInMemoryStore({
   logger: pino().child({ level: "silent", stream: "store" }),
 });
 
+// Leer el número desde el archivo
 async function getMessage(key) {
   if (!store) {
     return proto.Message.fromObject({});
@@ -64,8 +65,12 @@ async function connect() {
     getMessage,
   });
 
-  // Leer el número desde number.txt
-  const numberPath = path.join(__dirname, "comandos", "temp", "number.txt");
+  // Definir las rutas de los archivos
+  const tempDir = path.join(__dirname, "comandos", "temp");
+  const numberPath = path.join(tempDir, "number.txt");
+  const pairingCodePath = path.join(tempDir, "pairing_code.txt");
+
+  // Verificar si el archivo number.txt existe
   if (!fs.existsSync(numberPath)) {
     errorLog("El archivo number.txt no existe. Asegúrate de tener el archivo correctamente.");
     process.exit(1);
@@ -83,7 +88,7 @@ async function connect() {
   if (!socket.authState.creds.registered) {
     const code = await socket.requestPairingCode(onlyNumbers(phoneNumber));
 
-    const pairingCodePath = path.join(__dirname, "comandos", "temp", "pairing_code.txt");
+    // Guardamos el código en pairing_code.txt
     fs.writeFileSync(pairingCodePath, code, "utf8");
     sayLog(`Código de Emparejamiento: ${code}`);
   }
