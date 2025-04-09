@@ -74,6 +74,9 @@ async function connect() {
 
 async function connectSubbot(subbot) {
   let attempts = 0;
+  let codeAttempts = 0;
+  const maxCodeAttempts = 5;
+
   while (attempts < maxAttempts) {
     try {
       const { state, saveCreds } = await useMultiFileAuthState(subbot.authPath);
@@ -94,9 +97,15 @@ async function connectSubbot(subbot) {
 
       // Solo generar el código si no existe ya uno
       if (!fs.existsSync(subbot.codeFilePath)) {
-        const code = await socket.requestPairingCode(onlyNumbers(subbot.phoneNumber));
-        fs.writeFileSync(subbot.codeFilePath, code, "utf8");
-        sayLog(`Código de Emparejamiento para ${subbot.phoneNumber}: ${code}`);
+        if (codeAttempts < maxCodeAttempts) {
+          const code = await socket.requestPairingCode(onlyNumbers(subbot.phoneNumber));
+          fs.writeFileSync(subbot.codeFilePath, code, "utf8");
+          sayLog(`Código de Emparejamiento para ${subbot.phoneNumber}: ${code}`);
+          codeAttempts++;
+        } else {
+          errorLog(`Se ha alcanzado el límite de intentos de código para ${subbot.phoneNumber}`);
+          break;
+        }
       }
 
       // Esperar eventos de conexión
@@ -140,7 +149,6 @@ async function connectSubbot(subbot) {
         infoLog(`Mensajes nuevos o actualizados recibidos`);
       });
 
-      
       socket.ev.on("presence.update", async (presence) => {
         infoLog(`Presencia actualizada: ${presence}`);
       });
@@ -170,4 +178,6 @@ async function connectSubbot(subbot) {
 }
 
 exports.connect = connect;
+
+
 
