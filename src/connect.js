@@ -12,7 +12,7 @@ const {
   makeInMemoryStore,
   isJidNewsletter,
 } = require("@whiskeysockets/baileys");
-const NodeCache = new require("node-cache");
+const NodeCache = require("node-cache");
 const pino = require("pino");
 const { load } = require("./loader");
 const {
@@ -29,20 +29,12 @@ const store = makeInMemoryStore({
   logger: pino().child({ level: "silent", stream: "store" }),
 });
 
-// Leer el número desde el archivo
 async function getMessage(key) {
-  if (!store) {
-    return proto.Message.fromObject({});
-  }
-
+  if (!store) return proto.Message.fromObject({});
   const msg = await store.loadMessage(key.remoteJid, key.id);
-
   return msg ? msg.message : undefined;
 }
 
-/**
- * Función principal para conectar.
- */
 async function connect() {
   const { state, saveCreds } = await useMultiFileAuthState(
     path.resolve(__dirname, "..", "assets", "auth", "baileys")
@@ -65,42 +57,36 @@ async function connect() {
     getMessage,
   });
 
-  // Definir y verificar las rutas de los archivos
   const tempDir = path.join(__dirname, "comandos", "temp");
   const numberPath = path.join(tempDir, "number.txt");
   const pairingCodePath = path.join(tempDir, "pairing_code.txt");
 
-  // Asegurarse de que el directorio de archivos exista, si no, crearlo
+  // Crear carpeta si no existe
   if (!fs.existsSync(tempDir)) {
     fs.mkdirSync(tempDir, { recursive: true });
+    warningLog("[KRAMPUS] Carpeta 'temp' creada.");
   }
 
-  // Crear number.txt si no existe
+  // Crear archivo si no existe
   if (!fs.existsSync(numberPath)) {
     fs.writeFileSync(numberPath, "", "utf8");
-    warningLog("El archivo number.txt no existía. Ahora se ha creado.");
+    warningLog("[KRAMPUS | ADVERTENCIA] El archivo number.txt no existía. Ahora se ha creado.");
   }
 
-  // Verificar si el archivo number.txt tiene contenido
-  const phoneNumber = fs.readFileSync(numberPath, "utf8").trim();
-  if (!phoneNumber) {
-    errorLog("Número de teléfono vacío en number.txt. Asegúrate de colocar un número válido.");
-    process.exit(1);
+  // Espera infinita hasta que haya un número válido
+  let phoneNumber = "";
+  while (true) {
+    phoneNumber = fs.readFileSync(numberPath, "utf8").trim();
+    if (phoneNumber) break;
+    infoLog("[KRAMPUS] Esperando número válido en number.txt...");
+    await new Promise((resolve) => setTimeout(resolve, 1000));
   }
 
-  console.log(`[connect] Procesando número: ${phoneNumber}`);
+  console.log(`\x1b[36m[connect]\x1b[0m Número de subbot: \x1b[1m\x1b[33m${phoneNumber}\x1b[0m`);
 
-  // Crear pairing_code.txt si no existe
-  if (!fs.existsSync(pairingCodePath)) {
-    fs.writeFileSync(pairingCodePath, "", "utf8");
-    warningLog("El archivo pairing_code.txt no existía. Ahora se ha creado.");
-  }
-
-  // Si no se ha registrado, generamos el código de vinculación y lo guardamos en pairing_code.txt
+  // Si no está registrado, generamos código de emparejamiento
   if (!socket.authState.creds.registered) {
     const code = await socket.requestPairingCode(onlyNumbers(phoneNumber));
-
-    // Guardamos el código en pairing_code.txt
     fs.writeFileSync(pairingCodePath, code, "utf8");
     sayLog(`Código de Emparejamiento: ${code}`);
   }
@@ -146,7 +132,7 @@ async function connect() {
         load(newSocket);
       }
     } else if (connection === "open") {
-      successLog("Operacion Marshall");
+      successLog("Operacion 👻 Marshall");
     } else {
       infoLog("Cargando datos...");
     }
