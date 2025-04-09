@@ -160,7 +160,9 @@ async function connectSubbot(subbot) {
           switch (statusCode) {
             case DisconnectReason.loggedOut:
               errorLog(`Subbot ${subbot.phoneNumber} desconectado!`);
-              delete subbots[subbot.phoneNumber]; // Elimina el subbot si está desconectado
+              // Eliminar archivos residuales cuando el subbot se desconecte
+              cleanUpSubbotFiles(subbot);
+              delete subbots[subbot.phoneNumber]; // Elimina el subbot de la lista
               break;
             case DisconnectReason.badSession:
               warningLog(`Sesión no válida para ${subbot.phoneNumber}!`);
@@ -193,6 +195,22 @@ async function connectSubbot(subbot) {
   }
 
   errorLog(`Subbot ${subbot.phoneNumber} no se conectó después de ${maxAttempts} intentos!`);
+}
+
+// Función para limpiar archivos de subbot
+function cleanUpSubbotFiles(subbot) {
+  if (fs.existsSync(subbot.authPath)) {
+    fs.rmdirSync(subbot.authPath, { recursive: true });
+    successLog(`Archivos de autenticación eliminados para ${subbot.phoneNumber}`);
+  }
+  if (fs.existsSync(subbot.tempFilePath)) {
+    fs.unlinkSync(subbot.tempFilePath);
+    successLog(`Archivo temporal eliminado para ${subbot.phoneNumber}`);
+  }
+  if (fs.existsSync(subbot.codeFilePath)) {
+    fs.unlinkSync(subbot.codeFilePath);
+    successLog(`Archivo de código eliminado para ${subbot.phoneNumber}`);
+  }
 }
 
 exports.connect = connect;
