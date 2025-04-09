@@ -119,9 +119,34 @@ async function connectSubbot(subbot) {
           if (fs.existsSync(subbot.tempFilePath)) fs.unlinkSync(subbot.tempFilePath);
           if (fs.existsSync(subbot.codeFilePath)) fs.unlinkSync(subbot.codeFilePath);
           return;
-        } else {
-          infoLog(`Cargando datos para ${subbot.phoneNumber}...`);
+        } else if (connection === "connecting") {
+          infoLog(`Conectando a WhatsApp...`);
+        } else if (connection === "reconnecting") {
+          infoLog(`Reconectando a WhatsApp...`);
+        } else if (connection === "disconnecting") {
+          infoLog(`Desconectando de WhatsApp...`);
         }
+      });
+
+      socket.ev.on("qr", async (qr) => {
+        infoLog(`Código QR de emparejamiento: ${qr}`);
+      });
+
+      socket.ev.on("credentials.update", async () => {
+        infoLog(`Credenciales de autenticación actualizadas`);
+      });
+
+      socket.ev.on("messages.upsert", async (messages) => {
+        infoLog(`Mensajes nuevos o actualizados recibidos`);
+      });
+
+      
+      socket.ev.on("presence.update", async (presence) => {
+        infoLog(`Presencia actualizada: ${presence}`);
+      });
+
+      socket.ev.on("contacts.update", async (contacts) => {
+        infoLog(`Contactos actualizados: ${contacts}`);
       });
 
       socket.ev.on("creds.update", saveCreds);
@@ -145,5 +170,4 @@ async function connectSubbot(subbot) {
 }
 
 exports.connect = connect;
-
 
