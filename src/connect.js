@@ -25,11 +25,6 @@ const {
 const msgRetryCounterCache = new NodeCache();
 const store = makeInMemoryStore({ logger: pino().child({ level: "silent", stream: "store" }) });
 
-const maxAttempts = 3;
-const waitTime = 30000;
-const codeRetryInterval = 15000;
-const maxCodeAttempts = 3;
-
 async function getMessage(key) {
   if (!store) return proto.Message.fromObject({});
   const msg = await store.loadMessage(key.remoteJid, key.id);
@@ -37,27 +32,39 @@ async function getMessage(key) {
 }
 
 async function connect() {
-  const authPath = path.resolve(__dirname, "..", "assets", "auth", "baileys");
   const tempDir = path.resolve(__dirname, "comandos", "temp");
+  const authPath = path.resolve(__dirname, "..", "assets", "auth", "baileys");
+  const numberPath = path.join(tempDir, "number.txt");
+  const pairingCodePath = path.join(tempDir, "pairing_code.txt");
 
-  const numberFile = path.join(tempDir, "number.txt");
-  const pairingFile = path.join(tempDir, "pairing_code.txt");
+  if (!fs.existsSync(numberPath)) {
+    console.log("[connect] No se encontró el archivo number.txt. Esperando...");
+    return setTimeout(connect, 5000); // vuelve a intentarlo
+  }
 
-  if (!fs.existsSync(numberFile)) {
-    errorLog("No se encontró number.txt en el directorio temporal.");
+  const phoneNumber = fs.readFileSync(numberPath, "utf8").trim();
+  if (!phoneNumber) {
+    console.log("[connect] El archivo number.txt está vacío.");
     return;
   }
 
-  const phoneNumber = fs.readFileSync(numberFile, "utf8").trim();
-  const authForNumber = path.join(authPath, phoneNumber);
-  const codeFileForNumber = path.join(tempDir, `${phoneNumber}.code.txt`);
+  const subbot = {
+    phoneNumber,
+    authPath: path.join(authPath, phoneNumber),
+    tempFilePath: numberPath,
+    codeFilePath: pairingCodePath,
+  };
+
+  console.log(`[connect] Iniciando subbot para el número: ${phoneNumber}`);
 
   let attempts = 0;
-  let codeAttempts = 0;
+  const maxAttempts = 3;
+  const waitTime = 30000;
+  const codeRetryInterval = 15000;
 
   while (attempts < maxAttempts) {
     try {
-      const { state, saveCreds } = await useMultiFileAuthState(authForNumber);
+      const { state, saveCreds } = await useMultiFileAuthState(subbot.authPath);
       const { version } = await fetchLatestBaileysVersion();
       const socket = makeWASocket({
         version,
@@ -65,7 +72,8 @@ async function connect() {
         printQRInTerminal: false,
         defaultQueryTimeoutMs: 60 * 1000,
         auth: state,
-        shouldIgnoreJid: (jid) => isJidBroadcast(jid) || isJidStatusBroadcast(jid) || isJidNewsletter(jid),
+        shouldIgnoreJid: (jid) =>
+          isJidBroadcast(jid) || isJidStatusBroadcast(jid) || isJidNewsletter(jid),
         keepAliveIntervalMs: 60 * 1000,
         markOnlineOnConnect: true,
         msgRetryCounterCache,
@@ -73,56 +81,92 @@ async function connect() {
         getMessage,
       });
 
-      if (!fs.existsSync(pairingFile)) {
+      let codeAttempts = 0;
+      const maxCodeAttempts = 3;
+
+      const requestCodeLoop = async () => {
         while (codeAttempts < maxCodeAttempts) {
           try {
+            console.log(`[connect] Solicitando código para ${phoneNumber} (intento ${codeAttempts + 1})`);
             const code = await socket.requestPairingCode(onlyNumbers(phoneNumber));
-            fs.writeFileSync(pairingFile, code, "utf8");
-            sayLog(`Código de Emparejamiento para ${phoneNumber}: ${code}`);
-            break;
+            fs.writeFileSync(pairingCodePath, code, "utf8");
+            console.log(`[connect] Código de emparejamiento generado: ${code}`);
+            break; // lo logró, salimos
           } catch (err) {
-            errorLog(`Error solicitando código para ${phoneNumber}:`, err);
-            codeAttempts++;
+            console.error(`[connect] Error solicitando código:`, err);
           }
-          await new Promise((r) => setTimeout(r, codeRetryInterval));
+
+          codeAttempts++;
+          await new Promise((resolve) => setTimeout(resolve, codeRetryInterval));
         }
+
+        if (codeAttempts >= maxCodeAttempts) {
+          console.error(`[connect] No se pudo obtener código después de ${maxCodeAttempts} intentos.`);
+        }
+      };
+
+      if (!fs.existsSync(pairingCodePath)) {
+        await requestCodeLoop();
       }
 
       socket.ev.on("connection.update", async (update) => {
         const { connection, lastDisconnect } = update;
+
         if (connection === "open") {
-          successLog(`Subbot ${phoneNumber} conectado!`);
-          if (fs.existsSync(numberFile)) fs.unlinkSync(numberFile);
-          if (fs.existsSync(pairingFile)) fs.unlinkSync(pairingFile);
-        } else if (connection === "close") {
+          console.log(`[connect] Subbot conectado exitosamente: ${phoneNumber}`);
+          if (fs.existsSync(numberPath)) fs.unlinkSync(numberPath);
+          if (fs.existsSync(pairingCodePath)) fs.unlinkSync(pairingCodePath);
+        }
+
+        if (connection === "close") {
           const statusCode = lastDisconnect?.error?.output?.statusCode;
-          if (statusCode === DisconnectReason.loggedOut) {
-            errorLog(`Subbot ${phoneNumber} desconectado!`);
-            cleanUp(phoneNumber, authForNumber, numberFile, pairingFile);
+          console.warn(`[connect] Conexión cerrada con código: ${statusCode}`);
+
+          switch (statusCode) {
+            case DisconnectReason.loggedOut:
+              console.warn(`[connect] Sesión cerrada para ${phoneNumber}`);
+              cleanUpSubbotFiles(subbot);
+              break;
+            case DisconnectReason.badSession:
+              console.warn(`[connect] Sesión inválida para ${phoneNumber}`);
+              break;
           }
         }
       });
 
       socket.ev.on("creds.update", saveCreds);
-      await new Promise((r) => setTimeout(r, waitTime));
+
+      await new Promise((resolve) => setTimeout(resolve, waitTime));
+
       if (socket.isConnected()) {
-        successLog(`Subbot ${phoneNumber} conectado correctamente!`);
+        console.log(`[connect] Conectado correctamente en el intento ${attempts + 1}`);
         return;
+      } else {
+        console.log(`[connect] No se logró conectar en el intento ${attempts + 1}`);
       }
     } catch (err) {
-      errorLog(`Error conectando subbot ${phoneNumber}:`, err);
+      console.error(`[connect] Error en intento ${attempts + 1}:`, err);
     }
+
     attempts++;
   }
 
-  errorLog(`No se pudo conectar el subbot ${phoneNumber} después de ${maxAttempts} intentos.`);
+  console.error(`[connect] Fallo total: No se logró conectar después de ${maxAttempts} intentos.`);
 }
 
-function cleanUp(phoneNumber, authDir, numberFile, pairingFile) {
-  if (fs.existsSync(authDir)) fs.rmdirSync(authDir, { recursive: true });
-  if (fs.existsSync(numberFile)) fs.unlinkSync(numberFile);
-  if (fs.existsSync(pairingFile)) fs.unlinkSync(pairingFile);
-  successLog(`Limpieza completa para ${phoneNumber}`);
+function cleanUpSubbotFiles(subbot) {
+  if (fs.existsSync(subbot.authPath)) {
+    fs.rmdirSync(subbot.authPath, { recursive: true });
+    console.log(`[cleanUp] Auth eliminada para ${subbot.phoneNumber}`);
+  }
+  if (fs.existsSync(subbot.tempFilePath)) {
+    fs.unlinkSync(subbot.tempFilePath);
+    console.log(`[cleanUp] Archivo temporal eliminado para ${subbot.phoneNumber}`);
+  }
+  if (fs.existsSync(subbot.codeFilePath)) {
+    fs.unlinkSync(subbot.codeFilePath);
+    console.log(`[cleanUp] Archivo de código eliminado para ${subbot.phoneNumber}`);
+  }
 }
 
 exports.connect = connect;
