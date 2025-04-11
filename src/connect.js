@@ -23,8 +23,8 @@ const {
   successLog,
 } = require("./utils/logger");
 
-// RUTA ABSOLUTA COMPARTIDA
-const TEMP_DIR = path.resolve("/c/Users/tioba/subkram/temp");
+// Ruta absoluta compartida para Windows correctamente escrita
+const TEMP_DIR = path.resolve("C:\\Users\\tioba\\subkram\\temp");
 
 const msgRetryCounterCache = new NodeCache();
 const store = makeInMemoryStore({
