@@ -23,7 +23,8 @@ const {
   successLog,
 } = require("./utils/logger");
 
-const TEMP_DIR = path.resolve(process.cwd(), "src", "comandos", "temp");
+// RUTA ABSOLUTA COMPARTIDA
+const TEMP_DIR = path.resolve("/c/Users/tioba/subkram/temp");
 
 const msgRetryCounterCache = new NodeCache();
 const store = makeInMemoryStore({
