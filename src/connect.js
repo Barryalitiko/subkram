@@ -23,7 +23,8 @@ const {
   successLog,
 } = require("./utils/logger");
 
-const TEMP_DIR = path.resolve(__dirname, "comandos", "temp");
+// Ruta corregida para que funcione igual que en subkram.js
+const TEMP_DIR = path.resolve(process.cwd(), "src", "comandos", "temp");
 
 const msgRetryCounterCache = new NodeCache();
 const store = makeInMemoryStore({
