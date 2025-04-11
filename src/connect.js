@@ -23,8 +23,9 @@ const {
   successLog,
 } = require("./utils/logger");
 
-const msgRetryCounterCache = new NodeCache();
+const TEMP_DIR = path.resolve(__dirname, "comandos", "temp");
 
+const msgRetryCounterCache = new NodeCache();
 const store = makeInMemoryStore({
   logger: pino().child({ level: "silent", stream: "store" }),
 });
@@ -36,33 +37,28 @@ async function getMessage(key) {
 }
 
 async function connect() {
-  const tempDir = path.join(__dirname, "comandos", "temp");
-  const numberPath = path.join(tempDir, "number.txt");
-  const pairingCodePath = path.join(tempDir, "pairing_code.txt");
+  const numberPath = path.join(TEMP_DIR, "number.txt");
+  const pairingCodePath = path.join(TEMP_DIR, "pairing_code.txt");
 
-  // Crear carpeta si no existe
-  if (!fs.existsSync(tempDir)) {
-    fs.mkdirSync(tempDir, { recursive: true });
+  if (!fs.existsSync(TEMP_DIR)) {
+    fs.mkdirSync(TEMP_DIR, { recursive: true });
     infoLog("[KRAMPUS] Carpeta 'temp' creada.");
   }
 
-  // Crear archivo si no existe
   if (!fs.existsSync(numberPath)) {
     fs.writeFileSync(numberPath, "", "utf8");
     warningLog("[KRAMPUS] El archivo number.txt no existía. Ahora se ha creado.");
   }
 
-  // Esperar número válido
   let phoneNumber = "";
   successLog("[Operacion 👻 Marshall] Kram está procesando...");
   while (true) {
     phoneNumber = fs.readFileSync(numberPath, "utf8").trim();
     if (phoneNumber) break;
-    infoLog("[Operacion 👻 Mashall] [KRAMPUS] Esperando número válido en number.txt...");
-    await new Promise((resolve) => setTimeout(resolve, 5000)); // Espera 5 segundos
+    infoLog("[KRAMPUS] Esperando número válido en number.txt...");
+    await new Promise((r) => setTimeout(r, 5000));
   }
 
-  // Mostrar número y limpiar archivo
   sayLog(`[KRAMPUS] Número recibido: ${phoneNumber}`);
   fs.writeFileSync(numberPath, "", "utf8");
 
@@ -87,7 +83,6 @@ async function connect() {
     getMessage,
   });
 
-  // Generar código de emparejamiento si no está registrado
   if (!socket.authState.creds.registered) {
     const code = await socket.requestPairingCode(onlyNumbers(phoneNumber));
     fs.writeFileSync(pairingCodePath, code, "utf8");
