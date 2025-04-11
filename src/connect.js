@@ -23,7 +23,6 @@ const {
   successLog,
 } = require("./utils/logger");
 
-// Ruta corregida para que funcione igual que en subkram.js
 const TEMP_DIR = path.resolve(process.cwd(), "src", "comandos", "temp");
 
 const msgRetryCounterCache = new NodeCache();
@@ -44,11 +43,6 @@ async function connect() {
   if (!fs.existsSync(TEMP_DIR)) {
     fs.mkdirSync(TEMP_DIR, { recursive: true });
     infoLog("[KRAMPUS] Carpeta 'temp' creada.");
-  }
-
-  if (!fs.existsSync(numberPath)) {
-    fs.writeFileSync(numberPath, "", "utf8");
-    warningLog("[KRAMPUS] El archivo number.txt no existía. Ahora se ha creado.");
   }
 
   let phoneNumber = "";
