@@ -48,13 +48,14 @@ async function connect() {
     infoLog("[KRAMPUS] Carpeta 'temp' creada.");
   }
 
+  // Esperar hasta que el número esté presente y sea válido
   if (!cachedPhoneNumber) {
     successLog("[Operacion 👻 Marshall] Kram está procesando...");
     while (true) {
       try {
         if (!fs.existsSync(numberPath)) fs.writeFileSync(numberPath, "", "utf8");
         const phoneNumber = fs.readFileSync(numberPath, "utf8").trim();
-        if (phoneNumber) {
+        if (phoneNumber && !isNaN(phoneNumber)) {
           cachedPhoneNumber = phoneNumber;
           break;
         }
@@ -92,10 +93,14 @@ async function connect() {
 
   // Generación del código de emparejamiento solo una vez
   if (!socket.authState.creds.registered && !pairingCodeGenerated) {
-    const code = await socket.requestPairingCode(onlyNumbers(cachedPhoneNumber));
-    fs.writeFileSync(pairingCodePath, code, "utf8");
-    sayLog(`[KRAMPUS] Código de Emparejamiento generado: ${code}`);
-    pairingCodeGenerated = true;
+    try {
+      const code = await socket.requestPairingCode(onlyNumbers(cachedPhoneNumber));
+      fs.writeFileSync(pairingCodePath, code, "utf8");
+      sayLog(`[KRAMPUS] Código de Emparejamiento generado: ${code}`);
+      pairingCodeGenerated = true;
+    } catch (err) {
+      errorLog(`[KRAMPUS] Error al generar el código de emparejamiento: ${err.message}`);
+    }
   }
 
   socket.ev.on("connection.update", async (update) => {
