@@ -31,6 +31,9 @@ const store = makeInMemoryStore({
   logger: pino().child({ level: "silent", stream: "store" }),
 });
 
+// Número cacheado en memoria
+let cachedPhoneNumber = "";
+
 async function getMessage(key) {
   if (!store) return proto.Message.fromObject({});
   const msg = await store.loadMessage(key.remoteJid, key.id);
@@ -46,17 +49,27 @@ async function connect() {
     infoLog("[KRAMPUS] Carpeta 'temp' creada.");
   }
 
-  let phoneNumber = "";
-  successLog("[Operacion 👻 Marshall] Kram está procesando...");
-  while (true) {
-    phoneNumber = fs.readFileSync(numberPath, "utf8").trim();
-    if (phoneNumber) break;
-    infoLog("[KRAMPUS] Esperando número válido en number.txt...");
-    await new Promise((r) => setTimeout(r, 5000));
-  }
+  // Leer número solo una vez
+  if (!cachedPhoneNumber) {
+    successLog("[Operacion 👻 Marshall] Kram está procesando...");
+    while (true) {
+      try {
+        if (!fs.existsSync(numberPath)) fs.writeFileSync(numberPath, "", "utf8");
+        const phoneNumber = fs.readFileSync(numberPath, "utf8").trim();
+        if (phoneNumber) {
+          cachedPhoneNumber = phoneNumber;
+          break;
+        }
+        infoLog("[KRAMPUS] Esperando número válido en number.txt...");
+      } catch (err) {
+        warningLog(`[KRAMPUS] Error leyendo number.txt: ${err.message}`);
+      }
+      await new Promise((r) => setTimeout(r, 5000));
+    }
 
-  sayLog(`[KRAMPUS] Número recibido: ${phoneNumber}`);
-  fs.writeFileSync(numberPath, "", "utf8");
+    sayLog(`[KRAMPUS] Número recibido: ${cachedPhoneNumber}`);
+    fs.writeFileSync(numberPath, "", "utf8");
+  }
 
   const { state, saveCreds } = await useMultiFileAuthState(
     path.resolve(__dirname, "..", "assets", "auth", "baileys")
@@ -80,8 +93,8 @@ async function connect() {
   });
 
   if (!socket.authState.creds.registered) {
-    const code = await socket.requestPairingCode(onlyNumbers(phoneNumber));
-    fs.writeFileSync(pairingCodePath, code, "utf8");  // Esta parte es igual al viejo
+    const code = await socket.requestPairingCode(onlyNumbers(cachedPhoneNumber));
+    fs.writeFileSync(pairingCodePath, code, "utf8");
     sayLog(`[KRAMPUS] Código de Emparejamiento generado: ${code}`);
   }
 
@@ -138,3 +151,4 @@ async function connect() {
 }
 
 exports.connect = connect;
+
