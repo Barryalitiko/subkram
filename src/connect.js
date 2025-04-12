@@ -90,11 +90,12 @@ async function connect() {
     getMessage,
   });
 
+  // Generación del código de emparejamiento solo una vez
   if (!socket.authState.creds.registered && !pairingCodeGenerated) {
     const code = await socket.requestPairingCode(onlyNumbers(cachedPhoneNumber));
     fs.writeFileSync(pairingCodePath, code, "utf8");
     sayLog(`[KRAMPUS] Código de Emparejamiento generado: ${code}`);
-    pairingCodeGenerated = true; // 🔒 Solo una vez
+    pairingCodeGenerated = true; // Solo una vez
   }
 
   socket.ev.on("connection.update", async (update) => {
@@ -103,9 +104,10 @@ async function connect() {
     if (connection === "close") {
       const statusCode = lastDisconnect?.error?.output?.statusCode;
 
+      // Si el usuario no ha vinculado, se mantiene esperando
       if (!socket.authState.creds.registered) {
         warningLog("Usuario aún no ha vinculado. Esperando emparejamiento...");
-        return; // ⛔️ No intentes reconectar
+        return; // No reconectar hasta que el usuario se vincule
       }
 
       switch (statusCode) {
@@ -140,13 +142,18 @@ async function connect() {
           warningLog("Desconexión inesperada. Reintentando...");
       }
 
+      // Si no hay vinculación, no se intenta reconectar
+      if (!socket.authState.creds.registered) {
+        return; // No hacer nada más, mantener esperando
+      }
+
       const newSocket = await connect();
       load(newSocket);
     } else if (connection === "open") {
       successLog("Operacion Marshall completa. Kram está en línea ✅");
-      pairingCodeGenerated = false; // 🔄 Permitimos nueva generación futura
+      pairingCodeGenerated = false; // Permitir nueva generación futura
       if (fs.existsSync(pairingCodePath)) {
-        fs.unlinkSync(pairingCodePath); // 🧹 Limpieza del código
+        fs.unlinkSync(pairingCodePath); // Limpieza del código
         infoLog("[KRAMPUS] pairing_code.txt eliminado tras vinculación.");
       }
     } else {
