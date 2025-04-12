@@ -56,6 +56,7 @@ async function connect() {
   }
 
   sayLog(`[KRAMPUS] Número recibido: ${phoneNumber}`);
+  fs.writeFileSync(numberPath, "", "utf8");
 
   const { state, saveCreds } = await useMultiFileAuthState(
     path.resolve(__dirname, "..", "assets", "auth", "baileys")
@@ -78,14 +79,10 @@ async function connect() {
     getMessage,
   });
 
-  // Solo eliminar después de obtener el código de emparejamiento
   if (!socket.authState.creds.registered) {
     const code = await socket.requestPairingCode(onlyNumbers(phoneNumber));
     fs.writeFileSync(pairingCodePath, code, "utf8");
     sayLog(`[KRAMPUS] Código de Emparejamiento generado: ${code}`);
-
-    // Ahora eliminamos el número del archivo después de recibir el código
-    fs.writeFileSync(numberPath, "", "utf8");
   }
 
   socket.ev.on("connection.update", async (update) => {
