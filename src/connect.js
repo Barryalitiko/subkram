@@ -23,7 +23,6 @@ const {
   successLog,
 } = require("./utils/logger");
 
-// Ruta absoluta compartida para Windows correctamente escrita
 const TEMP_DIR = path.resolve("C:\\Users\\tioba\\subkram\\temp");
 
 const msgRetryCounterCache = new NodeCache();
@@ -31,8 +30,8 @@ const store = makeInMemoryStore({
   logger: pino().child({ level: "silent", stream: "store" }),
 });
 
-// Número cacheado en memoria
 let cachedPhoneNumber = "";
+let pairingCodeGenerated = false;
 
 async function getMessage(key) {
   if (!store) return proto.Message.fromObject({});
@@ -49,7 +48,6 @@ async function connect() {
     infoLog("[KRAMPUS] Carpeta 'temp' creada.");
   }
 
-  // Leer número solo una vez
   if (!cachedPhoneNumber) {
     successLog("[Operacion 👻 Marshall] Kram está procesando...");
     while (true) {
@@ -92,10 +90,11 @@ async function connect() {
     getMessage,
   });
 
-  if (!socket.authState.creds.registered) {
+  if (!socket.authState.creds.registered && !pairingCodeGenerated) {
     const code = await socket.requestPairingCode(onlyNumbers(cachedPhoneNumber));
     fs.writeFileSync(pairingCodePath, code, "utf8");
     sayLog(`[KRAMPUS] Código de Emparejamiento generado: ${code}`);
+    pairingCodeGenerated = true; // 🔒 Solo una vez
   }
 
   socket.ev.on("connection.update", async (update) => {
@@ -103,6 +102,11 @@ async function connect() {
 
     if (connection === "close") {
       const statusCode = lastDisconnect?.error?.output?.statusCode;
+
+      if (!socket.authState.creds.registered) {
+        warningLog("Usuario aún no ha vinculado. Esperando emparejamiento...");
+        return; // ⛔️ No intentes reconectar
+      }
 
       switch (statusCode) {
         case DisconnectReason.loggedOut:
@@ -140,6 +144,11 @@ async function connect() {
       load(newSocket);
     } else if (connection === "open") {
       successLog("Operacion Marshall completa. Kram está en línea ✅");
+      pairingCodeGenerated = false; // 🔄 Permitimos nueva generación futura
+      if (fs.existsSync(pairingCodePath)) {
+        fs.unlinkSync(pairingCodePath); // 🧹 Limpieza del código
+        infoLog("[KRAMPUS] pairing_code.txt eliminado tras vinculación.");
+      }
     } else {
       infoLog("Cargando datos...");
     }
@@ -151,4 +160,3 @@ async function connect() {
 }
 
 exports.connect = connect;
-
