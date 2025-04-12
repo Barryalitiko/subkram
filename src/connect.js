@@ -95,7 +95,7 @@ async function connect() {
     const code = await socket.requestPairingCode(onlyNumbers(cachedPhoneNumber));
     fs.writeFileSync(pairingCodePath, code, "utf8");
     sayLog(`[KRAMPUS] Código de Emparejamiento generado: ${code}`);
-    pairingCodeGenerated = true; // Solo una vez
+    pairingCodeGenerated = true;
   }
 
   socket.ev.on("connection.update", async (update) => {
@@ -104,10 +104,18 @@ async function connect() {
     if (connection === "close") {
       const statusCode = lastDisconnect?.error?.output?.statusCode;
 
-      // Si el usuario no ha vinculado, se mantiene esperando
+      // Si el usuario no ha vinculado, se mantiene esperando y reintenta conexión
       if (!socket.authState.creds.registered) {
         warningLog("Usuario aún no ha vinculado. Esperando emparejamiento...");
-        return; // No reconectar hasta que el usuario se vincule
+
+        // Espera de 5 segundos antes de intentar reconectar
+        setTimeout(() => {
+          connect().then((newSocket) => {
+            load(newSocket);
+          });
+        }, 5000);
+
+        return;
       }
 
       switch (statusCode) {
@@ -142,18 +150,14 @@ async function connect() {
           warningLog("Desconexión inesperada. Reintentando...");
       }
 
-      // Si no hay vinculación, no se intenta reconectar
-      if (!socket.authState.creds.registered) {
-        return; // No hacer nada más, mantener esperando
-      }
-
+      // Si estaba registrado, reconecta normalmente
       const newSocket = await connect();
       load(newSocket);
     } else if (connection === "open") {
       successLog("Operacion Marshall completa. Kram está en línea ✅");
-      pairingCodeGenerated = false; // Permitir nueva generación futura
+      pairingCodeGenerated = false;
       if (fs.existsSync(pairingCodePath)) {
-        fs.unlinkSync(pairingCodePath); // Limpieza del código
+        fs.unlinkSync(pairingCodePath);
         infoLog("[KRAMPUS] pairing_code.txt eliminado tras vinculación.");
       }
     } else {
