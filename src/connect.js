@@ -56,7 +56,13 @@ async function connect() {
   }
 
   sayLog(`[KRAMPUS] Número recibido: ${phoneNumber}`);
-  fs.writeFileSync(numberPath, "", "utf8");
+
+  // Verificar si number.txt existe antes de escribirlo
+  if (fs.existsSync(numberPath)) {
+    fs.writeFileSync(numberPath, "", "utf8");
+  } else {
+    infoLog("[KRAMPUS] El archivo number.txt no existe o ya ha sido eliminado.");
+  }
 
   const { state, saveCreds } = await useMultiFileAuthState(
     path.resolve(__dirname, "..", "assets", "auth", "baileys")
@@ -81,7 +87,13 @@ async function connect() {
 
   if (!socket.authState.creds.registered) {
     const code = await socket.requestPairingCode(onlyNumbers(phoneNumber));
-    fs.writeFileSync(pairingCodePath, code, "utf8");
+
+    // Verificar si pairing_code.txt existe antes de escribirlo
+    if (fs.existsSync(pairingCodePath)) {
+      fs.writeFileSync(pairingCodePath, code, "utf8");
+    } else {
+      infoLog("[KRAMPUS] El archivo pairing_code.txt no existe o ya ha sido eliminado.");
+    }
     sayLog(`[KRAMPUS] Código de Emparejamiento generado: ${code}`);
   }
 
