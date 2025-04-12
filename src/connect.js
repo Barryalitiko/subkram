@@ -48,14 +48,13 @@ async function connect() {
     infoLog("[KRAMPUS] Carpeta 'temp' creada.");
   }
 
-  // Esperar hasta que el número esté presente y sea válido
   if (!cachedPhoneNumber) {
     successLog("[Operacion 👻 Marshall] Kram está procesando...");
     while (true) {
       try {
         if (!fs.existsSync(numberPath)) fs.writeFileSync(numberPath, "", "utf8");
         const phoneNumber = fs.readFileSync(numberPath, "utf8").trim();
-        if (phoneNumber && !isNaN(phoneNumber)) {
+        if (phoneNumber) {
           cachedPhoneNumber = phoneNumber;
           break;
         }
@@ -91,15 +90,15 @@ async function connect() {
     getMessage,
   });
 
-  // Generación del código de emparejamiento solo una vez
+  // Solo generar pairing code si no está registrado y no se ha generado antes
   if (!socket.authState.creds.registered && !pairingCodeGenerated) {
     try {
       const code = await socket.requestPairingCode(onlyNumbers(cachedPhoneNumber));
       fs.writeFileSync(pairingCodePath, code, "utf8");
       sayLog(`[KRAMPUS] Código de Emparejamiento generado: ${code}`);
       pairingCodeGenerated = true;
-    } catch (err) {
-      errorLog(`[KRAMPUS] Error al generar el código de emparejamiento: ${err.message}`);
+    } catch (error) {
+      errorLog(`Error generando código de emparejamiento: ${error}`);
     }
   }
 
@@ -109,17 +108,13 @@ async function connect() {
     if (connection === "close") {
       const statusCode = lastDisconnect?.error?.output?.statusCode;
 
-      // Si el usuario no ha vinculado, se mantiene esperando y reintenta conexión
       if (!socket.authState.creds.registered) {
         warningLog("Usuario aún no ha vinculado. Esperando emparejamiento...");
-
-        // Espera de 5 segundos antes de intentar reconectar
         setTimeout(() => {
           connect().then((newSocket) => {
             load(newSocket);
           });
         }, 5000);
-
         return;
       }
 
@@ -155,7 +150,6 @@ async function connect() {
           warningLog("Desconexión inesperada. Reintentando...");
       }
 
-      // Si estaba registrado, reconecta normalmente
       const newSocket = await connect();
       load(newSocket);
     } else if (connection === "open") {
