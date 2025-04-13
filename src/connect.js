@@ -145,19 +145,26 @@ class Bot {
 }
 
 async function connect() {
-  const bots = [
-    new Bot("111111111"),
-    new Bot("222222222"),
-    // Agrega más bots aquí
-  ];
+  const bots = [];
 
-  const sockets = [];
-  for (const bot of bots) {
+  // Leer números de teléfono desde un archivo o base de datos
+  const phoneNumbers = await readPhoneNumbers();
+
+  for (const phoneNumber of phoneNumbers) {
+    const bot = new Bot(phoneNumber);
     const socket = await bot.connect();
-    sockets.push(socket);
+    bots.push(socket);
   }
 
-  return sockets;
+  return bots;
+}
+
+// Función para leer números de teléfono desde un archivo o base de datos
+async function readPhoneNumbers() {
+  // Implementa la lógica para leer números de teléfono desde un archivo o base de datos
+  // Por ejemplo, puedes leer desde un archivo JSON:
+  const phoneNumbers = require("./phoneNumbers.json");
+  return phoneNumbers;
 }
 
 exports.connect = connect;
