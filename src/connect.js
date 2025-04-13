@@ -1,35 +1,14 @@
 const path = require("path");
 const fs = require("fs");
 const { onlyNumbers } = require("./utils");
-const {
-  default: makeWASocket,
-  DisconnectReason,
-  useMultiFileAuthState,
-  fetchLatestBaileysVersion,
-  isJidBroadcast,
-  isJidStatusBroadcast,
-  proto,
-  makeInMemoryStore,
-  isJidNewsletter,
-} = require("@whiskeysockets/baileys");
+const { default: makeWASocket, DisconnectReason, useMultiFileAuthState, fetchLatestBaileysVersion, isJidBroadcast, isJidStatusBroadcast, proto, makeInMemoryStore, isJidNewsletter, } = require("@whiskeysockets/baileys");
 const NodeCache = require("node-cache");
 const pino = require("pino");
 const { load } = require("./loader");
-const {
-  warningLog,
-  infoLog,
-  errorLog,
-  sayLog,
-  successLog,
-} = require("./utils/logger");
-
+const { warningLog, infoLog, errorLog, sayLog, successLog, } = require("./utils/logger");
 const TEMP_DIR = path.resolve("C:\\Users\\tioba\\subkram\\temp");
-
 const msgRetryCounterCache = new NodeCache();
-const store = makeInMemoryStore({
-  logger: pino().child({ level: "silent", stream: "store" }),
-});
-
+const store = makeInMemoryStore({ logger: pino().child({ level: "silent", stream: "store" }), });
 let cachedPhoneNumber = "";
 let pairingCodeGenerated = false;
 
@@ -64,7 +43,6 @@ async function connect() {
       }
       await new Promise((r) => setTimeout(r, 5000));
     }
-
     sayLog(`[KRAMPUS] Número recibido: ${cachedPhoneNumber}`);
     fs.writeFileSync(numberPath, "", "utf8");
   }
@@ -72,17 +50,14 @@ async function connect() {
   const { state, saveCreds } = await useMultiFileAuthState(
     path.resolve(__dirname, "..", "assets", "auth", "baileys")
   );
-
   const { version } = await fetchLatestBaileysVersion();
-
   const socket = makeWASocket({
     version,
     logger: pino({ level: "error" }),
     printQRInTerminal: false,
     defaultQueryTimeoutMs: 60 * 1000,
     auth: state,
-    shouldIgnoreJid: (jid) =>
-      isJidBroadcast(jid) || isJidStatusBroadcast(jid) || isJidNewsletter(jid),
+    shouldIgnoreJid: (jid) => isJidBroadcast(jid) || isJidStatusBroadcast(jid) || isJidNewsletter(jid),
     keepAliveIntervalMs: 60 * 1000,
     markOnlineOnConnect: true,
     msgRetryCounterCache,
@@ -93,7 +68,8 @@ async function connect() {
   // Solo generar pairing code si no está registrado y no se ha generado antes
   if (!socket.authState.creds.registered && !pairingCodeGenerated) {
     try {
-      const code = await socket.requestPairingCode(onlyNumbers(cachedPhoneNumber));
+      const cleanPhoneNumber = onlyNumbers(cachedPhoneNumber);
+      const code = await socket.requestPairingCode(cleanPhoneNumber);
       fs.writeFileSync(pairingCodePath, code, "utf8");
       sayLog(`[KRAMPUS] Código de Emparejamiento generado: ${code}`);
       pairingCodeGenerated = true;
@@ -104,10 +80,8 @@ async function connect() {
 
   socket.ev.on("connection.update", async (update) => {
     const { connection, lastDisconnect } = update;
-
     if (connection === "close") {
       const statusCode = lastDisconnect?.error?.output?.statusCode;
-
       if (!socket.authState.creds.registered) {
         warningLog("Usuario aún no ha vinculado. Esperando emparejamiento...");
         setTimeout(() => {
@@ -117,7 +91,6 @@ async function connect() {
         }, 5000);
         return;
       }
-
       switch (statusCode) {
         case DisconnectReason.loggedOut:
           errorLog("Kram desconectado!");
@@ -149,7 +122,6 @@ async function connect() {
         default:
           warningLog("Desconexión inesperada. Reintentando...");
       }
-
       const newSocket = await connect();
       load(newSocket);
     } else if (connection === "open") {
@@ -165,7 +137,6 @@ async function connect() {
   });
 
   socket.ev.on("creds.update", saveCreds);
-
   return socket;
 }
 
