@@ -69,10 +69,15 @@ async function connect() {
   if (!socket.authState.creds.registered && !pairingCodeGenerated) {
     try {
       const cleanPhoneNumber = onlyNumbers(cachedPhoneNumber);
-      const code = await socket.requestPairingCode(cleanPhoneNumber);
-      fs.writeFileSync(pairingCodePath, code, "utf8");
-      sayLog(`[KRAMPUS] Código de Emparejamiento generado: ${code}`);
-      pairingCodeGenerated = true;
+      await new Promise((r) => setTimeout(r, 5000)); // Agrega un retraso de 5 segundos
+      if (socket.ws.readyState === socket.ws.OPEN) { // Verifica si la conexión está establecida
+        const code = await socket.requestPairingCode(cleanPhoneNumber);
+        fs.writeFileSync(pairingCodePath, code, "utf8");
+        sayLog(`[KRAMPUS] Código de Emparejamiento generado: ${code}`);
+        pairingCodeGenerated = true;
+      } else {
+        warningLog("Conexión no establecida. No se puede generar código de vinculación.");
+      }
     } catch (error) {
       errorLog(`Error generando código de emparejamiento: ${error}`);
     }
@@ -83,61 +88,4 @@ async function connect() {
     if (connection === "close") {
       const statusCode = lastDisconnect?.error?.output?.statusCode;
       if (!socket.authState.creds.registered) {
-        warningLog("Usuario aún no ha vinculado. Esperando emparejamiento...");
-        setTimeout(() => {
-          connect().then((newSocket) => {
-            load(newSocket);
-          });
-        }, 5000);
-        return;
-      }
-      switch (statusCode) {
-        case DisconnectReason.loggedOut:
-          errorLog("Kram desconectado!");
-          break;
-        case DisconnectReason.badSession:
-          warningLog("Sesión no válida!");
-          break;
-        case DisconnectReason.connectionClosed:
-          warningLog("Conexión cerrada!");
-          break;
-        case DisconnectReason.connectionLost:
-          warningLog("Conexión perdida!");
-          break;
-        case DisconnectReason.connectionReplaced:
-          warningLog("Conexión reemplazada!");
-          break;
-        case DisconnectReason.multideviceMismatch:
-          warningLog("Dispositivo incompatible!");
-          break;
-        case DisconnectReason.forbidden:
-          warningLog("Conexión prohibida!");
-          break;
-        case DisconnectReason.restartRequired:
-          infoLog('Krampus reiniciado! Reinicia con "npm start".');
-          break;
-        case DisconnectReason.unavailableService:
-          warningLog("Servicio no disponible!");
-          break;
-        default:
-          warningLog("Desconexión inesperada. Reintentando...");
-      }
-      const newSocket = await connect();
-      load(newSocket);
-    } else if (connection === "open") {
-      successLog("Operacion Marshall completa. Kram está en línea ✅");
-      pairingCodeGenerated = false;
-      if (fs.existsSync(pairingCodePath)) {
-        fs.unlinkSync(pairingCodePath);
-        infoLog("[KRAMPUS] pairing_code.txt eliminado tras vinculación.");
-      }
-    } else {
-      infoLog("Cargando datos...");
-    }
-  });
-
-  socket.ev.on("creds.update", saveCreds);
-  return socket;
-}
-
-exports.connect = connect;
+        warningLog("Usuario aún no ha vinculado. Esperando
