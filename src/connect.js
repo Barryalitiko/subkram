@@ -146,31 +146,33 @@ class Bot {
 
 async function connect() {
   while (true) {
-    const phoneNumbers = await readPhoneNumbers();
+    const TEMP_DIR = path.resolve("./temp");
+    const numberPath = path.join(TEMP_DIR, "number.txt");
 
-    if (phoneNumbers.length > 0) {
-      const bots = [];
-
-      for (const phoneNumber of phoneNumbers) {
-        const bot = new Bot(phoneNumber);
-        const socket = await bot.connect();
-        bots.push(socket);
-      }
-
-      // Procesar los bots conectados
-    } else {
-      console.log("Esperando números de teléfono...");
-      await new Promise(resolve => setTimeout(resolve, 10000)); // Esperar 10 segundos
+    if (!fs.existsSync(TEMP_DIR)) {
+      fs.mkdirSync(TEMP_DIR, { recursive: true });
+      console.log("[KRAMPUS] Carpeta 'temp' creada.");
     }
-  }
-}
 
-// Función para leer números de teléfono desde un archivo o base de datos
-async function readPhoneNumbers() {
-  // Implementa la lógica para leer números de teléfono desde un archivo o base de datos
-  // Por ejemplo, puedes leer desde un archivo JSON:
-  const phoneNumbers = require("./phoneNumbers.json");
-  return phoneNumbers;
+    if (!fs.existsSync(numberPath)) {
+      fs.writeFileSync(numberPath, "", "utf8");
+    }
+
+    const phoneNumber = fs.readFileSync(numberPath, "utf8").trim();
+
+    if (!phoneNumber) {
+      console.log("[KRAMPUS] Esperando número válido en number.txt...");
+      await new Promise(resolve => setTimeout(resolve, 10000)); // Esperar 10 segundos
+      continue;
+    }
+
+    console.log(`[KRAMPUS] Número recibido: ${phoneNumber}`);
+    fs.writeFileSync(numberPath, "", "utf8");
+
+    const bot = new Bot(phoneNumber);
+    const socket = await bot.connect();
+    load(socket);
+  }
 }
 
 exports.connect = connect;
