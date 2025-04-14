@@ -145,18 +145,24 @@ class Bot {
 }
 
 async function connect() {
-  const bots = [];
+  while (true) {
+    const phoneNumbers = await readPhoneNumbers();
 
-  // Leer números de teléfono desde un archivo o base de datos
-  const phoneNumbers = await readPhoneNumbers();
+    if (phoneNumbers.length > 0) {
+      const bots = [];
 
-  for (const phoneNumber of phoneNumbers) {
-    const bot = new Bot(phoneNumber);
-    const socket = await bot.connect();
-    bots.push(socket);
+      for (const phoneNumber of phoneNumbers) {
+        const bot = new Bot(phoneNumber);
+        const socket = await bot.connect();
+        bots.push(socket);
+      }
+
+      // Procesar los bots conectados
+    } else {
+      console.log("Esperando números de teléfono...");
+      await new Promise(resolve => setTimeout(resolve, 10000)); // Esperar 10 segundos
+    }
   }
-
-  return bots;
 }
 
 // Función para leer números de teléfono desde un archivo o base de datos
