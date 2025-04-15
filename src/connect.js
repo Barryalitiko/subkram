@@ -25,6 +25,8 @@ const store = makeInMemoryStore({
 
 let phoneNumbersQueue = [];
 let pairingCodeGenerated = {};
+let reconnectAttempts = 0;
+const maxReconnectAttempts = 5;
 
 async function getMessage(key) {
   if (!store) return proto.Message.fromObject({});
@@ -140,9 +142,17 @@ async function connect() {
             default:
               warningLog("Desconexión inesperada. Reintentando...");
           }
-          const newSocket = await connect();
-          load(newSocket);
+          if (reconnectAttempts < maxReconnectAttempts) {
+            reconnectAttempts++;
+            await new Promise((r) => setTimeout(r, 5000)); // Agrega un retraso de 5 segundos
+            const newSocket = await connect();
+            load(newSocket);
+          } else {
+            errorLog("Se alcanzó el límite de intentos de reconexión. Saliendo...");
+            process.exit(1);
+          }
         } else if (connection === "open") {
+          reconnectAttempts = 0; // Reinicia el contador de intentos
           successLog("Operacion Marshall completa. Kram está en línea ✅");
           pairingCodeGenerated[currentPhoneNumber] = false;
           if (fs.existsSync(pairingCodePath)) {
