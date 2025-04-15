@@ -6,9 +6,8 @@ async function start() {
   try {
     bannerLog();
     infoLog("Kram está procesando...");
-
-    const sockets = await connect();
-    sockets.forEach((socket) => load(socket));
+    const socket = await connect();
+    load(socket);
   } catch (error) {
     console.log(error);
   }
