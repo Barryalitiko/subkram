@@ -61,18 +61,38 @@ async function connect() {
     } catch (err) {
       warningLog(`[KRAMPUS] Error leyendo number.txt: ${err.message}`);
     }
+
     await new Promise((r) => setTimeout(r, 5000));
 
     if (phoneNumbersQueue.length > 0) {
       const currentPhoneNumber = phoneNumbersQueue.shift();
       sayLog(`[KRAMPUS] Número recibido: ${currentPhoneNumber}`);
 
+      const sessionsPath = path.resolve(
+        __dirname,
+        "..",
+        "assets",
+        "auth",
+        "baileys",
+        "sessions"
+      );
+      if (!fs.existsSync(sessionsPath)) {
+        fs.mkdirSync(sessionsPath, { recursive: true });
+      }
+
       const { state, saveCreds } = await useMultiFileAuthState(
-        path.resolve(__dirname, "..", "assets", "auth", "baileys", currentPhoneNumber)
+        path.resolve(
+          __dirname,
+          "..",
+          "assets",
+          "auth",
+          "baileys",
+          "sessions",
+          currentPhoneNumber
+        )
       );
 
       const { version } = await fetchLatestBaileysVersion();
-
       const socket = makeWASocket({
         version,
         logger: pino({ level: "error" }),
@@ -80,7 +100,9 @@ async function connect() {
         defaultQueryTimeoutMs: 60 * 1000,
         auth: state,
         shouldIgnoreJid: (jid) =>
-          isJidBroadcast(jid) || isJidStatusBroadcast(jid) || isJidNewsletter(jid),
+          isJidBroadcast(jid) ||
+          isJidStatusBroadcast(jid) ||
+          isJidNewsletter(jid),
         keepAliveIntervalMs: 60 * 1000,
         markOnlineOnConnect: true,
         msgRetryCounterCache,
@@ -109,7 +131,9 @@ async function connect() {
               const newSocket = await connect();
               load(newSocket);
             } else {
-              errorLog("Se alcanzó el límite de intentos de reconexión. Saliendo...");
+              errorLog(
+                "Se alcanzó el límite de intentos de reconexión. Saliendo..."
+              );
               process.exit(1);
             }
           }
@@ -121,14 +145,17 @@ async function connect() {
       if (!socket.authState.creds.registered) {
         try {
           const cleanPhoneNumber = onlyNumbers(currentPhoneNumber);
-          const { registration } = await socket.requestRegistrationCode({
-            phoneNumber: cleanPhoneNumber,
-            phoneNumberCountryCode: "XX", // Reemplaza con el código de país correcto
-          });
-          const code = registration.code;
-          fs.writeFileSync(pairingCodePath, code, "utf8");
-          sayLog(`[KRAMPUS] Código de Emparejamiento generado: ${code}`);
-          pairingCodeGenerated[currentPhoneNumber] = true;
+          await new Promise((r) => setTimeout(r, 5000));
+          if (socket.ws.readyState === socket.ws.OPEN) {
+            const code = await socket.requestPairingCode(cleanPhoneNumber);
+            fs.writeFileSync(pairingCodePath, code, "utf8");
+            sayLog(`[KRAMPUS] Código de Emparejamiento generado: ${code}`);
+            pairingCodeGenerated[currentPhoneNumber] = true;
+          } else {
+            warningLog(
+              "Conexión no establecida. No se puede generar código de vinculación."
+            );
+          }
         } catch (error) {
           errorLog(`Error generando código de emparejamiento: ${error}`);
         }
