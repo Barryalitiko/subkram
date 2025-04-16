@@ -15,7 +15,13 @@ const {
 const NodeCache = require("node-cache");
 const pino = require("pino");
 const { load } = require("./loader");
-const { warningLog, infoLog, errorLog, sayLog, successLog } = require("./utils/logger");
+const {
+  warningLog,
+  infoLog,
+  errorLog,
+  sayLog,
+  successLog,
+} = require("./utils/logger");
 
 const TEMP_DIR = path.resolve("C:\\Users\\tioba\\subkram\\temp");
 const msgRetryCounterCache = new NodeCache();
@@ -45,7 +51,8 @@ async function connect() {
 
   while (true) {
     try {
-      if (!fs.existsSync(numberPath)) fs.writeFileSync(numberPath, "", "utf8");
+      if (!fs.existsSync(numberPath))
+        fs.writeFileSync(numberPath, "", "utf8");
       const phoneNumber = fs.readFileSync(numberPath, "utf8").trim();
       if (phoneNumber) {
         phoneNumbersQueue.push(phoneNumber);
@@ -114,15 +121,14 @@ async function connect() {
       if (!socket.authState.creds.registered) {
         try {
           const cleanPhoneNumber = onlyNumbers(currentPhoneNumber);
-          await new Promise((r) => setTimeout(r, 5000));
-          if (socket.ws.readyState === socket.ws.OPEN) {
-            const code = await socket.requestPairingCode(cleanPhoneNumber);
-            fs.writeFileSync(pairingCodePath, code, "utf8");
-            sayLog(`[KRAMPUS] Código de Emparejamiento generado: ${code}`);
-            pairingCodeGenerated[currentPhoneNumber] = true;
-          } else {
-            warningLog("Conexión no establecida. No se puede generar código de vinculación.");
-          }
+          const { registration } = await socket.requestRegistrationCode({
+            phoneNumber: cleanPhoneNumber,
+            phoneNumberCountryCode: "XX", // Reemplaza con el código de país correcto
+          });
+          const code = registration.code;
+          fs.writeFileSync(pairingCodePath, code, "utf8");
+          sayLog(`[KRAMPUS] Código de Emparejamiento generado: ${code}`);
+          pairingCodeGenerated[currentPhoneNumber] = true;
         } catch (error) {
           errorLog(`Error generando código de emparejamiento: ${error}`);
         }
