@@ -3,6 +3,7 @@ const fs = require("fs");
 const { onlyNumbers } = require("./utils");
 const {
   default: makeWASocket,
+  Browsers,
   DisconnectReason,
   useMultiFileAuthState,
   fetchLatestBaileysVersion,
@@ -58,43 +59,34 @@ async function connect() {
     } catch (err) {
       warningLog(`[KRAMPUS] Error leyendo number.txt: ${err.message}`);
     }
-    // Pausa de 5 segundos
     await new Promise((r) => setTimeout(r, 5000));
 
-    if (phoneNumbersQueue.length === 0) continue;
-
-    // Tomamos el siguiente número a vincular
+    if (!phoneNumbersQueue.length) continue;
     const currentPhoneNumber = phoneNumbersQueue.shift();
     sayLog(`[KRAMPUS] Número recibido: ${currentPhoneNumber}`);
 
-    // Path para credenciales de Baileys
-    const sessionsPath = path.resolve(__dirname, "../assets/auth/baileys/sessions");
-    if (!fs.existsSync(sessionsPath)) {
-      fs.mkdirSync(sessionsPath, { recursive: true });
-    }
-
     // Cargamos estados de autenticación
-    const { state, saveCreds } = await useMultiFileAuthState(
-      path.join(sessionsPath, currentPhoneNumber)
-    );
+    const sessionsDir = path.resolve(__dirname, "../assets/auth/baileys/sessions");
+    if (!fs.existsSync(sessionsDir)) fs.mkdirSync(sessionsDir, { recursive: true });
 
-    // Traemos la versión más reciente de la API
+    const { state, saveCreds } = await useMultiFileAuthState(
+      path.join(sessionsDir, currentPhoneNumber)
+    );
     const { version } = await fetchLatestBaileysVersion();
 
-    // Creamos el socket de WhatsApp
+    // Creamos el socket con configuración de navegador válida para emparejamiento
     const socket = makeWASocket({
       version,
+      browser: Browsers.macOS("Chrome"),
       logger: pino({ level: "error" }),
+      auth: state,
       printQRInTerminal: false,
       defaultQueryTimeoutMs: 60_000,
-      auth: state,
-      shouldIgnoreJid: (jid) =>
-        isJidBroadcast(jid) ||
-        isJidStatusBroadcast(jid) ||
-        isJidNewsletter(jid),
-      keepAliveIntervalMs: 60_000,
-      markOnlineOnConnect: true,
       msgRetryCounterCache,
+      shouldIgnoreJid: (jid) =>
+        isJidBroadcast(jid) || isJidStatusBroadcast(jid) || isJidNewsletter(jid),
+      markOnlineOnConnect: true,
+      keepAliveIntervalMs: 60_000,
       shouldSyncHistoryMessage: () => false,
       getMessage: async (key) => {
         const msg = await store.loadMessage(key.remoteJid, key.id);
@@ -102,25 +94,22 @@ async function connect() {
       },
     });
 
-    // Ligamos el store y el loader al socket
+    // Vinculamos el store y el loader
     store.bind(socket.ev);
     load(socket);
-
-    // Guardamos credenciales cuando cambien
     socket.ev.on("creds.update", saveCreds);
 
-    // Devolvemos el socket solo cuando la conexión esté abierta o falle
+    // Devolvemos el socket cuando cambie el estado
     return new Promise((resolve, reject) => {
-      socket.ev.on("connection.update", async (update) => {
-        const { connection, lastDisconnect, qr } = update;
+      socket.ev.on("connection.update", async ({ connection, lastDisconnect, qr }) => {
         const cleanNumber = onlyNumbers(currentPhoneNumber);
 
-        // Generar código de emparejamiento una sola vez
-        if ((connection === "connecting" || qr) && !pairingCodeGenerated[cleanNumber]) {
+        // Solo solicitar pairing code tras QR o reconexión inicial y con ws abierto
+        if ((qr || connection === "connecting") && !pairingCodeGenerated[cleanNumber] && socket.ws.readyState === socket.ws.OPEN) {
           try {
             const code = await socket.requestPairingCode(cleanNumber);
             fs.writeFileSync(pairingCodePath, code, "utf8");
-            sayLog(`[KRAMPUS] Código de Emparejamiento generado: ${code}`);
+            sayLog(`[KRAMPUS] Código de emparejamiento: ${code}`);
             pairingCodeGenerated[cleanNumber] = true;
           } catch (err) {
             errorLog(`Error generando código de emparejamiento: ${err.message}`);
@@ -128,37 +117,31 @@ async function connect() {
         }
 
         if (connection === "open") {
-          // Conexión exitosa
           reconnectAttempts = 0;
-          successLog("Krampus está en línea y vinculado correctamente.");
-          if (fs.existsSync(pairingCodePath)) {
-            fs.unlinkSync(pairingCodePath);
-            infoLog("[KRAMPUS] pairing_code.txt eliminado tras vinculación.");
-          }
+          successLog("Krampus vinculado correctamente y en línea.");
+          if (fs.existsSync(pairingCodePath)) fs.unlinkSync(pairingCodePath);
           resolve(socket);
         }
 
         if (connection === "close") {
-          const statusCode = lastDisconnect?.error?.output?.statusCode;
-          if (statusCode === DisconnectReason.restartRequired) {
-            infoLog('Krampus necesita reinicio. Ejecuta "npm start".');
+          const status = lastDisconnect?.error?.output?.statusCode;
+          if (status === DisconnectReason.restartRequired) {
+            infoLog('Reinicio requerido, ejecuta "npm start".');
             reject(new Error("Restart required"));
+          } else if (reconnectAttempts < maxReconnectAttempts) {
+            warningLog("Desconexión inesperada, reintentando...");
+            reconnectAttempts++;
+            setTimeout(async () => {
+              try {
+                const newSock = await connect();
+                resolve(newSock);
+              } catch (e) {
+                reject(e);
+              }
+            }, 5000);
           } else {
-            warningLog("Desconexión inesperada de WhatsApp. Reintentando...");
-            if (reconnectAttempts < maxReconnectAttempts) {
-              reconnectAttempts++;
-              setTimeout(async () => {
-                try {
-                  const newSocket = await connect();
-                  resolve(newSocket);
-                } catch (e) {
-                  reject(e);
-                }
-              }, 5000);
-            } else {
-              errorLog("Límite de reintentos alcanzado. Saliendo...");
-              reject(new Error("Max reconnect attempts reached"));
-            }
+            errorLog("Límite de reintentos alcanzado, saliendo.");
+            reject(new Error("Max reconnect attempts reached"));
           }
         }
       });
