@@ -48,10 +48,7 @@ async function connect() {
     try {
       if (!fs.existsSync(numberPath)) fs.writeFileSync(numberPath, "", "utf8");
       rawNumber = fs.readFileSync(numberPath, "utf8").trim();
-      if (!rawNumber) {
-        console.log("[Subbot] Esperando número...");
-        await new Promise(r => setTimeout(r, 5000));
-      }
+      if (!rawNumber) await new Promise(r => setTimeout(r, 5000));
     } catch (e) {
       warningLog(`[KRAMPUS] Error leyendo número: ${e.message}`);
       await new Promise(r => setTimeout(r, 5000));
@@ -113,9 +110,6 @@ async function connect() {
     }
   };
 
-  // Intento inicial
-  await generatePairCode();
-
   // Manejar eventos de conexión
   return new Promise((resolve, reject) => {
     socket.ev.on("connection.update", async ({ connection, lastDisconnect }) => {
@@ -129,6 +123,9 @@ async function connect() {
           connectedPath,
           JSON.stringify({ number: currentNumber, connected: true }, null, 2)
         );
+
+        // Generar código solo cuando el socket esté abierto
+        await generatePairCode();
 
         resolve(socket);
       }
@@ -149,11 +146,6 @@ async function connect() {
           reject(new Error("Max reconnect attempts reached"));
         }
       }
-    });
-
-    // Reintentar pairing code al abrir ws si falló inicialmente
-    socket.ev.on("open", () => {
-      if (!pairingRequested) generatePairCode();
     });
   });
 }
