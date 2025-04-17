@@ -1,17 +1,17 @@
-const fs = require("fs");
 const path = require("path");
-const { question, onlyNumbers } = require("./utils");
+const fs = require("fs");
+const { onlyNumbers } = require("./utils");
 const {
   default: makeWASocket,
   DisconnectReason,
+  Browsers,
   useMultiFileAuthState,
   fetchLatestBaileysVersion,
   isJidBroadcast,
   isJidStatusBroadcast,
-  proto,
   isJidNewsletter,
+  makeInMemoryStore,
 } = require("@whiskeysockets/baileys");
-
 const NodeCache = require("node-cache");
 const pino = require("pino");
 const { load } = require("./loader");
@@ -23,148 +23,139 @@ const {
   successLog,
 } = require("./utils/logger");
 
+// Directorio temporal para intercambio de datos
+const TEMP_DIR = path.resolve(__dirname, "../temp");
 const msgRetryCounterCache = new NodeCache();
-const MAX_RECONNECT_ATTEMPTS = 5;
+const store = makeInMemoryStore({
+  logger: pino().child({ level: "silent", stream: "store" }),
+});
+
 let reconnectAttempts = 0;
-
-const TEMP_DIR = path.resolve(__dirname, "..", "assets", "temp");
-const numberFile = path.join(TEMP_DIR, "number.txt");
-const pairingCodeFile = path.join(TEMP_DIR, "pairing_code.txt");
-
-async function getMessage(key) {
-  return proto.Message.fromObject({});
-}
-
-// Esperar pacientemente a que aparezca un número válido
-async function esperarNumero() {
-  infoLog(`Esperando número en: ${numberFile}...`);
-
-  return new Promise((resolve) => {
-    const interval = setInterval(() => {
-      if (fs.existsSync(numberFile)) {
-        const phoneNumberRaw = fs.readFileSync(numberFile, "utf-8").trim();
-        if (phoneNumberRaw) {
-          clearInterval(interval);
-          resolve(onlyNumbers(phoneNumberRaw));
-        }
-      }
-    }, 1000); // verificar cada segundo
-  });
-}
+const maxReconnectAttempts = 5;
 
 async function connect() {
-  reconnectAttempts = 0;
+  // Paths de control
+  const numberPath = path.join(TEMP_DIR, "number.txt");
+  const pairingCodePath = path.join(TEMP_DIR, "pairing_code.txt");
+  const connectedPath = path.join(TEMP_DIR, "connected.json");
 
-  const authPath = path.resolve(__dirname, "..", "assets", "auth", "baileys");
-  const { state, saveCreds } = await useMultiFileAuthState(authPath);
+  // Crear carpeta temp si no existe
+  if (!fs.existsSync(TEMP_DIR)) fs.mkdirSync(TEMP_DIR, { recursive: true });
 
-  const { version } = await fetchLatestBaileysVersion();
-
-  const socket = makeWASocket({
-    version,
-    logger: pino({ level: "error" }),
-    printQRInTerminal: true,
-    defaultQueryTimeoutMs: 60 * 1000,
-    auth: state,
-    shouldIgnoreJid: (jid) =>
-      isJidBroadcast(jid) || isJidStatusBroadcast(jid) || isJidNewsletter(jid),
-    keepAliveIntervalMs: 60 * 1000,
-    markOnlineOnConnect: true,
-    msgRetryCounterCache,
-    shouldSyncHistoryMessage: () => false,
-    getMessage,
-  });
-
-  if (!socket.authState.creds.registered) {
-    warningLog("¡Credenciales no configuradas!");
-
-    const phoneNumber = await esperarNumero();
-    infoLog(`Número a vincular: ${phoneNumber}`);
-
+  // Leer número de archivo
+  let rawNumber;
+  while (!rawNumber) {
     try {
-      const code = await socket.requestPairingCode(phoneNumber);
-      sayLog(`Código de emparejamiento: ${code}`);
-
-      fs.writeFileSync(pairingCodeFile, code, "utf-8");
-      successLog(`Código guardado en: ${pairingCodeFile}`);
-
-      // Limpiar el archivo number.txt
-      fs.unlinkSync(numberFile);
-      infoLog("Archivo number.txt eliminado.");
-    } catch (err) {
-      errorLog(`Error generando código: ${err.message}`);
-      process.exit(1);
+      if (!fs.existsSync(numberPath)) fs.writeFileSync(numberPath, "", "utf8");
+      rawNumber = fs.readFileSync(numberPath, "utf8").trim();
+      if (!rawNumber) {
+        console.log("[Subbot] Esperando número...");
+        await new Promise(r => setTimeout(r, 5000));
+      }
+    } catch (e) {
+      warningLog(`[KRAMPUS] Error leyendo número: ${e.message}`);
+      await new Promise(r => setTimeout(r, 5000));
     }
   }
+  const currentNumber = onlyNumbers(rawNumber);
+  sayLog(`[KRAMPUS] Número a vincular: ${currentNumber}`);
 
-  socket.ev.on("connection.update", async (update) => {
-    const { connection, lastDisconnect } = update;
+  // Preparar estado de auth
+  const sessionsDir = path.resolve(__dirname, "../assets/auth/baileys/sessions");
+  if (!fs.existsSync(sessionsDir)) fs.mkdirSync(sessionsDir, { recursive: true });
 
-    if (connection === "close") {
-      const statusCode = lastDisconnect?.error?.output?.statusCode;
+  const { state, saveCreds } = await useMultiFileAuthState(
+    path.join(sessionsDir, currentNumber)
+  );
+  const { version } = await fetchLatestBaileysVersion();
 
-      if (statusCode === DisconnectReason.loggedOut) {
-        errorLog("¡Sesión cerrada! Reinicia manualmente.");
-        process.exit(1);
-      } else {
-        switch (statusCode) {
-          case DisconnectReason.badSession:
-            warningLog("¡Sesión no válida! Elimina la carpeta de autenticación.");
-            break;
-          case DisconnectReason.connectionClosed:
-            warningLog("¡Conexión cerrada inesperadamente!");
-            break;
-          case DisconnectReason.connectionLost:
-            warningLog("¡Conexión perdida! Intentando reconectar...");
-            break;
-          case DisconnectReason.connectionReplaced:
-            warningLog("¡Sesión iniciada en otro dispositivo! Cerrando.");
-            process.exit(1);
-            break;
-          case DisconnectReason.multideviceMismatch:
-            warningLog("¡Dispositivo incompatible! Elimina la sesión y vuelve a intentarlo.");
-            process.exit(1);
-            break;
-          case DisconnectReason.forbidden:
-            warningLog("¡Acceso prohibido! Verifica tu número.");
-            process.exit(1);
-            break;
-          case DisconnectReason.restartRequired:
-            infoLog('Reiniciando... Usa "npm start" para volver a iniciar.');
-            break;
-          case DisconnectReason.unavailableService:
-            warningLog("¡Servicio de WhatsApp no disponible temporalmente!");
-            break;
-          default:
-            warningLog("Desconexión inesperada.");
-            break;
-        }
-
-        if (reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
-          reconnectAttempts++;
-          const delay = reconnectAttempts * 5000;
-
-          warningLog(`Intento de reconexión ${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS} en ${delay / 1000} segundos...`);
-
-          setTimeout(async () => {
-            const newSocket = await connect();
-            load(newSocket);
-          }, delay);
-        } else {
-          errorLog("¡Máximo de intentos de reconexión alcanzado! Reinicia manualmente.");
-          process.exit(1);
-        }
-      }
-    } else if (connection === "open") {
-      successLog("¡Bot conectado exitosamente!");
-    } else {
-      infoLog("Cargando datos...");
+  // Crear socket
+  const socket = makeWASocket({
+    version,
+    browser: Browsers.macOS("Chrome"),
+    logger: pino({ level: "error" }),
+    auth: state,
+    printQRInTerminal: false,
+    defaultQueryTimeoutMs: 0,
+    keepAliveIntervalMs: 60_000,
+    markOnlineOnConnect: true,
+    msgRetryCounterCache,
+    shouldIgnoreJid: jid => isJidBroadcast(jid) || isJidStatusBroadcast(jid) || isJidNewsletter(jid),
+    shouldSyncHistoryMessage: () => false,
+    getMessage: async key => {
+      const msg = await store.loadMessage(key.remoteJid, key.id);
+      return msg?.message;
     }
   });
 
+  // Vincular store y loader
+  store.bind(socket.ev);
+  load(socket);
   socket.ev.on("creds.update", saveCreds);
 
-  return socket;
+  // Función para solicitar pairing code con manejo de error 428
+  let pairingRequested = false;
+  const generatePairCode = async () => {
+    if (pairingRequested) return;
+    pairingRequested = true;
+    try {
+      const code = await socket.requestPairingCode(currentNumber);
+      fs.writeFileSync(pairingCodePath, code, "utf8");
+      sayLog(`[KRAMPUS] Código de emparejamiento: ${code}`);
+    } catch (err) {
+      const status = err?.output?.statusCode;
+      if (status === 428) {
+        infoLog("[KRAMPUS] Servidor no listo, se reintentará al abrir conexión.");
+        pairingRequested = false; // permitir retry
+      } else {
+        errorLog(`Error generando código de emparejamiento: ${err.message}`);
+      }
+    }
+  };
+
+  // Intento inicial
+  await generatePairCode();
+
+  // Manejar eventos de conexión
+  return new Promise((resolve, reject) => {
+    socket.ev.on("connection.update", async ({ connection, lastDisconnect }) => {
+      if (connection === "open") {
+        reconnectAttempts = 0;
+        successLog("Krampus vinculado y en línea.");
+        if (fs.existsSync(pairingCodePath)) fs.unlinkSync(pairingCodePath);
+
+        // Guardar estado de conexión
+        fs.writeFileSync(
+          connectedPath,
+          JSON.stringify({ number: currentNumber, connected: true }, null, 2)
+        );
+
+        resolve(socket);
+      }
+
+      if (connection === "close") {
+        const code = lastDisconnect?.error?.output?.statusCode;
+        if (code === DisconnectReason.restartRequired) {
+          infoLog('Reinicio requerido, ejecuta "npm start".');
+          if (fs.existsSync(connectedPath)) fs.unlinkSync(connectedPath);
+          reject(new Error("Restart required"));
+        } else if (reconnectAttempts < maxReconnectAttempts) {
+          warningLog("Desconexión inesperada, reintentando...");
+          reconnectAttempts++;
+          setTimeout(async () => resolve(await connect()), 5000);
+        } else {
+          errorLog("Límite de reintentos alcanzado. Abortando.");
+          if (fs.existsSync(connectedPath)) fs.unlinkSync(connectedPath);
+          reject(new Error("Max reconnect attempts reached"));
+        }
+      }
+    });
+
+    // Reintentar pairing code al abrir ws si falló inicialmente
+    socket.ev.on("open", () => {
+      if (!pairingRequested) generatePairCode();
+    });
+  });
 }
 
 exports.connect = connect;
