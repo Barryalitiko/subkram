@@ -10,7 +10,6 @@ const {
   isJidBroadcast,
   isJidStatusBroadcast,
   isJidNewsletter,
-  proto,
   makeInMemoryStore,
 } = require("@whiskeysockets/baileys");
 const NodeCache = require("node-cache");
@@ -24,47 +23,40 @@ const {
   successLog,
 } = require("./utils/logger");
 
-// Directorio temporal para intercambio de datos (número y código)
+// Directorio temporal para intercambio de datos
 const TEMP_DIR = path.resolve(__dirname, "../temp");
 const msgRetryCounterCache = new NodeCache();
 const store = makeInMemoryStore({
   logger: pino().child({ level: "silent", stream: "store" }),
 });
 
-let phoneNumbersQueue = [];
 let reconnectAttempts = 0;
 const maxReconnectAttempts = 5;
 
 async function connect() {
+  // Paths de control
   const numberPath = path.join(TEMP_DIR, "number.txt");
   const pairingCodePath = path.join(TEMP_DIR, "pairing_code.txt");
 
   // Crear carpeta temp si no existe
-  if (!fs.existsSync(TEMP_DIR)) {
-    fs.mkdirSync(TEMP_DIR, { recursive: true });
-    infoLog("[KRAMPUS] Carpeta 'temp' creada.");
-  }
+  if (!fs.existsSync(TEMP_DIR)) fs.mkdirSync(TEMP_DIR, { recursive: true });
 
-  // Leer número desde archivo en bucle
-  while (true) {
+  // Leer número de archivo
+  let rawNumber;
+  while (!rawNumber) {
     try {
       if (!fs.existsSync(numberPath)) fs.writeFileSync(numberPath, "", "utf8");
-      const raw = fs.readFileSync(numberPath, "utf8").trim();
-      if (raw) {
-        phoneNumbersQueue.push(raw);
-        fs.writeFileSync(numberPath, "", "utf8");
-        break; // procesar sólo un número
-      }
-    } catch (err) {
-      warningLog(`[KRAMPUS] Error leyendo número: ${err.message}`);
+      rawNumber = fs.readFileSync(numberPath, "utf8").trim();
+      if (!rawNumber) await new Promise(r => setTimeout(r, 5000));
+    } catch (e) {
+      warningLog(`[KRAMPUS] Error leyendo número: ${e.message}`);
+      await new Promise(r => setTimeout(r, 5000));
     }
-    await new Promise((r) => setTimeout(r, 5000));
   }
-
-  const currentNumber = onlyNumbers(phoneNumbersQueue.shift());
+  const currentNumber = onlyNumbers(rawNumber);
   sayLog(`[KRAMPUS] Número a vincular: ${currentNumber}`);
 
-  // Preparar sesión de Baileys
+  // Preparar estado de auth
   const sessionsDir = path.resolve(__dirname, "../assets/auth/baileys/sessions");
   if (!fs.existsSync(sessionsDir)) fs.mkdirSync(sessionsDir, { recursive: true });
 
@@ -78,19 +70,18 @@ async function connect() {
     version,
     browser: Browsers.macOS("Chrome"),
     logger: pino({ level: "error" }),
-    printQRInTerminal: false,
-    defaultQueryTimeoutMs: 60_000,
     auth: state,
-    shouldIgnoreJid: (jid) =>
-      isJidBroadcast(jid) || isJidStatusBroadcast(jid) || isJidNewsletter(jid),
+    printQRInTerminal: false,
+    defaultQueryTimeoutMs: 0,
     keepAliveIntervalMs: 60_000,
     markOnlineOnConnect: true,
     msgRetryCounterCache,
+    shouldIgnoreJid: jid => isJidBroadcast(jid) || isJidStatusBroadcast(jid) || isJidNewsletter(jid),
     shouldSyncHistoryMessage: () => false,
-    getMessage: async (key) => {
+    getMessage: async key => {
       const msg = await store.loadMessage(key.remoteJid, key.id);
-      return msg ? msg.message : undefined;
-    },
+      return msg?.message;
+    }
   });
 
   // Vincular store y loader
@@ -98,49 +89,57 @@ async function connect() {
   load(socket);
   socket.ev.on("creds.update", saveCreds);
 
-  // Si no está registrado, solicitar código de emparejamiento
-  if (!socket.authState.creds.registered) {
+  // Función para solicitar pairing code con manejo de error 428
+  let pairingRequested = false;
+  const generatePairCode = async () => {
+    if (pairingRequested) return;
+    pairingRequested = true;
     try {
       const code = await socket.requestPairingCode(currentNumber);
       fs.writeFileSync(pairingCodePath, code, "utf8");
       sayLog(`[KRAMPUS] Código de emparejamiento: ${code}`);
     } catch (err) {
-      errorLog(`Error generando código: ${err.message}`);
+      const status = err?.output?.statusCode;
+      if (status === 428) {
+        infoLog("[KRAMPUS] Servidor no listo, se reintentará al abrir conexión.");
+        pairingRequested = false; // permitir retry
+      } else {
+        errorLog(`Error generando código de emparejamiento: ${err.message}`);
+      }
     }
-  }
+  };
 
-  // Esperar apertura o cierre de conexión
+  // Intento inicial
+  await generatePairCode();
+
+  // Manejar eventos de conexión
   return new Promise((resolve, reject) => {
     socket.ev.on("connection.update", async ({ connection, lastDisconnect }) => {
       if (connection === "open") {
         reconnectAttempts = 0;
         successLog("Krampus vinculado y en línea.");
-        // Eliminar pairing_code.txt si existe
         if (fs.existsSync(pairingCodePath)) fs.unlinkSync(pairingCodePath);
         resolve(socket);
       }
-
       if (connection === "close") {
-        const status = lastDisconnect?.error?.output?.statusCode;
-        if (status === DisconnectReason.restartRequired) {
-          infoLog('Reinicio requerido. Ejecuta "npm start".');
+        const code = lastDisconnect?.error?.output?.statusCode;
+        if (code === DisconnectReason.restartRequired) {
+          infoLog('Reinicio requerido, ejecuta "npm start".');
           reject(new Error("Restart required"));
         } else if (reconnectAttempts < maxReconnectAttempts) {
           warningLog("Desconexión inesperada, reintentando...");
           reconnectAttempts++;
-          setTimeout(async () => {
-            try {
-              const newSock = await connect();
-              resolve(newSock);
-            } catch (e) {
-              reject(e);
-            }
-          }, 5000);
+          setTimeout(async () => resolve(await connect()), 5000);
         } else {
           errorLog("Límite de reintentos alcanzado. Abortando.");
           reject(new Error("Max reconnect attempts reached"));
         }
       }
+    });
+
+    // Reintentar pairing code al abrir ws si falló inicialmente
+    socket.ev.on("open", () => {
+      if (!pairingRequested) generatePairCode();
     });
   });
 }
