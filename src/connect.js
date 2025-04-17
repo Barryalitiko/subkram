@@ -1,6 +1,6 @@
 const fs = require("fs");
 const path = require("path");
-const { onlyNumbers } = require("./utils");
+const { question, onlyNumbers } = require("./utils");
 const {
   default: makeWASocket,
   DisconnectReason,
@@ -27,12 +27,29 @@ const msgRetryCounterCache = new NodeCache();
 const MAX_RECONNECT_ATTEMPTS = 5;
 let reconnectAttempts = 0;
 
-const TEMP_DIR = path.resolve(__dirname, "..", "temp");
+const TEMP_DIR = path.resolve(__dirname, "..", "assets", "temp");
 const numberFile = path.join(TEMP_DIR, "number.txt");
 const pairingCodeFile = path.join(TEMP_DIR, "pairing_code.txt");
 
 async function getMessage(key) {
   return proto.Message.fromObject({});
+}
+
+// Esperar pacientemente a que aparezca un número válido
+async function esperarNumero() {
+  infoLog(`Esperando número en: ${numberFile}...`);
+
+  return new Promise((resolve) => {
+    const interval = setInterval(() => {
+      if (fs.existsSync(numberFile)) {
+        const phoneNumberRaw = fs.readFileSync(numberFile, "utf-8").trim();
+        if (phoneNumberRaw) {
+          clearInterval(interval);
+          resolve(onlyNumbers(phoneNumberRaw));
+        }
+      }
+    }, 1000); // verificar cada segundo
+  });
 }
 
 async function connect() {
@@ -61,30 +78,21 @@ async function connect() {
   if (!socket.authState.creds.registered) {
     warningLog("¡Credenciales no configuradas!");
 
-    if (!fs.existsSync(numberFile)) {
-      errorLog(`Archivo de número no encontrado: ${numberFile}`);
-      process.exit(1);
-    }
-
-    const phoneNumberRaw = fs.readFileSync(numberFile, "utf-8").trim();
-
-    if (!phoneNumberRaw) {
-      errorLog("El archivo number.txt está vacío.");
-      process.exit(1);
-    }
-
-    const phoneNumber = onlyNumbers(phoneNumberRaw);
+    const phoneNumber = await esperarNumero();
     infoLog(`Número a vincular: ${phoneNumber}`);
 
     try {
       const code = await socket.requestPairingCode(phoneNumber);
+      sayLog(`Código de emparejamiento: ${code}`);
 
-      sayLog(`Código de emparejamiento generado: ${code}`);
+      fs.writeFileSync(pairingCodeFile, code, "utf-8");
+      successLog(`Código guardado en: ${pairingCodeFile}`);
 
-      fs.writeFileSync(pairingCodeFile, code);
-      successLog(`Código de emparejamiento guardado en: ${pairingCodeFile}`);
+      // Limpiar el archivo number.txt
+      fs.unlinkSync(numberFile);
+      infoLog("Archivo number.txt eliminado.");
     } catch (err) {
-      errorLog(`Error generando código de emparejamiento: ${err.message}`);
+      errorLog(`Error generando código: ${err.message}`);
       process.exit(1);
     }
   }
