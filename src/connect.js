@@ -3,8 +3,8 @@ const fs = require("fs");
 const { onlyNumbers } = require("./utils");
 const {
   default: makeWASocket,
-  Browsers,
   DisconnectReason,
+  Browsers,
   useMultiFileAuthState,
   fetchLatestBaileysVersion,
   isJidBroadcast,
@@ -32,121 +32,117 @@ const store = makeInMemoryStore({
 });
 
 let phoneNumbersQueue = [];
-let pairingCodeGenerated = {};
 let reconnectAttempts = 0;
 const maxReconnectAttempts = 5;
 
 async function connect() {
-  // Rutas de los archivos de control
   const numberPath = path.join(TEMP_DIR, "number.txt");
   const pairingCodePath = path.join(TEMP_DIR, "pairing_code.txt");
 
-  // Aseguramos que exista el directorio temp
+  // Crear carpeta temp si no existe
   if (!fs.existsSync(TEMP_DIR)) {
     fs.mkdirSync(TEMP_DIR, { recursive: true });
     infoLog("[KRAMPUS] Carpeta 'temp' creada.");
   }
 
-  // Ciclo de espera activa: lee número cada 5s
+  // Leer número desde archivo en bucle
   while (true) {
     try {
       if (!fs.existsSync(numberPath)) fs.writeFileSync(numberPath, "", "utf8");
-      const rawNumber = fs.readFileSync(numberPath, "utf8").trim();
-      if (rawNumber) {
-        phoneNumbersQueue.push(rawNumber);
+      const raw = fs.readFileSync(numberPath, "utf8").trim();
+      if (raw) {
+        phoneNumbersQueue.push(raw);
         fs.writeFileSync(numberPath, "", "utf8");
+        break; // procesar sólo un número
       }
     } catch (err) {
-      warningLog(`[KRAMPUS] Error leyendo number.txt: ${err.message}`);
+      warningLog(`[KRAMPUS] Error leyendo número: ${err.message}`);
     }
     await new Promise((r) => setTimeout(r, 5000));
-
-    if (!phoneNumbersQueue.length) continue;
-    const currentPhoneNumber = phoneNumbersQueue.shift();
-    sayLog(`[KRAMPUS] Número recibido: ${currentPhoneNumber}`);
-
-    // Cargamos estados de autenticación
-    const sessionsDir = path.resolve(__dirname, "../assets/auth/baileys/sessions");
-    if (!fs.existsSync(sessionsDir)) fs.mkdirSync(sessionsDir, { recursive: true });
-
-    const { state, saveCreds } = await useMultiFileAuthState(
-      path.join(sessionsDir, currentPhoneNumber)
-    );
-    const { version } = await fetchLatestBaileysVersion();
-
-    // Creamos el socket con configuración de navegador válida para emparejamiento
-    const socket = makeWASocket({
-      version,
-      browser: Browsers.macOS("Chrome"),
-      logger: pino({ level: "error" }),
-      auth: state,
-      printQRInTerminal: false,
-      defaultQueryTimeoutMs: 60_000,
-      msgRetryCounterCache,
-      shouldIgnoreJid: (jid) =>
-        isJidBroadcast(jid) || isJidStatusBroadcast(jid) || isJidNewsletter(jid),
-      markOnlineOnConnect: true,
-      keepAliveIntervalMs: 60_000,
-      shouldSyncHistoryMessage: () => false,
-      getMessage: async (key) => {
-        const msg = await store.loadMessage(key.remoteJid, key.id);
-        return msg ? msg.message : undefined;
-      },
-    });
-
-    // Vinculamos el store y el loader
-    store.bind(socket.ev);
-    load(socket);
-    socket.ev.on("creds.update", saveCreds);
-
-    // Devolvemos el socket cuando cambie el estado
-    return new Promise((resolve, reject) => {
-      socket.ev.on("connection.update", async ({ connection, lastDisconnect, qr }) => {
-        const cleanNumber = onlyNumbers(currentPhoneNumber);
-
-        // Solo solicitar pairing code tras QR o reconexión inicial y con ws abierto
-        if ((qr || connection === "connecting") && !pairingCodeGenerated[cleanNumber] && socket.ws.readyState === socket.ws.OPEN) {
-          try {
-            const code = await socket.requestPairingCode(cleanNumber);
-            fs.writeFileSync(pairingCodePath, code, "utf8");
-            sayLog(`[KRAMPUS] Código de emparejamiento: ${code}`);
-            pairingCodeGenerated[cleanNumber] = true;
-          } catch (err) {
-            errorLog(`Error generando código de emparejamiento: ${err.message}`);
-          }
-        }
-
-        if (connection === "open") {
-          reconnectAttempts = 0;
-          successLog("Krampus vinculado correctamente y en línea.");
-          if (fs.existsSync(pairingCodePath)) fs.unlinkSync(pairingCodePath);
-          resolve(socket);
-        }
-
-        if (connection === "close") {
-          const status = lastDisconnect?.error?.output?.statusCode;
-          if (status === DisconnectReason.restartRequired) {
-            infoLog('Reinicio requerido, ejecuta "npm start".');
-            reject(new Error("Restart required"));
-          } else if (reconnectAttempts < maxReconnectAttempts) {
-            warningLog("Desconexión inesperada, reintentando...");
-            reconnectAttempts++;
-            setTimeout(async () => {
-              try {
-                const newSock = await connect();
-                resolve(newSock);
-              } catch (e) {
-                reject(e);
-              }
-            }, 5000);
-          } else {
-            errorLog("Límite de reintentos alcanzado, saliendo.");
-            reject(new Error("Max reconnect attempts reached"));
-          }
-        }
-      });
-    });
   }
+
+  const currentNumber = onlyNumbers(phoneNumbersQueue.shift());
+  sayLog(`[KRAMPUS] Número a vincular: ${currentNumber}`);
+
+  // Preparar sesión de Baileys
+  const sessionsDir = path.resolve(__dirname, "../assets/auth/baileys/sessions");
+  if (!fs.existsSync(sessionsDir)) fs.mkdirSync(sessionsDir, { recursive: true });
+
+  const { state, saveCreds } = await useMultiFileAuthState(
+    path.join(sessionsDir, currentNumber)
+  );
+  const { version } = await fetchLatestBaileysVersion();
+
+  // Crear socket
+  const socket = makeWASocket({
+    version,
+    browser: Browsers.macOS("Chrome"),
+    logger: pino({ level: "error" }),
+    printQRInTerminal: false,
+    defaultQueryTimeoutMs: 60_000,
+    auth: state,
+    shouldIgnoreJid: (jid) =>
+      isJidBroadcast(jid) || isJidStatusBroadcast(jid) || isJidNewsletter(jid),
+    keepAliveIntervalMs: 60_000,
+    markOnlineOnConnect: true,
+    msgRetryCounterCache,
+    shouldSyncHistoryMessage: () => false,
+    getMessage: async (key) => {
+      const msg = await store.loadMessage(key.remoteJid, key.id);
+      return msg ? msg.message : undefined;
+    },
+  });
+
+  // Vincular store y loader
+  store.bind(socket.ev);
+  load(socket);
+  socket.ev.on("creds.update", saveCreds);
+
+  // Si no está registrado, solicitar código de emparejamiento
+  if (!socket.authState.creds.registered) {
+    try {
+      const code = await socket.requestPairingCode(currentNumber);
+      fs.writeFileSync(pairingCodePath, code, "utf8");
+      sayLog(`[KRAMPUS] Código de emparejamiento: ${code}`);
+    } catch (err) {
+      errorLog(`Error generando código: ${err.message}`);
+    }
+  }
+
+  // Esperar apertura o cierre de conexión
+  return new Promise((resolve, reject) => {
+    socket.ev.on("connection.update", async ({ connection, lastDisconnect }) => {
+      if (connection === "open") {
+        reconnectAttempts = 0;
+        successLog("Krampus vinculado y en línea.");
+        // Eliminar pairing_code.txt si existe
+        if (fs.existsSync(pairingCodePath)) fs.unlinkSync(pairingCodePath);
+        resolve(socket);
+      }
+
+      if (connection === "close") {
+        const status = lastDisconnect?.error?.output?.statusCode;
+        if (status === DisconnectReason.restartRequired) {
+          infoLog('Reinicio requerido. Ejecuta "npm start".');
+          reject(new Error("Restart required"));
+        } else if (reconnectAttempts < maxReconnectAttempts) {
+          warningLog("Desconexión inesperada, reintentando...");
+          reconnectAttempts++;
+          setTimeout(async () => {
+            try {
+              const newSock = await connect();
+              resolve(newSock);
+            } catch (e) {
+              reject(e);
+            }
+          }, 5000);
+        } else {
+          errorLog("Límite de reintentos alcanzado. Abortando.");
+          reject(new Error("Max reconnect attempts reached"));
+        }
+      }
+    });
+  });
 }
 
 exports.connect = connect;
