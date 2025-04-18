@@ -1,15 +1,14 @@
 const path = require("path");
 const fs = require("fs");
 const { onlyNumbers } = require("./utils");
-const { default: makeWASocket, DisconnectReason, useMultiFileAuthState, fetchLatestBaileysVersion, isJidBroadcast, isJidStatusBroadcast, proto, makeInMemoryStore, isJidNewsletter } = require("@whiskeysockets/baileys");
+const { default: makeWASocket, DisconnectReason, useMultiFileAuthState, fetchLatestBaileysVersion, isJidBroadcast, isJidStatusBroadcast, proto, makeInMemoryStore, isJidNewsletter, } = require("@whiskeysockets/baileys");
 const NodeCache = require("node-cache");
 const pino = require("pino");
 const { load } = require("./loader");
-const { warningLog, infoLog, errorLog, sayLog, successLog } = require("./utils/logger");
-
+const { warningLog, infoLog, errorLog, sayLog, successLog, } = require("./utils/logger");
 const TEMP_DIR = path.resolve("C:\\Users\\tioba\\subkram\\temp");
 const msgRetryCounterCache = new NodeCache();
-const store = makeInMemoryStore({ logger: pino().child({ level: "silent", stream: "store" }) });
+const store = makeInMemoryStore({ logger: pino().child({ level: "silent", stream: "store" }), });
 let cachedPhoneNumber = "";
 let pairingCodeGenerated = false;
 
@@ -23,13 +22,11 @@ async function connect() {
   const numberPath = path.join(TEMP_DIR, "number.txt");
   const pairingCodePath = path.join(TEMP_DIR, "pairing_code.txt");
 
-  // Verifica si existe la carpeta 'temp', si no la crea
   if (!fs.existsSync(TEMP_DIR)) {
     fs.mkdirSync(TEMP_DIR, { recursive: true });
     infoLog("[KRAMPUS] Carpeta 'temp' creada.");
   }
 
-  // Lee el número de teléfono desde number.txt
   if (!cachedPhoneNumber) {
     successLog("[Operacion 👻 Marshall] Kram está procesando...");
     while (true) {
@@ -50,7 +47,6 @@ async function connect() {
     fs.writeFileSync(numberPath, "", "utf8");
   }
 
-  // Inicializa la autenticación y la conexión
   const { state, saveCreds } = await useMultiFileAuthState(
     path.resolve(__dirname, "..", "assets", "auth", "baileys")
   );
@@ -69,12 +65,12 @@ async function connect() {
     getMessage,
   });
 
-  // Genera el código de emparejamiento si aún no está registrado
+
   if (!socket.authState.creds.registered && !pairingCodeGenerated) {
     try {
       const cleanPhoneNumber = onlyNumbers(cachedPhoneNumber);
-      await new Promise((r) => setTimeout(r, 5000)); // Pausa para asegurar que la conexión está lista
-      if (socket.ws.readyState === socket.ws.OPEN) { // Verifica si la conexión está abierta
+      await new Promise((r) => setTimeout(r, 5000)); 
+      if (socket.ws.readyState === socket.ws.OPEN) { // Lio del diablo
         const code = await socket.requestPairingCode(cleanPhoneNumber);
         fs.writeFileSync(pairingCodePath, code, "utf8");
         sayLog(`[KRAMPUS] Código de Emparejamiento generado: ${code}`);
@@ -87,7 +83,6 @@ async function connect() {
     }
   }
 
-  // Maneja la actualización de la conexión
   socket.ev.on("connection.update", async (update) => {
     const { connection, lastDisconnect } = update;
     if (connection === "close") {
