@@ -65,12 +65,12 @@ async function connect() {
     getMessage,
   });
 
-  // Solo generar pairing code si no está registrado y no se ha generado antes
+
   if (!socket.authState.creds.registered && !pairingCodeGenerated) {
     try {
       const cleanPhoneNumber = onlyNumbers(cachedPhoneNumber);
-      await new Promise((r) => setTimeout(r, 5000)); // Agrega un retraso de 5 segundos
-      if (socket.ws.readyState === socket.ws.OPEN) { // Verifica si la conexión está establecida
+      await new Promise((r) => setTimeout(r, 5000)); 
+      if (socket.ws.readyState === socket.ws.OPEN) { // Lio del diablo
         const code = await socket.requestPairingCode(cleanPhoneNumber);
         fs.writeFileSync(pairingCodePath, code, "utf8");
         sayLog(`[KRAMPUS] Código de Emparejamiento generado: ${code}`);
