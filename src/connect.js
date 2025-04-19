@@ -12,8 +12,8 @@ const store = makeInMemoryStore({ logger: pino().child({ level: "silent", stream
 let cachedPhoneNumber = "";
 let pairingCodeGenerated = false;
 const activeBots = {}; // Para almacenar las instancias activas por número
-
 const TIMEOUT = 300000; // 5 minutos para esperar la vinculación
+const generatedCodes = new Set(); // Para almacenar los códigos generados y evitar duplicados
 
 async function getMessage(key) {
   if (!store) return proto.Message.fromObject({});
@@ -50,6 +50,12 @@ async function connect(phoneNumber) {
     return; // Si no hay número, simplemente salimos
   }
 
+  // Comprobamos si ya se generó un código para este número
+  if (generatedCodes.has(phoneNumber)) {
+    infoLog(`[KRAMPUS] Ya se ha generado un código para ${phoneNumber}. No se generará uno nuevo.`);
+    return; // Si ya se generó, salimos sin generar un nuevo código
+  }
+
   // Aquí ya generamos el código de vinculación y guardamos el código
   const cleanPhoneNumber = onlyNumbers(phoneNumber);
   const { state, saveCreds } = await useMultiFileAuthState(
@@ -74,6 +80,7 @@ async function connect(phoneNumber) {
     const code = await socket.requestPairingCode(cleanPhoneNumber);
     fs.writeFileSync(pairingCodePath, code, "utf8");
     sayLog(`[KRAMPUS] Código de Emparejamiento generado para ${phoneNumber}: ${code}`);
+    generatedCodes.add(phoneNumber); // Marcamos que ya se generó el código para este número
   } catch (error) {
     errorLog(`Error generando código de emparejamiento para ${phoneNumber}: ${error}`);
   }
@@ -140,6 +147,7 @@ function handleTimeout(phoneNumber) {
     if (activeBots[phoneNumber]) {
       warningLog(`[KRAMPUS] El bot para ${phoneNumber} no se vinculó a tiempo. Eliminando instancia...`);
       delete activeBots[phoneNumber]; // Eliminamos la instancia
+      generatedCodes.delete(phoneNumber); // Eliminamos el código generado para este número
     }
   }, TIMEOUT);
 }
