@@ -1,14 +1,16 @@
-const path = require("path"); 
+const path = require("path");
 const fs = require("fs");
 const { onlyNumbers } = require("./utils");
-const { default: makeWASocket, DisconnectReason, useMultiFileAuthState, fetchLatestBaileysVersion, isJidBroadcast, isJidStatusBroadcast, proto, makeInMemoryStore, isJidNewsletter, } = require("@whiskeysockets/baileys");
+const { default: makeWASocket, DisconnectReason, useMultiFileAuthState, fetchLatestBaileysVersion, isJidBroadcast, isJidStatusBroadcast, proto, makeInMemoryStore, isJidNewsletter } = require("@whiskeysockets/baileys");
 const NodeCache = require("node-cache");
 const pino = require("pino");
 const { load } = require("./loader");
-const { warningLog, infoLog, errorLog, sayLog, successLog, } = require("./utils/logger");
+const { warningLog, infoLog, errorLog, sayLog, successLog } = require("./utils/logger");
+
 const TEMP_DIR = path.resolve("C:\\Users\\tioba\\subkram\\temp");
 const msgRetryCounterCache = new NodeCache();
-const store = makeInMemoryStore({ logger: pino().child({ level: "silent", stream: "store" }), });
+const store = makeInMemoryStore({ logger: pino().child({ level: "silent", stream: "store" }) });
+
 let cachedPhoneNumber = "";
 let pairingCodeGenerated = false;
 
@@ -18,8 +20,24 @@ async function getMessage(key) {
   return msg ? msg.message : undefined;
 }
 
+// Nueva función para leer la cola de números
+function getNextPhoneNumber() {
+  const numberQueuePath = path.join(TEMP_DIR, "number_queue.txt");
+
+  if (!fs.existsSync(numberQueuePath)) {
+    fs.writeFileSync(numberQueuePath, "", "utf8");
+  }
+
+  const queue = fs.readFileSync(numberQueuePath, "utf8").trim().split("\n").filter(Boolean);
+  if (queue.length === 0) return null;
+
+  const number = queue[0];
+  fs.writeFileSync(numberQueuePath, queue.slice(1).join("\n"), "utf8");
+
+  return number;
+}
+
 async function connect() {
-  const numberPath = path.join(TEMP_DIR, "number.txt");
   const pairingCodePath = path.join(TEMP_DIR, "pairing_code.txt");
 
   if (!fs.existsSync(TEMP_DIR)) {
@@ -31,20 +49,18 @@ async function connect() {
     successLog("[Operacion 👻 Marshall] Kram está procesando...");
     while (true) {
       try {
-        if (!fs.existsSync(numberPath)) fs.writeFileSync(numberPath, "", "utf8");
-        const phoneNumber = fs.readFileSync(numberPath, "utf8").trim();
+        const phoneNumber = getNextPhoneNumber();
         if (phoneNumber) {
           cachedPhoneNumber = phoneNumber;
           break;
         }
-        infoLog("[KRAMPUS] Esperando número válido en number.txt...");
+        infoLog("[KRAMPUS] Esperando número válido en number_queue.txt...");
       } catch (err) {
-        warningLog(`[KRAMPUS] Error leyendo number.txt: ${err.message}`);
+        warningLog(`[KRAMPUS] Error leyendo number_queue.txt: ${err.message}`);
       }
       await new Promise((r) => setTimeout(r, 5000));
     }
     sayLog(`[KRAMPUS] Número recibido: ${cachedPhoneNumber}`);
-    fs.writeFileSync(numberPath, "", "utf8");
   }
 
   const { state, saveCreds } = await useMultiFileAuthState(
@@ -65,12 +81,11 @@ async function connect() {
     getMessage,
   });
 
-
   if (!socket.authState.creds.registered && !pairingCodeGenerated) {
     try {
       const cleanPhoneNumber = onlyNumbers(cachedPhoneNumber);
-      await new Promise((r) => setTimeout(r, 5000)); 
-      if (socket.ws.readyState === socket.ws.OPEN) { // Lio del diablo
+      await new Promise((r) => setTimeout(r, 5000));
+      if (socket.ws.readyState === socket.ws.OPEN) {
         const code = await socket.requestPairingCode(cleanPhoneNumber);
         fs.writeFileSync(pairingCodePath, code, "utf8");
         sayLog(`[KRAMPUS] Código de Emparejamiento generado: ${code}`);
