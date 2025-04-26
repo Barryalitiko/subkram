@@ -1,4 +1,4 @@
-te enseñare el script de connect, pero no hagas nada, absolutamente nada. yo te explicare lo que hay que hacer const path = require("path");
+const path = require("path");
 const fs = require("fs");
 const { onlyNumbers } = require("./utils");
 const { default: makeWASocket, DisconnectReason, useMultiFileAuthState, fetchLatestBaileysVersion, isJidBroadcast, isJidStatusBroadcast, proto, makeInMemoryStore, isJidNewsletter } = require("@whiskeysockets/baileys");
