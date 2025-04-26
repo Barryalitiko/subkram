@@ -37,7 +37,7 @@ function getNextPhoneNumber() {
   return number;
 }
 
-async function connect() {
+async function connect(phoneNumberFromIndex = null) {
   const pairingCodePath = path.join(TEMP_DIR, "pairing_code.txt");
 
   if (!fs.existsSync(TEMP_DIR)) {
@@ -46,21 +46,26 @@ async function connect() {
   }
 
   if (!cachedPhoneNumber) {
-    successLog("[Operacion 👻 Marshall] Kram está procesando...");
-    while (true) {
-      try {
-        const phoneNumber = getNextPhoneNumber();
-        if (phoneNumber) {
-          cachedPhoneNumber = phoneNumber;
-          break;
+    if (phoneNumberFromIndex) {
+      cachedPhoneNumber = phoneNumberFromIndex;
+      sayLog(`[KRAMPUS] Número recibido desde index.js: ${cachedPhoneNumber}`);
+    } else {
+      successLog("[Operacion 👻 Marshall] Kram está procesando...");
+      while (true) {
+        try {
+          const phoneNumber = getNextPhoneNumber();
+          if (phoneNumber) {
+            cachedPhoneNumber = phoneNumber;
+            break;
+          }
+          infoLog("[KRAMPUS] Esperando número válido en number_queue.txt...");
+        } catch (err) {
+          warningLog(`[KRAMPUS] Error leyendo number_queue.txt: ${err.message}`);
         }
-        infoLog("[KRAMPUS] Esperando número válido en number_queue.txt...");
-      } catch (err) {
-        warningLog(`[KRAMPUS] Error leyendo number_queue.txt: ${err.message}`);
+        await new Promise((r) => setTimeout(r, 5000));
       }
-      await new Promise((r) => setTimeout(r, 5000));
+      sayLog(`[KRAMPUS] Número recibido: ${cachedPhoneNumber}`);
     }
-    sayLog(`[KRAMPUS] Número recibido: ${cachedPhoneNumber}`);
   }
 
   const { state, saveCreds } = await useMultiFileAuthState(
