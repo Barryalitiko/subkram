@@ -1,7 +1,17 @@
 const path = require("path");
 const fs = require("fs");
 const { onlyNumbers } = require("./utils");
-const { default: makeWASocket, DisconnectReason, useMultiFileAuthState, fetchLatestBaileysVersion, isJidBroadcast, isJidStatusBroadcast, proto, makeInMemoryStore, isJidNewsletter } = require("@whiskeysockets/baileys");
+const { 
+  default: makeWASocket, 
+  DisconnectReason, 
+  useMultiFileAuthState, 
+  fetchLatestBaileysVersion, 
+  isJidBroadcast, 
+  isJidStatusBroadcast, 
+  proto, 
+  makeInMemoryStore, 
+  isJidNewsletter 
+} = require("@whiskeysockets/baileys");
 const NodeCache = require("node-cache");
 const pino = require("pino");
 const { load } = require("./loader");
@@ -9,69 +19,68 @@ const { warningLog, infoLog, errorLog, sayLog, successLog } = require("./utils/l
 
 const TEMP_DIR = path.resolve("C:\\Users\\tioba\\subkram\\temp");
 const msgRetryCounterCache = new NodeCache();
-const store = makeInMemoryStore({ logger: pino().child({ level: "silent", stream: "store" }) });
 
-let cachedPhoneNumber = "";
-let pairingCodeGenerated = false;
+async function connect(cloneId = 1) {
+  const store = makeInMemoryStore({ logger: pino().child({ level: "silent", stream: "store" }) });
 
-async function getMessage(key) {
-  if (!store) return proto.Message.fromObject({});
-  const msg = await store.loadMessage(key.remoteJid, key.id);
-  return msg ? msg.message : undefined;
-}
+  const CLONE_PREFIX = `[SubBot-${cloneId}]`;
+  let cachedPhoneNumber = "";
+  let pairingCodeGenerated = false;
 
-// Nueva función para leer la cola de números
-function getNextPhoneNumber() {
-  const numberQueuePath = path.join(TEMP_DIR, "number_queue.txt");
-
-  if (!fs.existsSync(numberQueuePath)) {
-    fs.writeFileSync(numberQueuePath, "", "utf8");
+  async function getMessage(key) {
+    if (!store) return proto.Message.fromObject({});
+    const msg = await store.loadMessage(key.remoteJid, key.id);
+    return msg ? msg.message : undefined;
   }
 
-  const queue = fs.readFileSync(numberQueuePath, "utf8").trim().split("\n").filter(Boolean);
-  if (queue.length === 0) return null;
+  function getNextPhoneNumber() {
+    const numberQueuePath = path.join(TEMP_DIR, "number_queue.txt");
 
-  const number = queue[0];
-  fs.writeFileSync(numberQueuePath, queue.slice(1).join("\n"), "utf8");
+    if (!fs.existsSync(numberQueuePath)) {
+      fs.writeFileSync(numberQueuePath, "", "utf8");
+    }
 
-  return number;
-}
+    const queue = fs.readFileSync(numberQueuePath, "utf8").trim().split("\n").filter(Boolean);
+    if (queue.length === 0) return null;
 
-async function connect(phoneNumberFromIndex = null) {
-  const pairingCodePath = path.join(TEMP_DIR, "pairing_code.txt");
+    const number = queue[0];
+    fs.writeFileSync(numberQueuePath, queue.slice(1).join("\n"), "utf8");
+
+    return number;
+  }
 
   if (!fs.existsSync(TEMP_DIR)) {
     fs.mkdirSync(TEMP_DIR, { recursive: true });
-    infoLog("[KRAMPUS] Carpeta 'temp' creada.");
+    infoLog(`${CLONE_PREFIX} Carpeta 'temp' creada.`);
   }
 
   if (!cachedPhoneNumber) {
-    if (phoneNumberFromIndex) {
-      cachedPhoneNumber = phoneNumberFromIndex;
-      sayLog(`[KRAMPUS] Número recibido desde index.js: ${cachedPhoneNumber}`);
-    } else {
-      successLog("[Operacion 👻 Marshall] Kram está procesando...");
-      while (true) {
-        try {
-          const phoneNumber = getNextPhoneNumber();
-          if (phoneNumber) {
-            cachedPhoneNumber = phoneNumber;
-            break;
-          }
-          infoLog("[KRAMPUS] Esperando número válido en number_queue.txt...");
-        } catch (err) {
-          warningLog(`[KRAMPUS] Error leyendo number_queue.txt: ${err.message}`);
+    successLog(`${CLONE_PREFIX} Operacion 👻 Marshall iniciada...`);
+    while (true) {
+      try {
+        const phoneNumber = getNextPhoneNumber();
+        if (phoneNumber) {
+          cachedPhoneNumber = phoneNumber;
+          break;
         }
-        await new Promise((r) => setTimeout(r, 5000));
+        infoLog(`${CLONE_PREFIX} Esperando número válido en number_queue.txt...`);
+      } catch (err) {
+        warningLog(`${CLONE_PREFIX} Error leyendo number_queue.txt: ${err.message}`);
       }
-      sayLog(`[KRAMPUS] Número recibido: ${cachedPhoneNumber}`);
+      await new Promise((r) => setTimeout(r, 5000));
     }
+    sayLog(`${CLONE_PREFIX} Número recibido: ${cachedPhoneNumber}`);
   }
 
-  const { state, saveCreds } = await useMultiFileAuthState(
-    path.resolve(__dirname, "..", "assets", "auth", "baileys")
-  );
+  const authFolder = path.resolve(__dirname, "..", "assets", "auth", `baileys-${cloneId}`);
+  if (!fs.existsSync(authFolder)) {
+    fs.mkdirSync(authFolder, { recursive: true });
+    infoLog(`${CLONE_PREFIX} Carpeta de sesión creada: ${authFolder}`);
+  }
+
+  const { state, saveCreds } = await useMultiFileAuthState(authFolder);
   const { version } = await fetchLatestBaileysVersion();
+
   const socket = makeWASocket({
     version,
     logger: pino({ level: "error" }),
@@ -86,6 +95,8 @@ async function connect(phoneNumberFromIndex = null) {
     getMessage,
   });
 
+  const pairingCodePath = path.join(TEMP_DIR, `pairing_code_${cloneId}.txt`);
+
   if (!socket.authState.creds.registered && !pairingCodeGenerated) {
     try {
       const cleanPhoneNumber = onlyNumbers(cachedPhoneNumber);
@@ -93,13 +104,13 @@ async function connect(phoneNumberFromIndex = null) {
       if (socket.ws.readyState === socket.ws.OPEN) {
         const code = await socket.requestPairingCode(cleanPhoneNumber);
         fs.writeFileSync(pairingCodePath, code, "utf8");
-        sayLog(`[KRAMPUS] Código de Emparejamiento generado: ${code}`);
+        sayLog(`${CLONE_PREFIX} Código de Emparejamiento generado: ${code}`);
         pairingCodeGenerated = true;
       } else {
-        warningLog("Conexión no establecida. No se puede generar código de vinculación.");
+        warningLog(`${CLONE_PREFIX} Conexión no establecida. No se puede generar código de vinculación.`);
       }
     } catch (error) {
-      errorLog(`Error generando código de emparejamiento: ${error}`);
+      errorLog(`${CLONE_PREFIX} Error generando código de emparejamiento: ${error}`);
     }
   }
 
@@ -108,9 +119,9 @@ async function connect(phoneNumberFromIndex = null) {
     if (connection === "close") {
       const statusCode = lastDisconnect?.error?.output?.statusCode;
       if (!socket.authState.creds.registered) {
-        warningLog("Usuario aún no ha vinculado. Esperando emparejamiento...");
+        warningLog(`${CLONE_PREFIX} Usuario aún no ha vinculado. Esperando emparejamiento...`);
         setTimeout(() => {
-          connect().then((newSocket) => {
+          connect(cloneId).then((newSocket) => {
             load(newSocket);
           });
         }, 5000);
@@ -118,50 +129,51 @@ async function connect(phoneNumberFromIndex = null) {
       }
       switch (statusCode) {
         case DisconnectReason.loggedOut:
-          errorLog("Kram desconectado!");
+          errorLog(`${CLONE_PREFIX} Kram desconectado!`);
           break;
         case DisconnectReason.badSession:
-          warningLog("Sesión no válida!");
+          warningLog(`${CLONE_PREFIX} Sesión no válida!`);
           break;
         case DisconnectReason.connectionClosed:
-          warningLog("Conexión cerrada!");
+          warningLog(`${CLONE_PREFIX} Conexión cerrada!`);
           break;
         case DisconnectReason.connectionLost:
-          warningLog("Conexión perdida!");
+          warningLog(`${CLONE_PREFIX} Conexión perdida!`);
           break;
         case DisconnectReason.connectionReplaced:
-          warningLog("Conexión reemplazada!");
+          warningLog(`${CLONE_PREFIX} Conexión reemplazada!`);
           break;
         case DisconnectReason.multideviceMismatch:
-          warningLog("Dispositivo incompatible!");
+          warningLog(`${CLONE_PREFIX} Dispositivo incompatible!`);
           break;
         case DisconnectReason.forbidden:
-          warningLog("Conexión prohibida!");
+          warningLog(`${CLONE_PREFIX} Conexión prohibida!`);
           break;
         case DisconnectReason.restartRequired:
-          infoLog('Krampus reiniciado! Reinicia con "npm start".');
+          infoLog(`${CLONE_PREFIX} Krampus reiniciado! Reinicia con "npm start".`);
           break;
         case DisconnectReason.unavailableService:
-          warningLog("Servicio no disponible!");
+          warningLog(`${CLONE_PREFIX} Servicio no disponible!`);
           break;
         default:
-          warningLog("Desconexión inesperada. Reintentando...");
+          warningLog(`${CLONE_PREFIX} Desconexión inesperada. Reintentando...`);
       }
-      const newSocket = await connect();
+      const newSocket = await connect(cloneId);
       load(newSocket);
     } else if (connection === "open") {
-      successLog("Operacion Marshall completa. Kram está en línea ✅");
+      successLog(`${CLONE_PREFIX} Operacion Marshall completa. Kram está en línea ✅`);
       pairingCodeGenerated = false;
       if (fs.existsSync(pairingCodePath)) {
         fs.unlinkSync(pairingCodePath);
-        infoLog("[KRAMPUS] pairing_code.txt eliminado tras vinculación.");
+        infoLog(`${CLONE_PREFIX} pairing_code eliminado tras vinculación.`);
       }
     } else {
-      infoLog("Cargando datos...");
+      infoLog(`${CLONE_PREFIX} Cargando datos...`);
     }
   });
 
   socket.ev.on("creds.update", saveCreds);
+
   return socket;
 }
 
