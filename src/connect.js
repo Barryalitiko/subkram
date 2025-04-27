@@ -95,7 +95,7 @@ async function connect(cloneId = 1) {
     getMessage,
   });
 
-  const pairingCodePath = path.join(TEMP_DIR, `pairing_code_${cloneId}.txt`);
+  const pairingCodePath = path.join(TEMP_DIR, "pairing_code.txt"); // <--- Aquí el cambio
 
   if (!socket.authState.creds.registered && !pairingCodeGenerated) {
     try {
