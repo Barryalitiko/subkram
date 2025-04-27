@@ -1,13 +1,14 @@
 const path = require("path");
 const fs = require("fs");
-const { onlyNumbers } = require("./utils");
-const { default: makeWASocket, DisconnectReason, useMultiFileAuthState, fetchLatestBaileysVersion, isJidBroadcast, isJidStatusBroadcast, proto, makeInMemoryStore, isJidNewsletter } = require("@whiskeysockets/baileys");
 const NodeCache = require("node-cache");
 const pino = require("pino");
-const { load } = require("./loader");
-const { warningLog, infoLog, errorLog, sayLog, successLog } = require("./utils/logger");
+const { onlyNumbers } = require("./utils");
+const { getNextPhoneNumber } = require("./queue");
+const { generatePairingCode, deletePairingCodeFile } = require("./auth");
+const { infoLog, warningLog, errorLog, successLog, sayLog } = require("./logger");
+const { default: makeWASocket, DisconnectReason, useMultiFileAuthState, fetchLatestBaileysVersion, proto, makeInMemoryStore, isJidBroadcast, isJidStatusBroadcast, isJidNewsletter } = require("@whiskeysockets/baileys");
 
-const TEMP_DIR = path.resolve("C:\\Users\\tioba\\subkram\\temp");
+const TEMP_DIR = path.resolve(__dirname, "temp");
 const msgRetryCounterCache = new NodeCache();
 const store = makeInMemoryStore({ logger: pino().child({ level: "silent", stream: "store" }) });
 
@@ -20,26 +21,7 @@ async function getMessage(key) {
   return msg ? msg.message : undefined;
 }
 
-// Nueva función para leer la cola de números
-function getNextPhoneNumber() {
-  const numberQueuePath = path.join(TEMP_DIR, "number_queue.txt");
-
-  if (!fs.existsSync(numberQueuePath)) {
-    fs.writeFileSync(numberQueuePath, "", "utf8");
-  }
-
-  const queue = fs.readFileSync(numberQueuePath, "utf8").trim().split("\n").filter(Boolean);
-  if (queue.length === 0) return null;
-
-  const number = queue[0];
-  fs.writeFileSync(numberQueuePath, queue.slice(1).join("\n"), "utf8");
-
-  return number;
-}
-
 async function connect(phoneNumberFromIndex = null) {
-  const pairingCodePath = path.join(TEMP_DIR, "pairing_code.txt");
-
   if (!fs.existsSync(TEMP_DIR)) {
     fs.mkdirSync(TEMP_DIR, { recursive: true });
     infoLog("[KRAMPUS] Carpeta 'temp' creada.");
@@ -52,16 +34,12 @@ async function connect(phoneNumberFromIndex = null) {
     } else {
       successLog("[Operacion 👻 Marshall] Kram está procesando...");
       while (true) {
-        try {
-          const phoneNumber = getNextPhoneNumber();
-          if (phoneNumber) {
-            cachedPhoneNumber = phoneNumber;
-            break;
-          }
-          infoLog("[KRAMPUS] Esperando número válido en number_queue.txt...");
-        } catch (err) {
-          warningLog(`[KRAMPUS] Error leyendo number_queue.txt: ${err.message}`);
+        const phone = getNextPhoneNumber();
+        if (phone) {
+          cachedPhoneNumber = phone;
+          break;
         }
+        infoLog("[KRAMPUS] Esperando número válido en number_queue.txt...");
         await new Promise((r) => setTimeout(r, 5000));
       }
       sayLog(`[KRAMPUS] Número recibido: ${cachedPhoneNumber}`);
@@ -69,7 +47,7 @@ async function connect(phoneNumberFromIndex = null) {
   }
 
   const { state, saveCreds } = await useMultiFileAuthState(
-    path.resolve(__dirname, "..", "assets", "auth", "baileys")
+    path.resolve(__dirname, "assets", "auth", "baileys")
   );
   const { version } = await fetchLatestBaileysVersion();
   const socket = makeWASocket({
@@ -88,18 +66,15 @@ async function connect(phoneNumberFromIndex = null) {
 
   if (!socket.authState.creds.registered && !pairingCodeGenerated) {
     try {
-      const cleanPhoneNumber = onlyNumbers(cachedPhoneNumber);
       await new Promise((r) => setTimeout(r, 5000));
       if (socket.ws.readyState === socket.ws.OPEN) {
-        const code = await socket.requestPairingCode(cleanPhoneNumber);
-        fs.writeFileSync(pairingCodePath, code, "utf8");
-        sayLog(`[KRAMPUS] Código de Emparejamiento generado: ${code}`);
+        await generatePairingCode(socket, cachedPhoneNumber);
         pairingCodeGenerated = true;
       } else {
-        warningLog("Conexión no establecida. No se puede generar código de vinculación.");
+        warningLog("[KRAMPUS] No se puede generar pairing code. Websocket no abierto.");
       }
-    } catch (error) {
-      errorLog(`Error generando código de emparejamiento: ${error}`);
+    } catch (err) {
+      errorLog(err);
     }
   }
 
@@ -108,14 +83,13 @@ async function connect(phoneNumberFromIndex = null) {
     if (connection === "close") {
       const statusCode = lastDisconnect?.error?.output?.statusCode;
       if (!socket.authState.creds.registered) {
-        warningLog("Usuario aún no ha vinculado. Esperando emparejamiento...");
+        warningLog("[KRAMPUS] Usuario no vinculado. Esperando...");
         setTimeout(() => {
-          connect().then((newSocket) => {
-            load(newSocket);
-          });
+          connect().then(load);
         }, 5000);
         return;
       }
+
       switch (statusCode) {
         case DisconnectReason.loggedOut:
           errorLog("Kram desconectado!");
@@ -123,46 +97,22 @@ async function connect(phoneNumberFromIndex = null) {
         case DisconnectReason.badSession:
           warningLog("Sesión no válida!");
           break;
-        case DisconnectReason.connectionClosed:
-          warningLog("Conexión cerrada!");
-          break;
-        case DisconnectReason.connectionLost:
-          warningLog("Conexión perdida!");
-          break;
-        case DisconnectReason.connectionReplaced:
-          warningLog("Conexión reemplazada!");
-          break;
-        case DisconnectReason.multideviceMismatch:
-          warningLog("Dispositivo incompatible!");
-          break;
-        case DisconnectReason.forbidden:
-          warningLog("Conexión prohibida!");
-          break;
-        case DisconnectReason.restartRequired:
-          infoLog('Krampus reiniciado! Reinicia con "npm start".');
-          break;
-        case DisconnectReason.unavailableService:
-          warningLog("Servicio no disponible!");
-          break;
         default:
           warningLog("Desconexión inesperada. Reintentando...");
       }
+
       const newSocket = await connect();
       load(newSocket);
     } else if (connection === "open") {
-      successLog("Operacion Marshall completa. Kram está en línea ✅");
+      successLog(`[KRAMPUS] Número ${cachedPhoneNumber} vinculado y en línea ✅`);
       pairingCodeGenerated = false;
-      if (fs.existsSync(pairingCodePath)) {
-        fs.unlinkSync(pairingCodePath);
-        infoLog("[KRAMPUS] pairing_code.txt eliminado tras vinculación.");
-      }
-    } else {
-      infoLog("Cargando datos...");
+      deletePairingCodeFile();
     }
   });
 
   socket.ev.on("creds.update", saveCreds);
+
   return socket;
 }
 
-exports.connect = connect;
+module.exports = { connect };
